@@ -1,0 +1,308 @@
+[
+  {
+    "text": "Pacijent dolazi po probiotik jer počinje antibiotsku terapiju amoksicilinom zbog upale grla. Koji je najispravniji savjet o vremenu uzimanja?",
+    "options": ["Probiotik i antibiotik uzeti istovremeno radi praktičnosti", "Probiotik uzeti najmanje 2 sata nakon antibiotika", "Probiotik tek nakon završene antibiotske terapije", "Probiotik nije potreban uz amoksicilin jer ne narušava značajno mikrobiotu"],
+    "correctIndex": 1,
+    "category": "otc",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Probiotik treba uzeti s razmakom od najmanje 2 sata od antibiotika kako bi se izbjeglo direktno uništavanje probiotskih sojeva. Istovremeno uzimanje značajno smanjuje učinak, a čekanje kraja terapije je suboptimalno — disbioza nastaje već prvih dana, pa je profilaktički pristup učinkovitiji (posebno S. boulardii i L. rhamnosus GG). I uskospektralni penicilini narušavaju mikrobiotu."
+  },
+  {
+    "text": "Tokom vrućinskog talasa, koji savjet o ishrani i hidrataciji treba dati pacijentu sa dijabetesom koji pita o pripremi za boravak na suncu?",
+    "options": ["Izbjegavati svu tečnost sa elektrolitima jer mogu naglo podići glikemiju", "Piti isključivo vodu bez ograničenja, bez potrebe praćenja glikemije tokom vrućine", "Redovno pratiti glikemiju, dovoljno se hidrirati vodom i izbjegavati slatke napitke kao zamjenu za vodu", "Smanjiti unos tečnosti kako bi se izbjegao pad šećera u krvi"],
+    "correctIndex": 2,
+    "category": "ljetna-zastita",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod dijabetesa vrućina povećava rizik i od dehidratacije i od poremećaja glikemije (mijenja apsorpciju insulina i osjetljivost na njega), pa je redovno praćenje glikemije + hidratacija vodom + izbjegavanje šećernih napitaka standardni savjet. Elektroliti bez šećera (npr. oralni rehidratacioni rastvori) nisu problem — problem su slatki napitci."
+  },
+  {
+    "text": "Pacijentica dojilja pita da li može uzeti metronidazol sistemski. Šta je stručno najispravnije?",
+    "options": ["Apsolutno kontraindikovano, mora prekinuti dojenje trajno", "Sigurno bez ikakvih napomena", "Uglavnom kompatibilno sa dojenjem uz standardne doze", "Samo topikalna primjena je dozvoljena"],
+    "correctIndex": 2,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metronidazol prelazi u mlijeko, ali prema većini savremenih izvora (npr. LactMed) smatra se uglavnom kompatibilnim sa dojenjem u standardnim dozama. Kod visokih jednokratnih doza nekad se savjetuje privremena pauza. Trajni prekid dojenja je zastarjelo i prestrogo shvatanje."
+  },
+  {
+    "text": "Kupac uzima preparat sa visokim dozama vitamina A za antioksidativnu zaštitu ljeti i istovremeno je trudnica u prvom trimestru. Šta joj se mora hitno napomenuti?",
+    "options": ["Visoke doze vitamina A (retinol) u trudnoći nose rizik od teratogenosti — treba upozoriti i uputiti na konsultaciju sa ginekologom prije nastavka uzimanja", "Vitamin A suplementi su potpuno bezbjedni u trudnoći u bilo kojoj dozi", "Samo sintetski vitamin A je opasan, prirodni izvori nisu", "Rizik postoji samo u trećem trimestru"],
+    "correctIndex": 0,
+    "category": "trudnoca-dojenje",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Visoke doze preformiranog vitamina A (retinol) su dobro poznati teratogen, sa posebno visokim rizikom u prvom trimestru (period organogeneze) — jedna od najozbiljnijih zamki u savjetovanju trudnica."
+  },
+  {
+    "text": "Koji SPF faktor se preporučuje kao minimalan za svakodnevnu zaštitu kože tokom ljetnih mjeseci u našem regionu?",
+    "options": ["SPF 15, jer viši faktori nepotrebno opterećuju kožu i usporavaju sintezu vitamina D", "SPF 50, jer je to jedini faktor koji blokira i UVA i UVB zrake u potpunosti", "SPF 30, jer pruža dovoljnu zaštitu od UVB zraka uz prihvatljivu primjenu u svakodnevnoj njezi", "SPF faktor nije bitan ljeti ako se koristi hidratantna krema s antioksidansima"],
+    "correctIndex": 2,
+    "category": "ljetna-zastita",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "SPF 30 blokira oko 97% UVB zraka i predstavlja standardnu minimalnu preporuku dermatoloških asocijacija. Nijedan SPF ne blokira zrake u potpunosti (SPF 50 blokira ~98%), a SPF sam po sebi ne govori ništa o UVA zaštiti. Antioksidansi ne zamjenjuju UV filtere."
+  },
+  {
+    "text": "Pacijentica na varfarinu dolazi po flukonazol kapsule. Koji joj savjet dajete?",
+    "options": ["Izdati bez komentara — flukonazol je Rx lijek i propisao ga je doktor", "Savjetovati da flukonazol oslabljuje dejstvo varfarina pa treba povećati dozu", "Upozoriti na moguće pojačano dejstvo varfarina i preporučiti kontrolu INR", "Ne reći ništa posebno, jer nema interakcija"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Flukonazol inhibira CYP2C9, glavni enzim koji metaboliše (S)-varfarin, što dovodi do povećanja INR i rizika od krvarenja — čak i kod pojedinih vaginalnih doza koje imaju sistemsku apsorpciju. Obavezna je kontrola INR i informisanje pacijentice."
+  },
+  {
+    "text": "Roditelj traži paracetamol sirup za dijete od 6 mjeseci, ali ne zna tačnu težinu djeteta. Šta je ispravno?",
+    "options": ["Dati standardnu dozu za malu djecu bez provjere težine", "Insistirati na saznanju tjelesne težine (ili procjeni po uzrastu uz oprez) jer je doziranje kod djece bazirano na kilogramima, uz upućivanje farmaceutu", "Preporučiti maksimalnu dozu da sigurno djeluje za taj uzrast", "Reći roditelju da sam prilagodi dozu na osnovu uputstva za lijek"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pedijatrijsko doziranje paracetamola je striktno vezano za tjelesnu težinu (mg/kg); izdavanje 'od oka' nosi rizik od predoziranja ili poddoziranja. Treba insistirati na tačnim podacima i po potrebi uključiti farmaceuta."
+  },
+  {
+    "text": "Kupac traži astaksantin za pripremu kože prije sunčanja, umjesto kreme za sunčanje. Šta je ispravan odgovor?",
+    "options": ["Astaksantin potpuno zamjenjuje kremu za sunčanje ako se uzima nekoliko sedmica ranije", "Astaksantin kao antioksidans može imati pomoćnu ulogu u zaštiti kože od oksidativnog stresa izazvanog UV zračenjem, ali nikad ne zamjenjuje lokalnu fotozaštitu", "Astaksantin ima SPF faktor ekvivalentan kremama sa SPF 30", "Astaksantin sprječava sve vrste oštećenja kože od sunca bez potrebe za dodatnom zaštitom"],
+    "correctIndex": 1,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Astaksantin je karotenoidni antioksidans koji može ublažiti oksidativni stres kože izazvan UV zračenjem i ima skromne dokaze kao dodatna (interna) podrška — ali nema mjerljiv SPF i ne blokira UV zrake, pa nikad ne zamjenjuje kremu za sunčanje niti druge mjere fotozaštite."
+  },
+  {
+    "text": "Majka traži savjet: njeno dijete (2 godine) ima blagi pelenski osip (dermatitis) bez znakova gljivične infekcije. Koja aktivna komponenta u kremi je prvi izbor za zaštitu i regeneraciju kože?",
+    "options": ["Hidrokortizon 1%", "Klotrimazol 1%", "Cink-oksid (10–40%)", "Mupirocin 2%"],
+    "correctIndex": 2,
+    "category": "pedijatrija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Cink-oksid je prvi izbor kod blagog pelenskog dermatitisa — formira zaštitnu barijeru između kože i iritanasa (urin, feces), ima blago adstringentno i antiseptično djelovanje te potiče regeneraciju kože. Dostupan je bez recepta i siguran za svakodnevnu upotrebu kod dojenčadi."
+  },
+  {
+    "text": "Pacijent pita koliko često treba reaplicirati kremu za sunčanje tokom dana provedenog na plaži. Koji je ispravan savjet?",
+    "options": ["Svaka 4 sata, jer se aktivne tvari u kremi razlažu pod UV zracima nakon tog perioda", "Svaka 2 sata, te odmah nakon kupanja, znojenja ili brisanja peškirom", "Jednom ujutro je dovoljno ako je SPF faktor 50 ili viši", "Samo prije izlaganja suncu, jer naknadna primjena ne povećava zaštitu"],
+    "correctIndex": 1,
+    "category": "ljetna-zastita",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Reaplikacija na 2 sata, plus odmah nakon kupanja/znojenja/brisanja, je standardna preporuka jer se zaštitni film fizički skida ili razrjeđuje. Viši SPF ne produžava interval reaplikacije — samo povećava postotak blokiranih zraka."
+  },
+  {
+    "text": "Koji par lijekova nosi najveći rizik od serotoninskog sindroma?",
+    "options": ["Sertralin + paracetamol", "Tramadol + linezolid", "Amlodipin + fluoksetin", "Metformin + citalopram"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Linezolid je slab, ali klinički značajan inhibitor MAO; u kombinaciji sa tramadolom (koji ima serotonergičku komponentu) rizik od serotoninskog sindroma je visok i dobro poznat. Ostale kombinacije nemaju serotonergičku sinergiju na tom nivou — zamka je asocijacija 'bilo koji SSRI + bilo koji lijek = rizik' bez razumijevanja mehanizma."
+  },
+  {
+    "text": "Pacijent vraća Prepidil gel koji je čuvao van frižidera, na sobnoj temperaturi, jer mu 'ipak nije trebao'. Šta je ispravan postupak?",
+    "options": ["Automatski zamijeniti lijek besplatno", "Objasniti da je lijek vjerovatno izgubio stabilnost/efikasnost zbog neispravnog čuvanja", "Reći da temperatura čuvanja nikad ne utiče na efikasnost", "Savjetovati da se lijek zamrzne da se spasi"],
+    "correctIndex": 1,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Termolabilni lijekovi (dinoproston, insulini, biološki lijekovi) mogu trajno izgubiti aktivnost ako se ne čuvaju u propisanom temperaturnom opsegu. To nije reklamacija kvaliteta proizvoda nego posljedica nepravilnog čuvanja od strane korisnika. Zamrzavanje dodatno oštećuje proizvod."
+  },
+  {
+    "text": "Pacijentkinja na terapiji varfarinom traži visoke doze vitamina E (400–1000 IU) za antioksidativnu zaštitu ljeti. Šta se mora znati?",
+    "options": ["Vitamin E nema nikakvu interakciju sa varfarinom", "Vitamin E potpuno neutrališe dejstvo varfarina pa treba povećati dozu antikoagulansa", "Kombinacija je sigurna sve dok se uzima navečer", "Visoke doze vitamina E mogu pojačati antikoagulantni efekat varfarina i povećati rizik od krvarenja"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vitamin E u visokim dozama ima blagi antiagregacijski/antikoagulantni potencijal i može pojačati efekat varfarina, povećavajući rizik od krvarenja — poznata i klinički relevantna interakcija koju treba prepoznati i uputiti pacijenta dalje."
+  },
+  {
+    "text": "Pacijentica (45 g.) traži preparat protiv povremene žgaravice nakon obilnijih večernjih obroka. Uzima levotiroksin ujutro natašte zbog hipotireoze. Koji OTC preparat joj je najprikladniji uz minimalan rizik od interakcije?",
+    "options": ["Aluminij-hidroksid + magnezij-hidroksid suspenzija", "Kalcij-karbonat tablete za žvakanje", "Sukralfat suspenzija", "Famotidin 10 mg tablete"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Famotidin (H2-blokator) ima najmanji potencijal interakcije s levotiroksinom jer ne sadrži polivalentne katione. Antacidi s aluminijem, magnezijem i kalcijem vežu levotiroksin u GIT-u i smanjuju njegovu apsorpciju (razmak najmanje 4 sata), a sukralfat posebno značajno smanjuje njegovu bioraspoloživost."
+  },
+  {
+    "text": "Koja oznaka na kremi za sunčanje potvrđuje da proizvod štiti i od UVA i od UVB zračenja?",
+    "options": ["Oznaka 'dermatološki testirano' na ambalaži proizvoda", "Visok SPF broj, jer SPF sam po sebi uvijek obuhvata oba tipa zračenja", "Natpis 'vodootporno' koji garantuje širokospektralnu zaštitu", "Oznaka UVA u krugu (EU UVA logo ili PA+ sistem) uz naveden SPF broj"],
+    "correctIndex": 3,
+    "category": "ljetna-zastita",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "SPF mjeri samo UVB zaštitu; UVA logo (krug s natpisom UVA) ili azijski PA+ sistem je odvojena oznaka koja potvrđuje UVA zaštitu. Kombinacija oba znaka označava širokospektralnu zaštitu."
+  },
+  {
+    "text": "Pacijent sa GFR 25 mL/min/1.73m² treba analgetik. Koji izbor je najbezbjedniji?",
+    "options": ["Ibuprofen u standardnoj dozi", "Paracetamol uz prilagođeno doziranje/interval", "Diklofenak jednokratno", "Naproksen u nižoj dozi"],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "NSAIL su relativno kontraindikovani kod teške bubrežne insuficijencije zbog rizika od daljeg pogoršanja funkcije bubrega (smanjena prostaglandinska vazodilatacija aferentne arteriole). Paracetamol je prvi izbor, uz prilagođavanje intervala doziranja. Zamka je 'jednokratno' — smjernice i za jednu dozu NSAIL savjetuju oprez."
+  },
+  {
+    "text": "Pacijent sa poznatom astmom traži OTC preparat za prehladu koji sadrži pseudoefedrin. Na šta se mora obratiti pažnja?",
+    "options": ["Astma nema veze sa pseudoefedrinom, slobodno izdati", "Pseudoefedrin je kontraindikovan kod svih respiratornih oboljenja", "Oprez je prvenstveno vezan za kardiovaskularne komorbiditete (hipertenzija, aritmije) zbog simpatomimetskog efekta — ne toliko astmu direktno, ali treba provjeriti terapiju i interakcije", "Pseudoefedrin liječi astmu pa je čak koristan"],
+    "correctIndex": 2,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pseudoefedrin kao simpatomimetik nosi rizik prvenstveno kod kardiovaskularnih stanja (hipertenzija, aritmije, ishemijska bolest srca) i kod interakcije sa MAO inhibitorima, a ne direktno kod astme. Asocijacija 'respiratorno oboljenje = automatska kontraindikacija' je pogrešna generalizacija."
+  },
+  {
+    "text": "Kupac uzima izotretinoin (Roaccutane) za akne i pita da li može dodatno uzimati suplement vitamina A za još bolju kožu ljeti. Šta je ispravan odgovor?",
+    "options": ["Da, što više vitamina A to bolje za kožu", "Vitamin A suplementi nemaju veze sa izotretinoinom jer je jedno lijek a drugo suplement", "NE — izotretinoin je derivat vitamina A, dodatni unos vitamina A suplementima nosi rizik od hipervitaminoze A", "Vitamin A suplement je siguran ako se uzima ujutro, a izotretinoin uveče"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Izotretinoin je sintetski derivat vitamina A; dodatni unos retinola putem suplemenata značajno povećava rizik od hipervitaminoze A (glavobolja, hepatotoksičnost). Klasična zamka — pacijenti ne povezuju lijek za akne sa vitaminom A, a razmak u vremenu uzimanja ne rješava problem kumulativne doze."
+  },
+  {
+    "text": "Tokom izdavanja preparata za dijete (4 godine, 18 kg) s temperaturom 38,9 °C, majka kaže da je prije sat vremena dala ibuprofen sirup. Koji je najsigurniji savjet?",
+    "options": ["Neka odmah da paracetamol u dozi 15 mg/kg radi bržeg pada temperature", "Naizmjenično davati ibuprofen i paracetamol svaka 3 sata", "Sačekati još 5 sati prije sljedeće doze ibuprofena i pratiti dijete", "Dati pola doze paracetamola odmah, a punu dozu ibuprofena za 4 sata"],
+    "correctIndex": 2,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Aktuelne smjernice (NICE, SZO) ne preporučuju rutinsku kombinaciju ili alternaciju ibuprofena i paracetamola — povećava rizik od greške u doziranju i hepato/nefrotoksičnosti uz marginalnu kliničku korist. Ibuprofen se dozira svakih 6–8 sati (max 30 mg/kg/dan); uz čekanje pomoći i fizikalnim mjerama (lagana odjeća, tečnost)."
+  },
+  {
+    "text": "Stariji pacijent sa hipertenzijom mora boraviti napolju tokom vrućinskog talasa. Koji savjet mu se NE bi trebao dati?",
+    "options": ["Da privremeno samoinicijativno smanji dozu diuretika zbog rizika od dehidracije", "Izbjegavati izlazak između 11 i 17 sati kada je UV indeks najviši", "Nositi laganu, svijetlu odjeću koja prekriva kožu", "Povećati unos tekućine, uz oprez kod ograničenja unosa zbog drugih bolesti"],
+    "correctIndex": 0,
+    "category": "ljetna-zastita",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Samoinicijativna promjena doze propisane terapije nikad nije savjet koji se daje bez ljekara, posebno kod kardiovaskularnih lijekova gdje promjena doze nosi rizike u oba smjera. Prilagodbu terapije tokom vrućina odlučuje isključivo ljekar."
+  },
+  {
+    "text": "Koji simptom hipoglikemije je MASKIRAN kod pacijenta na inzulinu koji dugo uzima beta-blokator?",
+    "options": ["Znojenje", "Tremor i palpitacije", "Konfuzija", "Glad"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Beta-blokatori maskiraju adrenergičke simptome hipoglikemije (tremor, palpitacije, tahikardija) jer blokiraju beta-adrenergički odgovor, dok znojenje (holinergički posredovano) obično ostaje prisutno. Odsustvo klasičnih simptoma ne isključuje hipoglikemiju kod ovih pacijenata."
+  },
+  {
+    "text": "Pacijent star 78 godina traži antihistaminik prve generacije (npr. difenhidramin) za nesanicu. Koji je najveći rizik?",
+    "options": ["Nema posebnog rizika kod starijih", "Samo blaga pospanost bez ikakvih drugih efekata", "Efekat je identičan kao kod mlađih osoba", "Izražen antikolinergički efekat — rizik od konfuzije, retencije urina i pada, posebno kod starijih"],
+    "correctIndex": 3,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Antihistaminici prve generacije imaju izražen antikolinergički profil koji kod starijih povećava rizik od kognitivnih poremećaja, retencije urina, opstipacije i padova — nalaze se na Beers listi lijekova koje treba izbjegavati kod starijih. Rizičnu populaciju treba prepoznati i uputiti na konsultaciju."
+  },
+  {
+    "text": "Kupac, dugogodišnji pušač, pita da li beta-karoten u visokim dozama štiti od raka pluća jer je 'jak antioksidans'. Šta se mora znati?",
+    "options": ["Da, treba mu odmah preporučiti visoke doze beta-karotena", "Beta-karoten je potpuno bezbjedan u bilo kojoj dozi za sve populacije", "Kod pušača su visoke doze beta-karotena iz suplemenata povezane sa POVEĆANIM rizikom od raka pluća", "Nema nikakvih podataka o riziku, sigurno je preporučiti"],
+    "correctIndex": 2,
+    "category": "suplementi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Velike randomizovane studije (CARET, ATBC) pokazale su povećan rizik od raka pluća kod pušača koji su uzimali visoke doze beta-karotena — suprotno očekivanju 'antioksidans = zaštita'. 'Prirodni antioksidans' ne znači automatski bezbjedan u svakoj populaciji i dozi."
+  },
+  {
+    "text": "Pacijent (62 g.) sa hipertenzijom uzima amlodipin i traži preparat protiv suhog nadražajnog kašlja (traje 3 dana, bez temperature). Koji izbor je NAJMANJE prikladan?",
+    "options": ["Sirup s ekstraktom bršljana (Hedera helix)", "Pastile s islandskim lišajem", "Sirup s ekstraktom slatkog korijena (Glycyrrhiza glabra)", "Inhalacije fiziološkim rastvorom"],
+    "correctIndex": 2,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Slatki korijen sadrži glicirizinsku kiselinu koja izaziva pseudohiperaldosteronizam — retenciju natrija, hipokalijemiju i porast krvnog pritiska — pa se izbjegava kod hipertenzije. Bršljan i islandski lišaj su sigurni biljni izbori, a inhalacija fiziološkim rastvorom je univerzalno prihvatljiva."
+  },
+  {
+    "text": "Koja izjava o djeci i kremama za sunčanje je TAČNA?",
+    "options": ["Djeca mlađa od 6 mjeseci trebaju koristiti kremu sa SPF 50+ prije svakog izlaganja suncu", "Djeca do 6 mjeseci trebaju biti potpuno zaštićena od direktnog sunca, a krema se ne preporučuje kao prva linija zaštite", "Sva djeca, bez obzira na dob, trebaju koristiti hemijske UV filtere zbog bolje apsorpcije", "Djeci je dovoljna jedna aplikacija kreme ujutro zbog osjetljivosti kože na učestalo nanošenje"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Standardna pedijatrijska preporuka (AAP i evropske smjernice) je da bebe do 6 mjeseci treba držati van direktnog sunca, u hladu i odjeći — krema se koristi samo kad zaštita odjećom/hladom nije moguća, na manjim površinama kože."
+  },
+  {
+    "text": "Trudnica u 3. trimestru traži OTC preparat protiv bolova. Koji je apsolutno kontraindiciran u ovoj fazi trudnoće?",
+    "options": ["Paracetamol", "Diklofenak gel", "Ibuprofen", "Magnezijum oksid"],
+    "correctIndex": 2,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "NSAIL u 3. trimestru nose rizik od preranog zatvaranja duktusa arteriozusa i oligohidramniona, pa se izbjegavaju posebno nakon 20. sedmice (naročito nakon 30.). Paracetamol ostaje standardni izbor. Zamka: 'ibuprofen je OTC, dakle bezbjedan' — zaboravlja se specifičnost trimestra."
+  },
+  {
+    "text": "Kupac traži da mu se izda Ventolin za astmu bez recepta jer 'uvijek uzima isti'. Koji je ispravan stav?",
+    "options": ["Izdati jer ga pacijent svakako koristi redovno", "Tehničar može sam odlučiti na osnovu prethodnog iskustva s kupcem", "Provjeriti koliko je pumpica u toku godine iskorišteno — ako je više od dvije, uključiti farmaceuta da savjetuje o pravilnoj upotrebi i uputiti ljekaru", "Ne izdati lijek ni u kom slučaju"],
+    "correctIndex": 2,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Potrošnja više od dvije SABA pumpice (salbutamol) godišnje ukazuje na slabu kontrolu astme i povećan rizik — prema smjernicama (GINA) to je signal za reviziju terapije. Takvog pacijenta treba savjetovati i uputiti ljekaru, uz uključivanje farmaceuta."
+  },
+  {
+    "text": "Kupac pita da li može uzimati visoke doze vitamina C (2–3 g dnevno) kao 'antioksidans protiv sunca' ljeti bez ikakvog ograničenja. Šta je ispravan savjet?",
+    "options": ["Vitamin C se može uzimati u neograničenim količinama bez ikakvog rizika", "Visoke doze vitamina C mogu izazvati gastrointestinalne tegobe (proljev) i kod predisponiranih osoba povećati rizik od oksalatnih bubrežnih kamenaca", "Što je doza veća, to je antioksidativni efekat proporcionalno jači bez gornje granice", "Vitamin C zamjenjuje potrebu za unosom tečnosti ljeti"],
+    "correctIndex": 1,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Iako je vitamin C relativno bezbjedan vodotopivi vitamin, ekstremno visoke doze mogu izazvati GI simptome i kod osjetljivih osoba (sklonost bubrežnim kamencima) povećati rizik od oksalatnih kamenaca — 'prirodno i vodotopivo' ne znači bez gornje granice."
+  },
+  {
+    "text": "Sportski rekreativac (28 g.) traži magnezij zbog noćnih grčeva u listovima. Koji oblik ima najbolju bioraspoloživost uz najmanji rizik od osmotske dijareje?",
+    "options": ["Magnezij-oksid", "Magnezij-sulfat", "Magnezij-citrat", "Magnezij-bisglicinat"],
+    "correctIndex": 3,
+    "category": "suplementi",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Magnezij-bisglicinat (helat) ima najbolju bioraspoloživost među navedenim oblicima i najmanji laksativni potencijal jer se apsorbira preko aminokiselinskih transportera, ne osmotski. Oksid ima visok sadržaj elementarnog magnezija ali slabu apsorpciju (~4%) i česte GIT smetnje; citrat je solidan ali s izraženijim laksativnim efektom; sulfat je primarno laksativ."
+  },
+  {
+    "text": "Koji lijek/grupa lijekova NAJČEŠĆE uzrokuje fotosenzitivne reakcije, što je važno pri savjetovanju o suncu?",
+    "options": ["Antihistaminici druge generacije (npr. cetirizin)", "Inhalacioni kortikosteroidi za astmu", "Tetraciklini i određeni NSAIL (npr. doksiciklin, ketoprofen)", "Lokalni antiseptici na bazi hlorheksidina"],
+    "correctIndex": 2,
+    "category": "ljetna-zastita",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tetraciklini (doksiciklin) i neki NSAIL (ketoprofen, posebno u gelu) su klasično poznati po izraženim fototoksičnim/fotoalergijskim reakcijama — standardno gradivo i česta tema savjetovanja u apoteci. Antihistaminici druge generacije imaju minimalan fotosenzitivni rizik."
+  },
+  {
+    "text": "Pacijent na amiodaronu donosi recept za prateći lijek. Koja kombinacija zahtijeva hitnu pažnju farmaceuta?",
+    "options": ["Levotiroksin 100 mcg", "Pantoprazol 40 mg", "Ibuprofen 600 mg", "Simvastatin 40 mg"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Amiodaron inhibira CYP3A4 i povećava koncentraciju simvastatina, značajno povećavajući rizik od miopatije/rabdomiolize — FDA i EMA preporučuju ograničenje doze simvastatina (obično ≤20 mg) uz amiodaron. Zamka: amiodaron se često percipira samo kroz uticaj na štitnu žlijezdu, a zaboravlja se CYP3A4 efekat."
+  },
+  {
+    "text": "Pacijent sa dijabetesom traži 'bilo koji OTC sirup protiv kašlja, brzo'. Na šta se mora obratiti pažnja?",
+    "options": ["Dijabetes nema veze sa izborom sirupa protiv kašlja", "Provjeriti sadržaj šećera u sirupu i predložiti formulaciju bez šećera ako postoji, uz opću provjeru sastava", "Svi sirupi protiv kašlja su bez šećera", "Preporučiti duplu dozu radi bržeg djelovanja"],
+    "correctIndex": 1,
+    "category": "otc",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Mnogi klasični sirupi protiv kašlja sadrže značajne količine šećera kao ekscipijens, što je relevantno za glikemijsku kontrolu kod dijabetičara — treba provjeriti sastav i ponuditi formulaciju bez šećera."
+  },
+  {
+    "text": "Pacijent uzima suplement koenzima Q10 kao 'jak antioksidans' i istovremeno je na terapiji varfarinom. Šta se mora provjeriti/napomenuti?",
+    "options": ["Nema nikakve interakcije, koenzim Q10 je potpuno neutralan", "Koenzim Q10 uvijek pojačava efekat varfarina", "Koenzim Q10 ima strukturnu sličnost sa vitaminom K i može smanjiti efikasnost varfarina", "Nema potrebe obavještavati farmaceuta jer se radi o prirodnom suplementu"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Koenzim Q10 ima strukturnu sličnost sa vitaminom K i postoje izvještaji o mogućem smanjenju antikoagulantnog efekta varfarina — relevantna interakcija koju treba prepoznati i eskalirati, bez obzira što se radi o 'prirodnom' proizvodu."
+  },
+  {
+    "text": "Pacijentica (35 g.) u drugom trimestru trudnoće žali se na opstipaciju. Koji laksativ je prvi izbor kao OTC preporuka?",
+    "options": ["Bisakodil tablete", "Sena čaj", "Parafinsko ulje", "Laktuloza sirup"],
+    "correctIndex": 3,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Laktuloza (osmotski laksativ) je prvi izbor u trudnoći — ne apsorbira se sistemski, sigurna je i dobro podnošljiva. Stimulativni laksativi (bisakodil, sena) mogu izazvati grčeve i refleksno potaknuti kontrakcije materice, a parafinsko ulje smanjuje apsorpciju liposolubilnih vitamina (A, D, E, K) — deficit vitamina K kod novorođenčeta povećava rizik od krvarenja."
+  }
+]
