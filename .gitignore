@@ -15,6 +15,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Firebase admin ključ — NIKAD na GitHub
+scripts/serviceAccountKey.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -13,5 +13,14 @@ service cloud.firestore {
       allow create, update: if request.auth != null && request.auth.uid == userId;
       allow delete: if false;
     }
+
+    // 'questions' — banka pitanja (Modul 3).
+    // Čitanje: samo prijavljeni korisnici. Pisanje: NIKO s klijenta —
+    // pitanja se uvoze isključivo admin skriptom (scripts/import-questions.js),
+    // koja ide preko Admin SDK-a i zaobilazi ova pravila.
+    match /questions/{questionId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }

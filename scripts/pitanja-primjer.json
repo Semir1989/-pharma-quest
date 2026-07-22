@@ -1,0 +1,92 @@
+[
+  {
+    "text": "Koji je antidot za predoziranje varfarinom?",
+    "options": ["Vitamin K", "Protamin sulfat", "N-acetilcistein", "Nalokson"],
+    "correctIndex": 0,
+    "category": "kardiologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Varfarin je antagonist vitamina K — inhibira sintezu faktora koagulacije zavisnih od vitamina K (II, VII, IX, X). Antidot je fitomenadion (vitamin K1)."
+  },
+  {
+    "text": "Koji je antidot za predoziranje paracetamolom?",
+    "options": ["Nalokson", "N-acetilcistein", "Flumazenil", "Atropin"],
+    "correctIndex": 1,
+    "category": "toksikologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "N-acetilcistein obnavlja zalihe glutationa u jetri i neutrališe toksični metabolit paracetamola (NAPQI). Najefikasniji je unutar 8–10 sati od ingestije."
+  },
+  {
+    "text": "Koja grupa antibiotika je kontraindicirana kod djece zbog uticaja na razvoj hrskavice?",
+    "options": ["Makrolidi", "Cefalosporini", "Fluorohinoloni", "Penicilini"],
+    "correctIndex": 2,
+    "category": "antibiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Fluorohinoloni (ciprofloksacin, levofloksacin) mogu oštetiti hrskavicu u razvoju, pa se kod djece koriste samo izuzetno, kada nema alternative."
+  },
+  {
+    "text": "Koji lijek iz grupe ACE inhibitora najčešće izaziva suhi kašalj?",
+    "options": ["Svi ACE inhibitori podjednako", "Samo enalapril", "Samo ramipril", "Samo lizinopril"],
+    "correctIndex": 0,
+    "category": "kardiologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Suhi kašalj je grupni efekat ACE inhibitora — nastaje zbog nakupljanja bradikinina. Javlja se kod 5–20% pacijenata; alternativa su sartani (ARB)."
+  },
+  {
+    "text": "Sa kojim lijekom grejpfrut ulazi u klinički značajnu interakciju?",
+    "options": ["Paracetamol", "Simvastatin", "Amoksicilin", "Metformin"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Grejpfrut inhibira CYP3A4 u crijevnom zidu, čime značajno povećava bioraspoloživost simvastatina i rizik od miopatije/rabdomiolize."
+  },
+  {
+    "text": "Koji je maksimalni preporučeni broj dana uzastopne upotrebe nazalnih dekongestiva?",
+    "options": ["3 dana", "5–7 dana", "14 dana", "30 dana"],
+    "correctIndex": 1,
+    "category": "OTC",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Duža upotreba od 5–7 dana nosi rizik od rebound kongestije (rhinitis medicamentosa) — začaranog kruga zavisnosti od dekongestiva."
+  },
+  {
+    "text": "Koji oralni antidijabetik je prvi izbor u terapiji dijabetesa tipa 2?",
+    "options": ["Gliklazid", "Metformin", "Empagliflozin", "Sitagliptin"],
+    "correctIndex": 1,
+    "category": "endokrinologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Metformin je prvi izbor prema svim vodičima — ne izaziva hipoglikemiju, neutralan je na tjelesnu masu i ima dokazanu kardiovaskularnu sigurnost."
+  },
+  {
+    "text": "Kada je najbolje uzimati levotiroksin?",
+    "options": ["Uz doručak", "Natašte, 30–60 min prije doručka", "Poslije ručka", "Prije spavanja uz obrok"],
+    "correctIndex": 1,
+    "category": "endokrinologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Hrana, kafa, kalcij i željezo značajno smanjuju apsorpciju levotiroksina — zato se uzima natašte s vodom, 30–60 minuta prije doručka."
+  },
+  {
+    "text": "Koji od navedenih lijekova zahtijeva postepeno smanjivanje doze pri prekidu terapije?",
+    "options": ["Paracetamol", "Prednizolon (duža terapija)", "Amoksicilin", "Loratadin"],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Duža terapija kortikosteroidima suprimira osovinu hipotalamus-hipofiza-nadbubreg. Nagli prekid može izazvati adrenalnu insuficijenciju — doza se smanjuje postepeno."
+  },
+  {
+    "text": "Koji NSAIL ima najveći kardiovaskularni rizik pri dužoj upotrebi?",
+    "options": ["Naproksen", "Ibuprofen u niskoj dozi", "Diklofenak", "Acetilsalicilna kiselina 100 mg"],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Diklofenak ima COX-2 selektivnost sličnu koksibima i nosi najveći kardiovaskularni rizik među klasičnim NSAIL. Naproksen se smatra kardiovaskularno najsigurnijim."
+  }
+]
