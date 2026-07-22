@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
+import CircleProgress from '../components/CircleProgress'
 import { levelFromXp, xpProgress } from '../utils/levels'
+import { getTasks, progressForType, taskValue } from '../services/tasks'
 
 function greeting() {
   const h = new Date().getHours()
@@ -47,11 +51,52 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Placeholder za dnevni zadatak / leaderboard (dolazi u sljedećim modulima) */}
-      <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-400">
-        Kartica dnevnog zadatka, sedmični zadatak i leaderboard dolaze u
-        sljedećim modulima.
+      {/* Dnevni taskovi — kružići napretka (Modul 6) */}
+      <DailyTasksCard profile={profile} />
+
+      {/* Placeholder za leaderboard (Modul 7) */}
+      <div className="mt-4 rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-400">
+        Leaderboard dolazi u sljedećem modulu.
       </div>
     </div>
+  )
+}
+
+// Kartica dnevnih taskova s kružnim progresom — klik vodi na Questove.
+function DailyTasksCard({ profile }) {
+  const [daily, setDaily] = useState(null)
+
+  useEffect(() => {
+    getTasks().then((t) => setDaily(t.daily)).catch(() => setDaily([]))
+  }, [])
+
+  if (!daily || daily.length === 0) return null
+
+  const progress = progressForType(profile, 'daily')
+  const allDone = daily.every((t) => taskValue(progress, t) >= t.goal)
+
+  return (
+    <Link
+      to="/questovi"
+      className="mt-6 block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
+    >
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-slate-800">📅 Dnevni zadaci</h2>
+        <span className={`text-sm font-bold ${allDone ? 'text-green-600' : 'text-teal-700'}`}>
+          {allDone ? 'Sve završeno! ✓' : 'Pogledaj →'}
+        </span>
+      </div>
+      <div className="mt-3 flex justify-around">
+        {daily.map((task) => {
+          const value = taskValue(progress, task)
+          return (
+            <div key={task.id} className="flex w-24 flex-col items-center text-center">
+              <CircleProgress value={value} goal={task.goal} done={value >= task.goal} size={48} />
+              <span className="mt-1 text-[11px] leading-tight text-slate-500">{task.shortTitle || task.title}</span>
+            </div>
+          )
+        })}
+      </div>
+    </Link>
   )
 }

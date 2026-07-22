@@ -29,5 +29,12 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+
+    // 'tasks' — definicije dnevnih/sedmičnih/mjesečnih taskova (Modul 6).
+    // Čitanje za prijavljene; pisanje samo admin skriptom (Admin SDK).
+    match /tasks/{taskId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }

@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "uvoz-pitanja": "node scripts/import-questions.js",
-    "postavi-levele": "node scripts/postavi-level-config.js"
+    "postavi-levele": "node scripts/postavi-level-config.js",
+    "postavi-taskove": "node scripts/postavi-taskove.js"
   },
   "dependencies": {
     "firebase": "^12.16.0",
