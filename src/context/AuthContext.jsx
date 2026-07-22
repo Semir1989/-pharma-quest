@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '../firebase'
+import { loadLevelConfig } from '../services/levelConfig'
 
 const AuthContext = createContext(null)
 
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
       setProfileLoading(false)
       return
     }
+    loadLevelConfig() // učitaj XP krivu iz Firestore (jednom, poslije prijave)
     setProfileLoading(true)
     const unsubscribe = onSnapshot(
       doc(db, 'users', user.uid),

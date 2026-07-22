@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "uvoz-pitanja": "node scripts/import-questions.js"
+    "uvoz-pitanja": "node scripts/import-questions.js",
+    "postavi-levele": "node scripts/postavi-level-config.js"
   },
   "dependencies": {
     "firebase": "^12.16.0",

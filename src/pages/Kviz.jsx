@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getRandomQuestions } from '../services/questions'
 import { saveQuizResult } from '../services/quizResults'
+import { levelFromXp, rankFromLevel } from '../utils/levels'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 import ResultsScreen from '../components/quiz/ResultsScreen'
 
@@ -18,7 +19,9 @@ export default function Kviz() {
   const [current, setCurrent] = useState(0)
   const [answers, setAnswers] = useState([])
   const [earnedXp, setEarnedXp] = useState(0)
+  const [levelUp, setLevelUp] = useState(null) // { level, rank, rankChanged } ili null
   const savedRef = useRef(false) // čuvar da se rezultat ne upiše dva puta
+  const xpAtStartRef = useRef(0) // XP prije kviza (za detekciju level-upa)
 
   async function startQuiz() {
     setPhase('loading')
@@ -32,7 +35,9 @@ export default function Kviz() {
       setCurrent(0)
       setAnswers([])
       setEarnedXp(0)
+      setLevelUp(null)
       savedRef.current = false
+      xpAtStartRef.current = profile.xp || 0
       setPhase('playing')
     } catch {
       setPhase('error')
@@ -54,12 +59,24 @@ export default function Kviz() {
     setPhase('results')
     if (!savedRef.current) {
       savedRef.current = true
+      let xp
       try {
-        const xp = await saveQuizResult(user.uid, profile, allAnswers)
-        setEarnedXp(xp)
+        xp = await saveQuizResult(user.uid, profile, allAnswers)
       } catch {
         // Upis nije uspio — rezultat se ipak prikazuje, XP lokalno izračunat.
-        setEarnedXp(allAnswers.reduce((s, a) => s + (a.correct ? a.question.points : 0), 0))
+        xp = allAnswers.reduce((s, a) => s + (a.correct ? a.question.points : 0), 0)
+      }
+      setEarnedXp(xp)
+
+      // Detekcija level-upa (Modul 5).
+      const oldLevel = levelFromXp(xpAtStartRef.current)
+      const newLevel = levelFromXp(xpAtStartRef.current + xp)
+      if (newLevel > oldLevel) {
+        setLevelUp({
+          level: newLevel,
+          rank: rankFromLevel(newLevel),
+          rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
+        })
       }
     }
   }
@@ -81,6 +98,8 @@ export default function Kviz() {
       <ResultsScreen
         answers={answers}
         earnedXp={earnedXp}
+        levelUp={levelUp}
+        onLevelUpSeen={() => setLevelUp(null)}
         onContinue={() => navigate('/')}
       />
     )

@@ -1,14 +1,28 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import LevelUpOverlay from './LevelUpOverlay'
 
 // Ekran rezultata kviza: kružni skor, poruka, osvojeni XP,
 // lista pitanja s ✓/✗ i objašnjenjima (klik za otvaranje).
-// props: answers = [{ question, selected, correct }], earnedXp, onContinue
-export default function ResultsScreen({ answers, earnedXp, onContinue }) {
+// Ako je korisnik prešao level, prvo se prikazuje LevelUpOverlay (Modul 5).
+// props: answers = [{ question, selected, correct }], earnedXp,
+//        levelUp ({ level, rank, rankChanged } ili null), onLevelUpSeen, onContinue
+export default function ResultsScreen({ answers, earnedXp, levelUp, onLevelUpSeen, onContinue }) {
   const [open, setOpen] = useState({}) // koja su pitanja raširena
   const score = answers.filter((a) => a.correct).length
   const total = answers.length
   const great = score / total >= 0.7
+
+  if (levelUp) {
+    return (
+      <LevelUpOverlay
+        level={levelUp.level}
+        rank={levelUp.rank}
+        rankChanged={levelUp.rankChanged}
+        onClose={onLevelUpSeen}
+      />
+    )
+  }
 
   const toggleAll = () => {
     const anyClosed = answers.some((_, i) => !open[i])
