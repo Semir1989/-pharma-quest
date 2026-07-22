@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Privremena pravila za Modul 2 (Profil korisnika).
+// Napomena: puna zaštita (XP mijenja samo server) dolazi u Modulu 6.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 'users' dokumenti
+    match /users/{userId} {
+      // Svaki prijavljen korisnik može čitati profile (za leaderboard/javne profile).
+      allow read: if request.auth != null;
+      // Korisnik može kreirati/mijenjati SAMO svoj dokument.
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+    }
+  }
+}

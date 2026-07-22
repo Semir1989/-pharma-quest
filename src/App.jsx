@@ -5,6 +5,7 @@ import AppLayout from './components/AppLayout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ResetLozinke from './pages/ResetLozinke'
+import DovrsiProfil from './pages/DovrsiProfil'
 import Home from './pages/Home'
 import Kviz from './pages/Kviz'
 import Questovi from './pages/Questovi'
@@ -21,6 +22,16 @@ function App() {
             <Route path="/prijava" element={<Login />} />
             <Route path="/registracija" element={<Register />} />
             <Route path="/reset-lozinke" element={<ResetLozinke />} />
+
+            {/* Dovršetak profila (prijavljen, bez profila — bez bottom nav) */}
+            <Route
+              path="/dovrsi-profil"
+              element={
+                <ProtectedRoute>
+                  <DovrsiProfil />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Zaštićene rute (s bottom nav) */}
             <Route
