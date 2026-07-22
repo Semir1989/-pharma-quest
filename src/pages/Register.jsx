@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
 import { authErrorToBosnian } from '../utils/authErrors'
 import BrandHeader from '../components/BrandHeader'
+import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from '../components/icons'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -40,8 +41,8 @@ export default function Register() {
         onSubmit={handleSubmit}
         className="-mt-5 flex flex-1 flex-col gap-4 rounded-t-3xl bg-white px-6 pt-8"
       >
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="text-slate-400">✉️</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <MailIcon className="h-6 w-6 shrink-0 text-teal-700" />
           <input
             type="email"
             required
@@ -52,8 +53,8 @@ export default function Register() {
           />
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="text-slate-400">🔒</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <LockIcon className="h-6 w-6 shrink-0 text-teal-700" />
           <input
             type={showPassword ? 'text' : 'password'}
             required
@@ -65,15 +66,19 @@ export default function Register() {
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
-            className="text-slate-400"
+            className="text-teal-700"
             aria-label="Prikaži lozinku"
           >
-            {showPassword ? '🙈' : '👁️'}
+            {showPassword ? (
+              <EyeOffIcon className="h-6 w-6" />
+            ) : (
+              <EyeIcon className="h-6 w-6" />
+            )}
           </button>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="text-slate-400">🔒</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <LockIcon className="h-6 w-6 shrink-0 text-teal-700" />
           <input
             type={showPassword ? 'text' : 'password'}
             required
@@ -89,7 +94,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-teal-700 py-3 font-semibold text-white transition active:scale-[0.99] disabled:opacity-60"
+          className="mt-2 rounded-2xl bg-teal-800 py-4 text-lg font-semibold text-white transition active:scale-[0.99] disabled:opacity-60"
         >
           {loading ? 'Kreiranje…' : 'Kreiraj profil'}
         </button>

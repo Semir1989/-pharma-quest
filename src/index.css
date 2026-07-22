@@ -9,3 +9,8 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background: #f8fafc;
 }
+
+/* Font za naslove/brend (PHARMA QUEST) */
+.font-title {
+  font-family: 'Nunito', system-ui, sans-serif;
+}

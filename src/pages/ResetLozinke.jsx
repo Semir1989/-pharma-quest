@@ -4,6 +4,7 @@ import { sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../firebase'
 import { authErrorToBosnian } from '../utils/authErrors'
 import BrandHeader from '../components/BrandHeader'
+import { MailIcon } from '../components/icons'
 
 export default function ResetLozinke() {
   const [email, setEmail] = useState('')
@@ -44,8 +45,8 @@ export default function ResetLozinke() {
               Unesi email adresu i poslaćemo ti link za postavljanje nove
               lozinke.
             </p>
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="text-slate-400">✉️</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <MailIcon className="h-6 w-6 shrink-0 text-teal-700" />
               <input
                 type="email"
                 required
@@ -61,7 +62,7 @@ export default function ResetLozinke() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-teal-700 py-3 font-semibold text-white transition active:scale-[0.99] disabled:opacity-60"
+              className="rounded-2xl bg-teal-800 py-4 text-lg font-semibold text-white transition active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? 'Slanje…' : 'Pošalji link'}
             </button>

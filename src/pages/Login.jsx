@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
 import { authErrorToBosnian } from '../utils/authErrors'
 import BrandHeader from '../components/BrandHeader'
+import { MailIcon, LockIcon, EyeIcon, EyeOffIcon, UserPlusIcon } from '../components/icons'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -35,8 +36,8 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="-mt-5 flex flex-1 flex-col gap-4 rounded-t-3xl bg-white px-6 pt-8"
       >
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="text-slate-400">✉️</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <MailIcon className="h-6 w-6 shrink-0 text-teal-700" />
           <input
             type="email"
             required
@@ -47,8 +48,8 @@ export default function Login() {
           />
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <span className="text-slate-400">🔒</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <LockIcon className="h-6 w-6 shrink-0 text-teal-700" />
           <input
             type={showPassword ? 'text' : 'password'}
             required
@@ -60,10 +61,14 @@ export default function Login() {
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
-            className="text-slate-400"
+            className="text-teal-700"
             aria-label="Prikaži lozinku"
           >
-            {showPassword ? '🙈' : '👁️'}
+            {showPassword ? (
+              <EyeOffIcon className="h-6 w-6" />
+            ) : (
+              <EyeIcon className="h-6 w-6" />
+            )}
           </button>
         </div>
 
@@ -72,19 +77,19 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-teal-700 py-3 font-semibold text-white transition active:scale-[0.99] disabled:opacity-60"
+          className="mt-2 rounded-2xl bg-teal-800 py-4 text-lg font-semibold text-white transition active:scale-[0.99] disabled:opacity-60"
         >
           {loading ? 'Prijavljivanje…' : 'Prijavi se'}
         </button>
 
         <Link
           to="/reset-lozinke"
-          className="text-center text-sm font-medium text-teal-700"
+          className="text-center text-sm font-semibold text-teal-700"
         >
           Zaboravljena lozinka?
         </Link>
 
-        <div className="flex items-center gap-3 py-2 text-xs text-slate-400">
+        <div className="flex items-center gap-3 py-1 text-xs text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
           ILI
           <span className="h-px flex-1 bg-slate-200" />
@@ -92,9 +97,10 @@ export default function Login() {
 
         <Link
           to="/registracija"
-          className="rounded-xl border border-teal-700 py-3 text-center font-semibold text-teal-700"
+          className="flex items-center justify-center gap-2 rounded-2xl border border-teal-700 py-4 text-lg font-semibold text-teal-700"
         >
-          + Kreiraj profil
+          <UserPlusIcon className="h-6 w-6" />
+          Kreiraj profil
         </Link>
 
         <div className="mt-auto flex items-center justify-center gap-2 pb-6 pt-4 text-xs text-slate-400">
