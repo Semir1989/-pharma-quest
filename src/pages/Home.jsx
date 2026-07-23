@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import CircleProgress from '../components/CircleProgress'
+import InstallBanner from '../components/InstallBanner'
 import { levelFromXp, xpProgress } from '../utils/levels'
 import { getTasks, progressForType, taskValue } from '../services/tasks'
 
@@ -50,6 +51,9 @@ export default function Home() {
           {prog.current}/{prog.needed} XP
         </span>
       </div>
+
+      {/* Instaliraj aplikaciju (Modul 8 — PWA) */}
+      <InstallBanner />
 
       {/* Dnevni taskovi — kružići napretka (Modul 6) */}
       <DailyTasksCard profile={profile} />
