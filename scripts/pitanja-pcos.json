@@ -1,0 +1,65 @@
+[
+  {
+    "text": "Pacijentica s PCOS-om pita zašto joj je ginekolog propisao kombinovanu oralnu kontracepciju (COC) iako ne treba kontracepciju. Kako tehničar najbolje objašnjava svrhu?",
+    "options": ["COC se kod PCOS-a često propisuje i zbog regulacije ciklusa i smanjenja androgenih simptoma (akne, hirzutizam), ne samo zbog kontracepcije", "Ljekar je vjerovatno pogriješio, treba se vratiti po novi recept", "COC se nikad ne propisuje osim za kontracepciju", "Tehničar treba samostalno objasniti kompletan hormonski mehanizam i prilagoditi dozu"],
+    "correctIndex": 0,
+    "category": "ginekologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "COC se kod PCOS-a često koristi terapijski (regulacija ciklusa, smanjenje androgenih simptoma) nezavisno od kontracepcije. Tehničar može dati opštu informaciju, ali detaljno savjetovanje i nedoumice usmjerava nazad ljekaru — ne dovodi u pitanje ljekarsku odluku."
+  },
+  {
+    "text": "Žena s PCOS-om (bez dijabetesa) dolazi po metformin koji joj je ljekar propisao off-label za regulaciju ciklusa. Šta tehničar treba znati?",
+    "options": ["Metformin je odobren isključivo za dijabetes pa ga ne smije izdati bez te dijagnoze", "Metformin se kod PCOS-a često koristi off-label zbog insulinske rezistencije — uobičajena praksa propisivanja od ljekara", "Metformin liječi PCOS uzročno i garantuje trudnoću u roku od mjesec dana", "Tehničar mora tražiti dodatnu potvrdu dijagnoze dijabetesa prije izdavanja"],
+    "correctIndex": 1,
+    "category": "ginekologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Off-label propisivanje je legitimna i uobičajena praksa (metformin kod PCOS-a zbog insulinske rezistencije). Tehničar izdaje po važećem receptu bez traženja dodatne dijagnoze i savjetuje uzimanje uz hranu radi smanjenja GI nuspojava; metformin ne garantuje trudnoću."
+  },
+  {
+    "text": "Žena traži OTC preparat s mio-inozitolom za 'regulaciju hormona' kod PCOS-a koji je vidjela na društvenim mrežama. Koji je stručno najispravniji odgovor?",
+    "options": ["Mio-inozitol je čudotvoran lijek koji zamjenjuje sve propisane terapije", "Mio-inozitol je opasan i nikad se ne smije koristiti kod PCOS-a", "Mio-inozitol je dodatak prehrani s određenim dokazima o koristi kod PCOS-a (insulinska osjetljivost), ali nije zamjena za ljekarsku terapiju — savjetovati konsultaciju", "Mio-inozitol djeluje isto kao hormonska kontracepcija"],
+    "correctIndex": 2,
+    "category": "ginekologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mio-inozitol je dodatak prehrani sa slabim dokazima o poboljšanju insulinske osjetljivosti kod PCOS-a. Tehničar ga ne smije predstaviti kao zamjenu za medicinsku terapiju niti garantovati efekat; prije kombinovanja savjetuje konsultaciju s ljekarom."
+  },
+  {
+    "text": "Pacijentica s PCOS-om na kombinovanoj oralnoj kontracepciji prvi put u životu ima jaku glavobolju s vidnim smetnjama (aura). Šta tehničar radi?",
+    "options": ["Savjetuje paracetamol i nastavak COC bez daljeg razmišljanja", "Kaže da je to normalna nuspojava koja prolazi sama", "Savjetuje udvostručenje doze kontraceptiva", "Prepoznaje potencijalni znak upozorenja (rizik moždanog udara uz COC + aura) i hitno upućuje ljekaru/hitnoj pomoći"],
+    "correctIndex": 3,
+    "category": "ginekologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Nova pojava migrene s aurom kod korisnice kombinovane hormonske kontracepcije je ozbiljan crveni signal (povećan rizik od ishemijskog moždanog udara) i traži hitnu medicinsku procjenu — prevazilazi kompetencije tehničara i farmaceuta."
+  },
+  {
+    "text": "Pacijentica s PCOS-om i gojaznošću pita može li 'prirodni čaj za mršavljenje' iz apoteke zamijeniti njenu terapiju metforminom. Ispravan odgovor?",
+    "options": ["Propisana terapija se ne smije samostalno zamjenjivati biljnim proizvodom bez konsultacije ljekara (moguće interakcije i nedokazana efikasnost)", "Da, biljni čajevi su uvijek sigurniji i efikasniji od lijekova", "Čaj se može dodati terapiji u neograničenim količinama bez ikakvog rizika", "Nema potrebe za konsultacijom jer je proizvod biljnog porijekla, dakle bezbjedan"],
+    "correctIndex": 0,
+    "category": "ginekologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Propisana terapija se ne smije samovoljno prekidati ili zamjenjivati biljnim proizvodom, a 'prirodno' ne znači automatski bezbjedno ni bez interakcija. Potrebna je konsultacija ljekara/farmaceuta."
+  },
+  {
+    "text": "Pacijentica s PCOS-om na dugotrajnoj kombinovanoj oralnoj kontracepciji je pušač i ima 38 godina. Na šta tehničar mora obratiti pažnju?",
+    "options": ["Pušenje i dob nemaju uticaja na rizik kod COC", "Kombinacija pušenja i dobi ≥35 godina značajno povećava kardiovaskularni rizik (tromboembolija) uz COC", "Treba automatski udvostručiti dozu kontraceptiva", "Kombinacija pušenja i dobi ≥35 godina značajno smanjuje kardiovaskularni rizik uz COC"],
+    "correctIndex": 1,
+    "category": "ginekologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pušenje uz dob ≥35 godina je dobro poznat faktor rizika za venski tromboembolizam i kardiovaskularne događaje kod korisnica kombinovane hormonske kontracepcije; smjernice savjetuju izbjegavanje COC u toj populaciji. Tehničar treba prepoznati rizik i signalizirati farmaceutu/ljekaru."
+  },
+  {
+    "text": "Žena s PCOS-om pita može li uzimati OTC preparat s visokim dozama cimeta i alfa-lipoinske kiseline umjesto insulina jer je 'pročitala da to liječi insulinsku rezistenciju'. Odgovor?",
+    "options": ["Da, ovi suplementi potpuno zamjenjuju insulinsku terapiju", "Inzulin se može bezbjedno prekinuti čim počne uzimati suplemente", "Suplementi mogu imati ulogu kao dodatak ishrani, ali nikad ne smiju zamijeniti propisanu terapiju insulinom bez izričite ljekarske odluke", "Cimet i alfa-lipoinska kiselina su potpuno beskorisni i ne treba o njima razgovarati"],
+    "correctIndex": 2,
+    "category": "ginekologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Posebno opasna zamka: samostalni prekid insulinske terapije na osnovu suplemenata može biti životno opasan. Suplementi mogu biti dodatak, ali nikad zamjena za propisanu terapiju bez izričite ljekarske odluke — tehničar mora hitno uputiti na ljekara."
+  }
+]

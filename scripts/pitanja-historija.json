@@ -1,0 +1,74 @@
+[
+  {
+    "text": "Kojim su dokumentom medicina i farmacija formalno razdvojene kao zasebne struke?",
+    "options": ["Edictum de Salerno (Salernski edikt)", "Materia medica", "Codex medicus", "Papirus Ebers"],
+    "correctIndex": 0,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Salernski edikt (Edictum de Salerno) donio je Fridrik II 1240. u Kraljevini Siciliji. Njime su odvojena zanimanja ljekara (propisuje) i apotekara (izrađuje lijek), određene cijene lijekova i uvedena prva kontrola kvaliteta — praktično prvi farmaceutski zakon u Evropi."
+  },
+  {
+    "text": "Šta su ljekaruše?",
+    "options": ["Službeni farmakopejski priručnici iz 19. vijeka", "Zbirke rukom pisanih narodnih recepata i zapisa o lijekovima te načinima liječenja", "Knjige za obuku farmaceuta na srednjovjekovnim univerzitetima", "Prvi apotekarski zakoni u Osmanskom carstvu"],
+    "correctIndex": 1,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ljekaruše su zbirke rukom pisanih narodnih recepata i zapisa o lijekovima, njihovoj pripremi i načinima liječenja. Poznate su npr. ljekaruša iz Livna, Plehanska ljekaruša, 'Ljekaruša iz Kreševa u Bosni' i druge."
+  },
+  {
+    "text": "Kako se naziva pripravljač i trgovac lijekovima, biljem i začinima (riječ arapsko-turskog porijekla) u osmanskom periodu?",
+    "options": ["Hakim", "Mualim", "Attar", "Šejh"],
+    "correctIndex": 2,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Attar je bio pripravljač i trgovac lijekovima, biljem i začinima u osmanskom periodu; njegove radnje (attarhane) bile su preteča modernih apoteka."
+  },
+  {
+    "text": "Koje je godine Bosna i Hercegovina dobila prvu apoteku u evropskom smislu u Sarajevu?",
+    "options": ["1678.", "1778.", "1978.", "1878."],
+    "correctIndex": 3,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "BiH je prvu apoteku u evropskom smislu dobila 1878. godine u Sarajevu, modernizacijom apoteke Samuela Sumbula, jednog od najpoznatijih sarajevskih ljekara i apotekara."
+  },
+  {
+    "text": "Koji je dokument prvi put omogućio ženama pravo vlasništva nad apotekama?",
+    "options": ["Uredba o apotekama Austro-Ugarske, 1907.", "Edikt Fridrika II, 1240.", "Zakon o medicini Kraljevine Jugoslavije, 1921.", "Salernski edikt, 1240."],
+    "correctIndex": 0,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Uredba o apotekama Austro-Ugarske iz 1907. prvi je put ženama omogućila pravo vlasništva nad apotekama — važan korak u emancipaciji. Prije toga to pravo imali su samo muškarci ili udovice apotekara pod uslovima."
+  },
+  {
+    "text": "Prema istraživanju Međunarodne farmaceutske federacije, BiH je druga u Evropi po broju čega (po glavi stanovnika/stanovniku)?",
+    "options": ["Apoteka po glavi stanovnika", "Farmaceutskih fakulteta po milionu stanovnika", "Kliničkih farmaceuta u bolnicama", "Udruženja farmaceuta po glavi stanovnika"],
+    "correctIndex": 1,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "BiH ima 3,71 farmaceutskih fakulteta na milion stanovnika — odmah iza Kipra (6,39) — što pokazuje visoku koncentraciju farmaceutskih obrazovnih institucija u odnosu na broj stanovnika."
+  },
+  {
+    "text": "Kako glasi tema Svjetskog dana farmaceuta 2025. godine?",
+    "options": ["'Farmaceuti: Ključni za održive zdravstvene sisteme'", "'Zdravlje na prvom mjestu, farmaceuti na čelu'", "'Razmišljaj o zdravlju, razmišljaj o farmaceutu'", "'Farmaceuti: Vaš partner u zdravlju'"],
+    "correctIndex": 2,
+    "category": "historija-farmacije",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Tema Svjetskog dana farmaceuta 2025. koju je odabrala Međunarodna farmaceutska federacija je 'Razmišljaj o zdravlju, razmišljaj o farmaceutu' (Think Health, Think Pharmacist)."
+  },
+  {
+    "text": "Koji se doprinos u oblasti farmacije pripisuje Ibn Sini (Aviceni)?",
+    "options": ["Otkriće vakcine protiv velikih boginja", "Otkriće morfina", "Razvoj prvih modernih antibiotika u 17. vijeku", "Pisanje djela Kanon medicine"],
+    "correctIndex": 3,
+    "category": "historija-farmacije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ibn Sina (Avicena), perzijski ljekar i naučnik, napisao je Kanon medicine — djelo s detaljnim opisima lijekova, njihove pripreme i djelovanja, koje je dugo bilo osnovni udžbenik farmacije i medicine na univerzitetima u Evropi i Aziji."
+  }
+]
