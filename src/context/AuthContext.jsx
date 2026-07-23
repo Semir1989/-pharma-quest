@@ -3,6 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { loadLevelConfig } from '../services/levelConfig'
+import { syncGlobalEntry } from '../services/leaderboard'
 
 const AuthContext = createContext(null)
 
@@ -32,8 +33,11 @@ export function AuthProvider({ children }) {
     const unsubscribe = onSnapshot(
       doc(db, 'users', user.uid),
       (snap) => {
-        setProfile(snap.exists() ? snap.data() : null)
+        const data = snap.exists() ? snap.data() : null
+        setProfile(data)
         setProfileLoading(false)
+        // Osvježi globalni leaderboard unos (ime/avatar/XP/level) — Modul 7.
+        if (data) syncGlobalEntry(user.uid, data)
       },
       () => setProfileLoading(false)
     )

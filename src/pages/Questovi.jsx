@@ -27,7 +27,7 @@ export default function Questovi() {
     if (claiming) return
     setClaiming(task.id)
     try {
-      await claimTask(user.uid, task)
+      await claimTask(user.uid, task, profile)
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
     } finally {
       setClaiming(null)

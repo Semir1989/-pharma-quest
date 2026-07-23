@@ -1,6 +1,7 @@
 import { doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { buildUpdatedTaskProgress } from './tasks'
+import { addWeeklyXp } from './leaderboard'
 
 // Upis rezultata kviza u profil korisnika (Modul 4).
 // NAPOMENA: bodovanje je privremeno na klijentu — u Etapi 6 seli na server
@@ -49,6 +50,9 @@ export async function saveQuizResult(uid, profile, answers) {
     taskProgress,
     lastQuizAt: serverTimestamp(),
   })
+
+  // Sedmični leaderboard (Modul 7) — "fire and forget", greška ne ruši upis.
+  addWeeklyXp(uid, profile, earnedXp)
 
   return earnedXp
 }

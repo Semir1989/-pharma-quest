@@ -11,6 +11,8 @@ import Kviz from './pages/Kviz'
 import Questovi from './pages/Questovi'
 import Klan from './pages/Klan'
 import Profil from './pages/Profil'
+import Leaderboard from './pages/Leaderboard'
+import JavniProfil from './pages/JavniProfil'
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function App() {
               <Route path="/questovi" element={<Questovi />} />
               <Route path="/klan" element={<Klan />} />
               <Route path="/profil" element={<Profil />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/igrac/:uid" element={<JavniProfil />} />
             </Route>
           </Routes>
         </div>
