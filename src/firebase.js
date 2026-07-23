@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
-import { getDatabase } from 'firebase/database'
+import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database'
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,3 +18,15 @@ export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const rtdb = getDatabase(app)
+export const functions = getFunctions(app, 'europe-west1')
+
+// U dev modu (npm run dev) aplikacija se veže na LOKALNE emulatore —
+// sigurno igralište bez diranja pravih podataka (Etapa 6).
+// Produkcijska verzija (npm run build / preview) ide na pravi Firebase.
+if (import.meta.env.DEV) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  connectDatabaseEmulator(rtdb, '127.0.0.1', 9000)
+  connectFunctionsEmulator(functions, '127.0.0.1', 5001)
+  console.log('🧪 Dev mod: povezan na Firebase EMULATORE (lokalni podaci)')
+}

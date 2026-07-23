@@ -8,6 +8,7 @@
 // Klijent više NIKAD ne računa niti upisuje XP.
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { setGlobalOptions } from 'firebase-functions/v2'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
@@ -328,4 +329,20 @@ export const claimTask = onCall(async (request) => {
   await syncLeaderboard(uid, profileAfter, totalXp, task.reward, levelFromXp(totalXp, cfg))
 
   return { reward: task.reward }
+})
+
+// ---------------------------------------------------------------------------
+// syncProfileToLeaderboard — svaka promjena profila (ime, avatar, XP...)
+// osvježava globalni leaderboard unos. Klijent NE piše u leaderboard (pravila).
+// ---------------------------------------------------------------------------
+export const syncProfileToLeaderboard = onDocumentWritten('users/{uid}', async (event) => {
+  const after = event.data?.after
+  if (!after?.exists) return // profil obrisan — ništa
+  const profile = after.data()
+  const cfg = await getLevelConfig()
+  const totalXp = profile.xp || 0
+  await rtdb.ref(`leaderboard/global/${event.params.uid}`).set({
+    ...leaderboardEntry(profile, levelFromXp(totalXp, cfg)),
+    xp: totalXp,
+  })
 })

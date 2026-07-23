@@ -1,7 +1,7 @@
 rules_version = '2';
 
-// Privremena pravila za Modul 2 (Profil korisnika).
-// Napomena: puna zaštita (XP mijenja samo server) dolazi u Modulu 6.
+// Pravila poslije Etape 6: XP i statistiku mijenja ISKLJUČIVO server
+// (Cloud Functions preko Admin SDK-a, koji zaobilazi ova pravila).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -9,8 +9,14 @@ service cloud.firestore {
     match /users/{userId} {
       // Svaki prijavljen korisnik može čitati profile (za leaderboard/javne profile).
       allow read: if request.auth != null;
-      // Korisnik može kreirati/mijenjati SAMO svoj dokument.
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // Kreiranje: samo vlastiti profil, i XP mora krenuti od nule.
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.xp == 0;
+      // Izmjena: samo vlastiti profil, i SAMO ime/avatar — XP, statistika,
+      // taskovi i sve ostalo su rezervisani za server.
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['displayName', 'avatar']);
       allow delete: if false;
     }
 

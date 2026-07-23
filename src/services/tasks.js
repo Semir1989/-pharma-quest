@@ -1,7 +1,7 @@
-import { collection, getDocs, query, where, doc, updateDoc, increment } from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { periodKey } from '../utils/periods'
-import { addWeeklyXp } from './leaderboard'
+import { claimTaskReward } from './quizApi'
 
 // Servis za task sistem (Modul 6).
 // Definicije taskova žive u Firestore 'tasks' kolekciji (admin skripta),
@@ -34,34 +34,8 @@ export function taskValue(progress, task) {
   return progress[task.metric] || 0
 }
 
-// Preuzimanje nagrade: dodaje XP i označava task kao preuzet u tekućem periodu.
-export async function claimTask(uid, task, profile) {
-  await updateDoc(doc(db, 'users', uid), {
-    xp: increment(task.reward),
-    [`taskProgress.${task.type}.claimed.${task.id}`]: true,
-  })
-  // Nagrada se računa i u sedmični leaderboard (Modul 7).
-  addWeeklyXp(uid, profile, task.reward)
-}
-
-// Poslije kviza: uvećaj brojače u sva tri perioda (poziva se iz quizResults).
-// Vraća novi taskProgress objekat spreman za upis u users dokument.
-export function buildUpdatedTaskProgress(profile, { correctCount, earnedXp, correctByCategory }) {
-  const result = {}
-  for (const type of ['daily', 'weekly', 'monthly']) {
-    const p = progressForType(profile, type)
-    const byCategory = { ...p.byCategory }
-    for (const [cat, n] of Object.entries(correctByCategory)) {
-      byCategory[cat] = (byCategory[cat] || 0) + n
-    }
-    result[type] = {
-      period: p.period,
-      quizzes: p.quizzes + 1,
-      correct: p.correct + correctCount,
-      xp: p.xp + earnedXp,
-      byCategory,
-      claimed: p.claimed,
-    }
-  }
-  return result
+// Preuzimanje nagrade (Etapa 6): server provjerava uslov i dodjeljuje XP —
+// klijent više ništa ne upisuje sam.
+export async function claimTask(task) {
+  await claimTaskReward(task.id)
 }

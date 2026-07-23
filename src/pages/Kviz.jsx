@@ -1,42 +1,34 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getRandomQuestions } from '../services/questions'
-import { saveQuizResult } from '../services/quizResults'
+import { startQuizSession, submitQuizAnswer } from '../services/quizApi'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 import ResultsScreen from '../components/quiz/ResultsScreen'
 
-const QUESTIONS_PER_QUIZ = 10
-
-// Kviz engine (Modul 4): intro → pitanja (tajmer 30s, objašnjenja) → rezultat.
+// Kviz (Etapa 6 — server verzija): server bira pitanja, provjerava odgovore
+// i dodjeljuje XP. Klijent vodi samo prikaz i prikuplja feedback za pregled.
 export default function Kviz() {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const navigate = useNavigate()
 
   const [phase, setPhase] = useState('intro') // intro | loading | playing | results | error
-  const [questions, setQuestions] = useState([])
-  const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState([])
-  const [earnedXp, setEarnedXp] = useState(0)
-  const [levelUp, setLevelUp] = useState(null) // { level, rank, rankChanged } ili null
-  const savedRef = useRef(false) // čuvar da se rezultat ne upiše dva puta
-  const xpAtStartRef = useRef(0) // XP prije kviza (za detekciju level-upa)
+  const [session, setSession] = useState(null) // { sessionId, total }
+  const [question, setQuestion] = useState(null) // trenutno pitanje (bez tačnog odgovora)
+  const [answers, setAnswers] = useState([]) // za pregled na rezultatima
+  const [summary, setSummary] = useState(null) // { earnedXp, correctCount, total }
+  const [levelUp, setLevelUp] = useState(null)
+  const xpAtStartRef = useRef(0)
 
   async function startQuiz() {
     setPhase('loading')
     try {
-      const q = await getRandomQuestions(QUESTIONS_PER_QUIZ)
-      if (q.length === 0) {
-        setPhase('error')
-        return
-      }
-      setQuestions(q)
-      setCurrent(0)
+      const res = await startQuizSession()
+      setSession({ sessionId: res.sessionId, total: res.total })
+      setQuestion(res.question)
       setAnswers([])
-      setEarnedXp(0)
+      setSummary(null)
       setLevelUp(null)
-      savedRef.current = false
       xpAtStartRef.current = profile.xp || 0
       setPhase('playing')
     } catch {
@@ -44,33 +36,26 @@ export default function Kviz() {
     }
   }
 
-  async function handleNext(selected) {
-    const question = questions[current]
-    const answer = { question, selected, correct: selected === question.correctIndex }
-    const allAnswers = [...answers, answer]
-    setAnswers(allAnswers)
-
-    if (current + 1 < questions.length) {
-      setCurrent(current + 1)
-      return
-    }
-
-    // Kraj kviza — upiši XP i statistiku (jednom).
-    setPhase('results')
-    if (!savedRef.current) {
-      savedRef.current = true
-      let xp
-      try {
-        xp = await saveQuizResult(user.uid, profile, allAnswers)
-      } catch {
-        // Upis nije uspio — rezultat se ipak prikazuje, XP lokalno izračunat.
-        xp = allAnswers.reduce((s, a) => s + (a.correct ? a.question.points : 0), 0)
-      }
-      setEarnedXp(xp)
-
-      // Detekcija level-upa (Modul 5).
+  // Šalje odgovor serveru; bilježi rezultat za pregled na kraju.
+  async function handleSubmit(selected) {
+    const res = await submitQuizAnswer(session.sessionId, selected)
+    setAnswers((prev) => [
+      ...prev,
+      {
+        question: {
+          ...question,
+          correctIndex: res.correctIndex,
+          explanation: res.explanation,
+        },
+        selected,
+        correct: res.correct,
+      },
+    ])
+    if (res.finished) {
+      setSummary(res.summary)
+      // Detekcija level-upa (server je već upisao XP u profil).
       const oldLevel = levelFromXp(xpAtStartRef.current)
-      const newLevel = levelFromXp(xpAtStartRef.current + xp)
+      const newLevel = levelFromXp(xpAtStartRef.current + res.summary.earnedXp)
       if (newLevel > oldLevel) {
         setLevelUp({
           level: newLevel,
@@ -79,15 +64,24 @@ export default function Kviz() {
         })
       }
     }
+    return res
   }
 
-  if (phase === 'playing') {
+  function handleNext(feedback) {
+    if (feedback.finished) {
+      setPhase('results')
+    } else {
+      setQuestion(feedback.question)
+    }
+  }
+
+  if (phase === 'playing' && question) {
     return (
       <QuestionScreen
-        key={current} // resetuje tajmer i izbor za svako pitanje
-        question={questions[current]}
-        index={current}
-        total={questions.length}
+        key={question.index} // resetuje tajmer i izbor za svako pitanje
+        question={question}
+        total={session.total}
+        onSubmit={handleSubmit}
         onNext={handleNext}
       />
     )
@@ -97,7 +91,7 @@ export default function Kviz() {
     return (
       <ResultsScreen
         answers={answers}
-        earnedXp={earnedXp}
+        earnedXp={summary?.earnedXp || 0}
         levelUp={levelUp}
         onLevelUpSeen={() => setLevelUp(null)}
         onContinue={() => navigate('/')}
@@ -113,11 +107,11 @@ export default function Kviz() {
 
       {phase === 'error' ? (
         <p className="mt-2 text-slate-500">
-          Ne mogu učitati pitanja. Provjeri internet konekciju pa pokušaj ponovo.
+          Ne mogu pokrenuti kviz. Provjeri internet konekciju pa pokušaj ponovo.
         </p>
       ) : (
         <p className="mt-2 text-slate-500">
-          {QUESTIONS_PER_QUIZ} nasumičnih pitanja · 30 sekundi po pitanju.
+          10 nasumičnih pitanja · 30 sekundi po pitanju.
           <br />
           Svaki tačan odgovor nosi XP!
         </p>
@@ -128,7 +122,7 @@ export default function Kviz() {
         disabled={phase === 'loading'}
         className="mt-8 w-full max-w-xs rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800 disabled:opacity-60"
       >
-        {phase === 'loading' ? 'Učitavam pitanja…' : phase === 'error' ? 'Pokušaj ponovo' : 'Započni kviz ▶'}
+        {phase === 'loading' ? 'Pokrećem kviz…' : phase === 'error' ? 'Pokušaj ponovo' : 'Započni kviz ▶'}
       </button>
     </div>
   )

@@ -5,18 +5,12 @@
     "leaderboard": {
       "global": {
         ".read": "auth != null",
-        ".indexOn": ["xp"],
-        "$uid": {
-          ".write": "auth != null && auth.uid == $uid"
-        }
+        ".indexOn": ["xp"]
       },
       "weekly": {
         "$week": {
           ".read": "auth != null",
-          ".indexOn": ["xp"],
-          "$uid": {
-            ".write": "auth != null && auth.uid == $uid"
-          }
+          ".indexOn": ["xp"]
         }
       }
     }

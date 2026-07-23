@@ -13,7 +13,7 @@ import CircleProgress from '../components/CircleProgress'
 // Questovi ekran (Modul 6): dnevni / sedmični / mjesečni taskovi
 // s kružnim progresom i "Preuzmi" dugmetom za nagrade.
 export default function Questovi() {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
 
@@ -27,7 +27,7 @@ export default function Questovi() {
     if (claiming) return
     setClaiming(task.id)
     try {
-      await claimTask(user.uid, task, profile)
+      await claimTask(task)
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
     } finally {
       setClaiming(null)
