@@ -1,0 +1,191 @@
+[
+  {
+    "text": "Šta znači izraz 'odmah' prema Pravilniku o praćenju neželjenih pojava vezanih za medicinska sredstva (materiovigilansa)?",
+    "options": ["Odlaganje koje nije moguće opravdati (bez opravdanog odlaganja)", "U roku od 24 sata", "U roku od 7 dana", "U roku od mjesec dana"],
+    "correctIndex": 0,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 4. Pravilnika o praćenju neželjenih pojava vezanih za medicinska sredstva, 'odmah' znači odlaganje koje nije moguće opravdati."
+  },
+  {
+    "text": "Koji je minimalni stepen stručnosti odgovorne osobe za materiovigilansu?",
+    "options": ["IV stepen", "VI stepen", "V stepen", "VII stepen"],
+    "correctIndex": 1,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 6. Pravilnika, odgovorna osoba za materiovigilansu (odgovorna za uspostavu i djelovanje sistema vigilanse kod proizvođača ili zastupnika) mora imati VI stepen stručnosti."
+  },
+  {
+    "text": "Kada je prihvatljivo periodično izvještavanje o neželjenim pojavama medicinskih sredstava?",
+    "options": ["Kada nema neželjenih pojava", "Samo jednom godišnje", "Kada je proizvođač dao sigurnosnu obavijest i proveo sigurnosnu korektivnu radnju", "Samo za lijekove"],
+    "correctIndex": 2,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 9. Pravilnika, periodično izvještavanje je prihvatljivo kada je proizvođač dao sigurnosnu obavijest o neželjenoj pojavi i proveo sigurnosne korektivne radnje, uz dogovor s Agencijom za lijekove i medicinska sredstva BiH o načinu i vremenu pokretanja postupka."
+  },
+  {
+    "text": "Koje neželjene pojave medicinskih sredstava NIJE potrebno prijavljivati?",
+    "options": ["Reakcije koje mogu dovesti do smrti", "Neočekivane reakcije", "Pogoršanje zdravstvenog stanja", "Događaje čiji je jedini uzrok istek roka trajanja proizvoda"],
+    "correctIndex": 3,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 10. Pravilnika, ne prijavljuju se npr. nedostaci koje korisnik uvijek može otkriti prije upotrebe, događaji čiji je osnovni uzrok zdravstveno stanje pacijenta, te slučajevi kada je jedini uzrok pojave istek roka trajanja proizvoda."
+  },
+  {
+    "text": "U kojem se roku prijavljuje ozbiljna prijetnja javnom zdravlju vezana za medicinsko sredstvo?",
+    "options": ["Odmah, a najkasnije za dva dana od saznanja", "U roku od 30 dana", "U roku od 15 dana", "U roku od 60 dana"],
+    "correctIndex": 0,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 15. Pravilnika: ozbiljna prijetnja javnom zdravlju prijavljuje se odmah, ali ne kasnije od dva dana nakon saznanja; nepredviđeno ozbiljno pogoršanje/smrt najkasnije 10 dana; ostalo najkasnije 30 dana od dana saznanja."
+  },
+  {
+    "text": "Ko provodi istragu neželjene pojave medicinskog sredstva?",
+    "options": ["Agencija za lijekove i medicinska sredstva BiH", "Proizvođač", "Federalno ministarstvo zdravstva", "Sudski organi"],
+    "correctIndex": 1,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 17. Pravilnika, istragu provodi proizvođač, a Agencija za lijekove i medicinska sredstva BiH prati napredak. Ako proizvođač nije u mogućnosti provesti istragu, mora o tome obavijestiti Agenciju."
+  },
+  {
+    "text": "U kojem roku pravna i fizička lica koja uvoze/prometuju medicinskim sredstvima moraju prijaviti neželjenu pojavu Agenciji (ALMBIH)?",
+    "options": ["12 sati", "7 dana", "24 sata", "15 dana"],
+    "correctIndex": 2,
+    "category": "materiovigilansa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema članu 33. Pravilnika, uvoznici i lica u prometu na veliko/malo moraju odmah, u roku od 24 sata od saznanja, obavijestiti Agenciju (obrazac Priloga 5) o neželjenoj pojavi vezanoj za medicinsko sredstvo."
+  },
+  {
+    "text": "Na koji dio nefrona primarno djeluje hidrohlorotiazid?",
+    "options": ["Proksimalni tubul", "Henlejevu petlju", "Sabirne kanaliće", "Distalni zavijeni tubul"],
+    "correctIndex": 3,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Hidrohlorotiazid je tiazidni diuretik koji djeluje na distalni zavijeni tubul, gdje blokira Na⁺/Cl⁻ kotransporter i sprečava reapsorpciju natrija i hlora — više natrija ostaje u tubulu, voda ga prati i raste diureza."
+  },
+  {
+    "text": "Antagonist kojeg hormona je spironolakton?",
+    "options": ["Aldosterona", "Antidiuretskog hormona", "Kortizola", "Renina"],
+    "correctIndex": 0,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Spironolakton blokira djelovanje aldosterona na sabirne kanaliće. Aldosteron povećava reapsorpciju natrija i vode te izlučivanje kalija; blokadom se izlučuje više vode, a štedi kalij (diuretik koji štedi kalij)."
+  },
+  {
+    "text": "Koji se diuretik često koristi kod ascitesa u cirozi jetre?",
+    "options": ["Manitol", "Spironolakton", "Acetazolamid", "Torasemid"],
+    "correctIndex": 1,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod ciroze jetra ne razgrađuje aldosteron normalno pa nastaje hiperaldosteronizam koji zadržava natrij i vodu (ascites). Spironolakton, kao antagonist aldosterona, blokira to zadržavanje i pomaže smanjiti ascites."
+  },
+  {
+    "text": "Koji diuretik može izazvati ototoksičnost?",
+    "options": ["Amilorid", "Spironolakton", "Furosemid", "Hidrohlorotiazid"],
+    "correctIndex": 2,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Furosemid (diuretik Henlejeve petlje) može izazvati ototoksičnost (zujanje u ušima, smanjen sluh, u težim slučajevima trajno oštećenje), naročito u visokim dozama ili pri brzoj IV primjeni zbog poremećaja ionske ravnoteže u unutrašnjem uhu."
+  },
+  {
+    "text": "Acetazolamid djeluje tako što inhibira koji enzim?",
+    "options": ["Na⁺/K⁺ ATP-azu", "Angiotenzin-konvertujući enzim", "Aldosteron", "Karboanhidrazu"],
+    "correctIndex": 3,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Acetazolamid inhibira karboanhidrazu (najviše u proksimalnom tubulu), smanjujući reapsorpciju natrija i bikarbonata. Više bikarbonata izlazi urinom, raste diureza, urin postaje alkalniji i može nastati metabolička acidoza."
+  },
+  {
+    "text": "Koji diuretik povećava reapsorpciju kalcija u bubrezima?",
+    "options": ["Tiazidi", "Furosemid", "Manitol", "Acetazolamid"],
+    "correctIndex": 0,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tiazidi (npr. hidrohlorotiazid) povećavaju reapsorpciju kalcija: blokadom Na⁺/Cl⁻ kotransportera u distalnom tubulu snizuje se unutarćelijski natrij, pojačava se rad Na⁺/Ca²⁺ izmjenjivača i više se kalcija vraća u krv (manje kalcija u urinu)."
+  },
+  {
+    "text": "Kod kojeg se stanja acetazolamid, između ostalog, može koristiti?",
+    "options": ["Hipertireoze", "Glaukoma", "Osteoporoze", "Hipoglikemije"],
+    "correctIndex": 1,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Acetazolamid smanjuje stvaranje očne vodice i time intraokularni pritisak, pa se koristi kod glaukoma. Inhibicijom karboanhidraze smanjuje se stvaranje bikarbonata i volumen tečnosti u oku."
+  },
+  {
+    "text": "Interakcije prema tipu uključuju sve navedeno OSIM:",
+    "options": ["Lijek–lijek", "Hrana–lijek", "Gen–lijek", "Laboratorijski test–lijek"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Interakcije prema tipu obuhvataju lijek–lijek, hrana–lijek, hemijska supstanca–lijek i laboratorijski test–lijek. Interakcije gen–lijek spadaju u farmakogenetiku/farmakogenomiku (individualni genetski faktori), a ne u klasične interakcije prema tipu."
+  },
+  {
+    "text": "S čime su najčešće povezane farmaceutske interakcije?",
+    "options": ["Receptorima u centralnom nervnom sistemu", "Metabolizmom u jetri", "Filtracijom u bubrezima", "Hemijskom ili fizičkom inkompatibilnošću lijekova"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Farmaceutske interakcije nastaju izvan organizma — pri miješanju lijekova u istoj šprici/infuziji, pripremi rastvora ili neodgovarajućem čuvanju. Povezane su s fizičkom ili hemijskom inkompatibilnošću (precipitacija, promjena boje, hidroliza, oksidacija)."
+  },
+  {
+    "text": "Mehanizmi interakcija u toku apsorpcije uključuju sve navedeno OSIM:",
+    "options": ["Indukcije citohroma P450", "Uticaja na pH", "Heliranja", "Uticaja na motilitet gastrointestinalnog sistema"],
+    "correctIndex": 0,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "U fazi apsorpcije djeluju: uticaj na pH, heliranje (npr. tetraciklini + Ca/Mg/Fe), uticaj na motilitet GIT-a i inhibicija aktivnog transporta. Indukcija citohroma P450 odnosi se na metabolizam (jetra/crijeva), a ne direktno na apsorpciju."
+  },
+  {
+    "text": "Interakcije potiskivanjem iz veze s proteinima plazme klinički su značajne kod lijekova koji se vežu:",
+    "options": ["< 20%", "> 95%", "< 50%", "Samo za globuline"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Značajne su kod jako vezanih lijekova (obično >95%) s uskom terapijskom širinom (npr. varfarin, fenitoin) — istiskivanjem raste slobodna, aktivna frakcija i rizik od toksičnosti. Kod slabo vezanih (<50%) istiskivanje obično nema veliki klinički značaj."
+  },
+  {
+    "text": "Nakon koliko vremena se javlja maksimalni efekt indukcije enzima?",
+    "options": ["6 sati", "2 dana", "2–3 sedmice", "2 mjeseca"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Indukcija enzima zahtijeva vrijeme za sintezu i nakupljanje novih enzima, pa se maksimalni efekt razvija postepeno, najčešće za 2–3 sedmice. Inhibicija enzima, nasuprot tome, nastupa brzo (sati do par dana) jer ne traži sintezu novih enzima."
+  },
+  {
+    "text": "Do čega najčešće dovodi inhibicija enzima koji metabolišu lijek?",
+    "options": ["Smanjenja koncentracije lijeka u krvi i slabijeg efekta", "Potpune eliminacije lijeka iz organizma", "Promjene boje kože", "Pojačanog i produženog terapijskog odgovora uz rizik intoksikacije"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Inhibicija enzima usporava metabolizam lijeka — raste koncentracija u krvi, efekt je jači i duži, uz veći rizik od toksičnosti. Primjer: eritromicin ili ketokonazol inhibiraju CYP3A4 i povećavaju koncentraciju statina (rizik od rabdomiolize)."
+  },
+  {
+    "text": "Na kojem nivou najčešće nastaju farmakodinamske interakcije?",
+    "options": ["Receptora i mjesta djelovanja u tkivima", "Jetrenih enzima", "Crijevne flore", "Albumina u plazmi"],
+    "correctIndex": 0,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Farmakodinamske interakcije nastaju kada dva lijeka djeluju na isto mjesto djelovanja ili iste fiziološke sisteme bez promjene koncentracije u krvi — na nivou receptora, enzima, ionskih kanala i signalnih puteva. Npr. benzodiazepini + alkohol (depresija CNS-a); NSAIL + antikoagulansi (krvarenje)."
+  }
+]

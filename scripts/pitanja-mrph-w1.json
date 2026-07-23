@@ -1,0 +1,128 @@
+[
+  {
+    "text": "Pacijent koji je četiri mjeseca na terapiji klozapinom javlja se u apoteku zbog upale grla i blago povišene temperature. Nalazi krvi od prije tri sedmice bili su uredni. Koji je najispravniji postupak?",
+    "options": ["Odmah privremeno obustaviti klozapin i hitno uputiti pacijenta na diferencijalnu krvnu sliku zbog rizika od agranulocitoze", "Savjetovati ispiranje grla antiseptikom i paracetamol uz kontrolu za 48 sati", "Izdati antibiotik širokog spektra jer su pacijenti na klozapinu imunokompromitovani", "Savjetovati nastavak terapije uz više tečnosti jer klozapin izaziva benignu povišenu temperaturu"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Upala grla i temperatura kod osobe na klozapinu mogu biti prvi znaci neutropenije ili agranulocitoze — potencijalno životno ugrožavajućeg neželjenog efekta. Uredan nalaz od prije tri sedmice ne isključuje nagli pad neutrofila. Klozapin treba odmah privremeno obustaviti i pacijenta isti dan uputiti na diferencijalnu krvnu sliku (apsolutni broj neutrofila)."
+  },
+  {
+    "text": "Pacijentica koja koristi sertralin 100 mg planira elektivnu operaciju kuka za sedam dana. Na šta farmaceut treba ukazati hirurgu o perioperativnom riziku?",
+    "options": ["SSRI mogu izazvati perioperativnu hipertenzivnu krizu u kombinaciji s anesteticima", "Povećan rizik od postoperativnog krvarenja zbog inhibicije preuzimanja serotonina u trombocitima, što remeti njihovu agregaciju", "Potreban je prekid terapije 14 dana ranije zbog rizika od serotoninskog sindroma tokom anestezije", "SSRI značajno produžavaju efekt mišićnih relaksanata"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "SSRI (uključujući sertralin) inhibiraju preuzimanje serotonina u trombocitima; smanjenje intratrombocitnog serotonina slabi agregaciju i povećava rizik od perioperativnog/postoperativnog krvarenja, naročito uz NSAIL, aspirin ili antikoagulanse. Treba upozoriti hirurga/anesteziologa, ali ne znači automatski prekid — odluka individualno vaga rizik krvarenja naspram relapsa depresije."
+  },
+  {
+    "text": "Pacijent s dijagnostikovanim Barrettovim ezofagusom donosi recept za oralni alendronat jednom sedmično. Koja je najprikladnija preporuka farmaceuta?",
+    "options": ["Savjetovati uzimanje s punom čašom vode i uspravan položaj 60 minuta", "Savjetovati uzimanje s hranom kako bi se smanjila iritacija sluznice jednjaka", "Preporučiti ljekaru prelazak na intravenski preparat (npr. zoledronska kiselina) ili drugi modalitet zbog kontraindikacije oralnih bisfosfonata kod težih poremećaja jednjaka", "Prebaciti pacijenta na tečnu formulaciju alendronata jer ona ne uzrokuje oštećenja jednjaka"],
+    "correctIndex": 2,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Oralni bisfosfonati su kontraindikovani kod abnormalnosti jednjaka koje odgađaju pražnjenje (strikture, ahalazija, Barrettov ezofagus) jer mogu izazvati ezofagitis, erozije i ulceracije, a Barrettov ezofagus je prekancerozno stanje. IV zoledronska kiselina ili supkutani denosumab zaobilaze GIT i eliminišu rizik od direktnog oštećenja jednjaka."
+  },
+  {
+    "text": "Pacijent na varfarinu navodi da je počeo piti velike količine zelenog čaja radi 'detoksikacije'. Kako to može uticati na njegov INR?",
+    "options": ["INR će značajno porasti zbog inhibicije CYP enzima", "Zeleni čaj nema nikakav uticaj na koagulaciju jer ne sadrži salicilate", "Zeleni čaj će povećati nivo slobodnog varfarina u plazmi", "INR će pasti jer velike količine zelenog čaja unose vitamin K koji antagonizuje efekt varfarina"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Velike količine zelenog čaja (ili dodataka na bazi zelenog čaja) unose značajne doze vitamina K, koji zaobilazi varfarinski blok reciklaže vitamina K i omogućava jetri ponovnu sintezu faktora koagulacije — INR pada, raste rizik od tromboze. Savjetuje se dosljednost u unosu namirnica bogatih vitaminom K, a ne nagle promjene ishrane."
+  },
+  {
+    "text": "Pacijentica na karbamazepinu dobiva kombinovani oralni kontraceptiv. Nakon tri mjeseca navodi intermenstrualna krvarenja, bez propuštenih tableta. Koje objašnjenje je najvjerovatnije?",
+    "options": ["Karbamazepin je enzimski induktor i može sniziti koncentracije estrogena i progestina", "Kontraceptiv inhibira metabolizam karbamazepina, što izaziva krvarenje", "Krvarenje potvrđuje da je kontraceptiv sigurno efikasan", "Interakcija je moguća samo s progesteronskim implantatom, ne i s tabletama"],
+    "correctIndex": 0,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Karbamazepin je snažan induktor jetrenih enzima (posebno CYP3A4) i ubrzava metabolizam steroidnih hormona iz kontraceptiva, snižavajući ih ispod terapijskog nivoa. Intermenstrualno krvarenje je često prvi znak nedovoljnog nivoa hormona i ukazuje na visok rizik od neplanirane trudnoće. Preporučuju se alternativne/dodatne metode (spirala, barijerna zaštita)."
+  },
+  {
+    "text": "Pacijent s Parkinsonovom bolešću na levodopi/karbidopi želi lijek protiv mučnine prije putovanja. Koji izbor zahtijeva posebnu opreznost?",
+    "options": ["Oralni rehidracijski rastvor", "Metoklopramid", "Đumbir", "Rastvor glukoze"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metoklopramid je antagonist dopaminskih D2 receptora i prolazi krvno-moždanu barijeru; kod Parkinsonove bolesti može pogoršati rigiditet, tremor i bradikineziju te izazvati ekstrapiramidalne efekte. Treba ga izbjegavati, a razmotriti antiemetike koji djeluju manje centralno na dopaminske receptore."
+  },
+  {
+    "text": "Pacijent na metoprololu počinje uzimati paroksetin. Sedmicu kasnije navodi vrtoglavicu pri ustajanju i puls 48/min. Koji mehanizam najvjerovatnije objašnjava situaciju?",
+    "options": ["Paroksetin povećava renalnu eliminaciju metoprolola", "Metoprolol inhibira ponovni unos serotonina", "Paroksetin inhibira CYP2D6 i može povećati koncentraciju metoprolola", "Paroksetin direktno smanjuje apsorpciju soli i uzrokuje dehidraciju"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Metoprolol se primarno metaboliše preko CYP2D6, a paroksetin je jedan od najsnažnijih inhibitora tog enzima. Blokadom CYP2D6 koncentracija metoprolola naglo raste, uzrokujući intenzivnu beta-blokadu — bradikardiju (48/min) i ortostatsku hipotenziju. Sigurnije opcije uz metoprolol su sertralin ili escitalopram (slabiji uticaj na CYP2D6)."
+  },
+  {
+    "text": "Koja studija je najvažnija za procjenu mutagenog potencijala lijeka-kandidata?",
+    "options": ["Studija lokalne iritacije", "Draize test", "Farmakodinamička studija", "Amesov test"],
+    "correctIndex": 3,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Amesov test je najčešće korišten in vitro test za procjenu mutagenog potencijala. Koristi sojeve Salmonella typhimurium koji ne mogu sintetisati histidin; ako supstanca izazove mutaciju koja 'ispravi' taj nedostatak, bakterije rastu na podlozi bez histidina — veći broj kolonija ukazuje na mutageni potencijal."
+  },
+  {
+    "text": "Čime se najčešće procjenjuje toksičnost nakon ponovljenih doza lijeka-kandidata?",
+    "options": ["Studijama subhronične i hronične toksičnosti", "Amesovim testom", "In vitro citotoksičnošću", "Testom rastvorljivosti"],
+    "correctIndex": 0,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Toksičnost nakon ponovljenih doza utvrđuje ciljne organe toksičnosti, reverzibilnost promjena i NOAEL. Studije se dijele na subhronične (obično 28–90 dana) i hronične (šest mjeseci ili duže, ovisno o planiranoj kliničkoj primjeni)."
+  },
+  {
+    "text": "Koji od navedenih principa NIJE dio 3R koncepta u pretkliničkim istraživanjima na životinjama?",
+    "options": ["Replacement", "Registration", "Reduction", "Refinement"],
+    "correctIndex": 1,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "3R koncept čine Replacement (zamjena životinja alternativnim metodama), Reduction (najmanji broj životinja za pouzdane rezultate) i Refinement (smanjenje boli i stresa, bolji uslovi). Registration nije dio 3R koncepta."
+  },
+  {
+    "text": "Koja tvrdnja o in vitro modelima u pretkliničkim istraživanjima je tačna?",
+    "options": ["U potpunosti zamjenjuju istraživanja na životinjama", "Koriste se samo nakon kliničkih istraživanja", "Omogućavaju ranu procjenu efikasnosti i toksičnosti lijeka-kandidata", "Ne koriste se u toksikološkim istraživanjima"],
+    "correctIndex": 2,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "In vitro modeli (ćelijske kulture, tkiva, izolovani organi) omogućavaju ranu procjenu efikasnosti, mehanizma djelovanja, citotoksičnosti i genotoksičnosti. Na osnovu njih se odlučuje ima li kandidat dovoljno potencijala za nastavak in vivo — ali ne zamjenjuju u potpunosti istraživanja na životinjama."
+  },
+  {
+    "text": "Koji se parametar najčešće koristi za procjenu akutne toksičnosti lijeka-kandidata?",
+    "options": ["ED₅₀", "IC₅₀", "EC₅₀", "LD₅₀"],
+    "correctIndex": 3,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "LD₅₀ (Lethal Dose 50%) je doza koja izaziva smrt 50% testirane populacije životinja — klasičan parametar akutne toksičnosti nakon jedne doze ili kratke ekspozicije. Koristi se za poređenje toksičnosti supstanci i procjenu sigurnosnog raspona."
+  },
+  {
+    "text": "Šta predstavlja NOAEL u pretkliničkim istraživanjima?",
+    "options": ["Najveću dozu bez uočenih toksičnih efekata", "Najnižu dozu koja izaziva smrt", "Srednju letalnu dozu", "Minimalnu terapijsku dozu"],
+    "correctIndex": 0,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "NOAEL (No Observed Adverse Effect Level) je najveća doza pri kojoj nisu uočeni toksični efekti u istraživanjima na životinjama. Ključni je sigurnosni parametar za određivanje početne doze faze I i izračun sigurnosnih faktora."
+  },
+  {
+    "text": "Koji princip najbolje opisuje Dobru laboratorijsku praksu (GLP)?",
+    "options": ["Standardizacija proizvodnje lijekova", "Standardizacija izvođenja i dokumentovanja istraživanja", "Distribucija lijekova", "Klinička evaluacija"],
+    "correctIndex": 1,
+    "category": "pretklinicka-istrazivanja",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Dobra laboratorijska praksa (GLP) osigurava da se pretklinička istraživanja izvode kvalitetno i pouzdano — kroz standardizaciju izvođenja eksperimenata, dokumentovanje postupaka i rezultata, sljedivost podataka i kontrolu kvaliteta, kako bi rezultati bili ponovljivi i prihvatljivi regulatornim agencijama."
+  }
+]

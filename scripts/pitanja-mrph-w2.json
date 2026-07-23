@@ -1,0 +1,191 @@
+[
+  {
+    "text": "Koji od navedenih faktora NE ulazi u standardni FRAX model za procjenu rizika od prijeloma?",
+    "options": ["Vrijednost vitamina D u krvi", "Dob", "Spol", "Pušenje"],
+    "correctIndex": 0,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "FRAX procjenjuje 10-godišnji rizik od osteoporotskih prijeloma na osnovu: dobi, spola, ITM-a, prethodnog prijeloma, prijeloma kuka kod roditelja, pušenja, dugotrajne terapije glukokortikoidima, reumatoidnog artritisa, sekundarne osteoporoze, alkohola i BMD-a vrata femura. Vrijednost vitamina D nije dio standardnog FRAX algoritma."
+  },
+  {
+    "text": "Koja komplikacija je rijedak, ali ozbiljan neželjeni efekt dugotrajne terapije bisfosfonatima?",
+    "options": ["Akutni pankreatitis", "Osteonekroza vilice", "Perikarditis", "Katarakta"],
+    "correctIndex": 1,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Osteonekroza vilice je rijedak ali ozbiljan neželjeni efekt, posebno kod visokih IV doza (maligne bolesti), stomatoloških zahvata (vađenje zuba, implantati) i loše oralne higijene. Karakteriše je izložena nekrotična kost vilice koja ne zarasta, uz bol, otok i moguću infekciju."
+  },
+  {
+    "text": "Koji mehanizam djelovanja imaju bisfosfonati?",
+    "options": ["Stimulišu osteoblaste", "Povećavaju lučenje estrogena", "Inhibiraju aktivnost i funkciju osteoklasta", "Smanjuju apsorpciju vitamina D"],
+    "correctIndex": 2,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Bisfosfonati se ugrađuju u koštano tkivo; kada ih osteoklasti pri razgradnji preuzmu, dolazi do smanjenja njihove aktivnosti i ubrzane apoptoze. Rezultat je smanjena razgradnja kosti, veća mineralna gustina i manji rizik od prijeloma."
+  },
+  {
+    "text": "Koji nalaz na denzitometriji (T-score) odgovara osteopeniji?",
+    "options": ["T-score > +1", "T-score < -2,5", "T-score < -3,5", "T-score između -1,0 i -2,5"],
+    "correctIndex": 3,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema SZO klasifikaciji: normalna koštana masa T-score ≥ -1,0; osteopenija T-score između -1,0 i -2,5; osteoporoza T-score ≤ -2,5; teška osteoporoza T-score ≤ -2,5 uz prisutan prijelom."
+  },
+  {
+    "text": "Koji od navedenih lijekova djeluje kao monoklonsko antitijelo protiv RANKL?",
+    "options": ["Denosumab", "Alendronat", "Raloksifen", "Kalcitonin"],
+    "correctIndex": 0,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Denosumab je monoklonsko antitijelo protiv RANKL — signalnog proteina koji aktivira osteoklaste. Vezivanjem za RANKL sprečava njegovu interakciju s RANK receptorom, inhibira stvaranje i aktivnost osteoklasta te povećava mineralnu gustinu kosti."
+  },
+  {
+    "text": "Koji lijek za osteoporozu djeluje anabolički — stimuliše stvaranje nove kosti?",
+    "options": ["Zoledronska kiselina", "Teriparatid", "Denosumab", "Kalcitonin"],
+    "correctIndex": 1,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Teriparatid je rekombinantni oblik paratiroidnog hormona koji pri intermitentnoj primjeni ima anabolički efekt — stimuliše osteoblaste, povećava formiranje nove koštane matrice i poboljšava mikroarhitekturu kosti. Ostali navedeni su antiresorptivni lijekovi."
+  },
+  {
+    "text": "Koji se bisfosfonat često primjenjuje jednom godišnje intravenoznom infuzijom kod osteoporoze?",
+    "options": ["Alendronat", "Risedronat", "Zoledronska kiselina", "Ibandronat"],
+    "correctIndex": 2,
+    "category": "osteoporoza",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zoledronska kiselina je vrlo snažan bisfosfonat koji se dugotrajno veže za kost i ima dug biološki efekt nakon jedne doze, što omogućava godišnju IV primjenu (5 mg)."
+  },
+  {
+    "text": "Koji je najčešće korišten standardni režim za PrEP (predekspozicijsku profilaksu) HIV-a?",
+    "options": ["Dolutegravir + lamivudin", "Biktegravir + tenofovir", "Raltegravir + lamivudin", "Tenofovir + emtricitabin"],
+    "correctIndex": 3,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Najčešće korišten PrEP režim sadrži tenofovir 300 mg i emtricitabin 200 mg jednom dnevno."
+  },
+  {
+    "text": "Šta podrazumijeva 'on-demand' PrEP protokol 2-1-1?",
+    "options": ["2 tablete prije odnosa (2–24 h), zatim po 1 nakon 24 i 48 h", "1 tabletu dnevno tokom sedam dana", "2 tablete nakon odnosa i 1 narednog dana", "2 tablete svakih 12 h"],
+    "correctIndex": 0,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Protokol 2-1-1 podrazumijeva dvije tablete prije izlaganja (2–24 sata prije), a zatim po jednu tabletu nakon 24 i nakon 48 sati."
+  },
+  {
+    "text": "Koji je maksimalni vremenski period za započinjanje PEP (postekspozicijske profilakse) HIV-a?",
+    "options": ["24 sata", "72 sata", "48 sati", "5 dana"],
+    "correctIndex": 1,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "PEP treba započeti što prije, idealno u prvih nekoliko sati, a najkasnije unutar 72 sata. Nakon tog perioda efikasnost značajno opada i započinjanje se obično ne preporučuje."
+  },
+  {
+    "text": "Koliko traje standardni PEP (postekspozicijska profilaksa) protokol za HIV?",
+    "options": ["7 dana", "14 dana", "28 dana", "21 dan"],
+    "correctIndex": 2,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Standardni PEP protokol traje 28 dana. Skraćivanje smanjuje efikasnost i ne preporučuje se, osim u slučaju nepodnošljivih neželjenih efekata kada se razmatra zamjena lijekova."
+  },
+  {
+    "text": "Kada se (po broju CD4+ limfocita) postavlja dijagnoza AIDS-a?",
+    "options": ["1000 ćelija/mm³", "750 ćelija/mm³", "350 ćelija/mm³", "Ispod 200 ćelija/mm³"],
+    "correctIndex": 3,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Dijagnoza AIDS-a postavlja se kada broj CD4+ limfocita padne ispod 200 ćelija/mm³, ili kada se pojave određene oportunističke infekcije ili malignomi."
+  },
+  {
+    "text": "Koji je primarni cilj antiretrovirusne terapije (ART)?",
+    "options": ["Virusno opterećenje <50 kopija/mL (nedetektabilan nivo)", "Potpuna eradikacija virusa iz organizma", "CD4+ <200 ćelija/mm³", "Povećanje tjelesne mase"],
+    "correctIndex": 0,
+    "category": "infektologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Cilj ART-a je supresija HIV-a — smanjenje virusnog opterećenja na nedetektabilan nivo (<50 kopija/mL). Time se sprečava progresija bolesti, oporavlja imunitet (rast CD4+), smanjuje rizik od oportunističkih infekcija i sprečava prenos (U=U — Undetectable = Untransmittable)."
+  },
+  {
+    "text": "Koji režim SZO preporučuje kao zlatni standard prve linije za većinu odraslih koji žive s HIV-om?",
+    "options": ["Dolutegravir + lamivudin", "Tenofovir + lamivudin + dolutegravir", "Kabotegravir + rilpivirin", "Efavirenz monoterapija"],
+    "correctIndex": 1,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tenofovir/lamivudin/dolutegravir je preporučeni režim prve linije zbog visoke efikasnosti, dobre podnošljivosti i visoke barijere za razvoj rezistencije."
+  },
+  {
+    "text": "Prema evropskim smjernicama, prva linija akutnog liječenja migrene uključuje antiemetik i koji lijek?",
+    "options": ["Triptan", "Gepant", "Nesteroidni antiinflamatorni lijek", "Ergot alkaloid"],
+    "correctIndex": 2,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "NSAIL (npr. ibuprofen, naproksen) su prva linija za blagu do umjerenu migrenu, uz antiemetik (npr. metoklopramid) za mučninu i bolju apsorpciju analgetika. Triptani, gepanti i ditani se uvode kod jačih/refraktornih napada; ergot alkaloidi se izbjegavaju."
+  },
+  {
+    "text": "Prema evropskim smjernicama, prvu liniju profilaktičkog liječenja migrene čine:",
+    "options": ["Flunarizin, amitriptilin ili natrij valproat", "Botulinum toksin", "Paracetamol", "Beta-blokator, topiramat ili kandesartan"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Prvu liniju profilakse čine beta-blokatori (npr. propranolol), topiramat te u pojedinim slučajevima kandesartan. Drugu liniju čine flunarizin, amitriptilin ili natrij valproat, a treću botulinum toksin."
+  },
+  {
+    "text": "Monoklonalna antitijela u profilaksi migrene (erenumab, fremanezumab...) djeluju primarno putem:",
+    "options": ["Neutralizacije CGRP liganda ili blokade CGRP receptora", "Inhibicije serotoninskih 5-HT1B/1D receptora", "Blokade dopaminskih D2 receptora u triger zoni", "Inhibicije COX-1 enzima u trigeminalnom sistemu"],
+    "correctIndex": 0,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ova monoklonalna antitijela ili vežu CGRP ligand (sprečavaju njegovo djelovanje) ili blokiraju CGRP receptor, čime smanjuju trigemino-vaskularnu aktivaciju i učestalost migrenoznih napada."
+  },
+  {
+    "text": "Koja tvrdnja o gepantima (npr. ubrogepant, rimegepant, atogepant) je tačna?",
+    "options": ["Blokiraju CGRP receptor i/ili inhibiraju djelovanje CGRP", "Neki se koriste i u profilaktičkom liječenju migrene", "Ne uzrokuju vazokonstrikciju cerebralnih krvnih sudova", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Gepanti su antagonisti CGRP receptora / blokatori CGRP signalnog puta. Ubrogepant i rimegepant koriste se akutno, a atogepant (i rimegepant u određenim režimima) i profilaktički. Za razliku od triptana i ergota, ne uzrokuju vazokonstrikciju cerebralnih krvnih sudova — sve navedeno je tačno."
+  },
+  {
+    "text": "Koja tvrdnja o lasmiditanu je tačna?",
+    "options": ["Selektivni je agonist 5-HT1F receptora", "Ne uzrokuje vazokonstrikciju cerebralnih krvnih sudova", "Može izazvati sedaciju, vrtoglavicu i omaglicu zbog centralnog djelovanja", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Lasmiditan je selektivni agonist 5-HT1F receptora za akutno liječenje migrene. Ne izaziva vazokonstrikciju (pogodan kod kardiovaskularnog rizika), ali zbog centralnog djelovanja često uzrokuje sedaciju, vrtoglavicu i omaglicu — sve navedeno je tačno."
+  },
+  {
+    "text": "Koja se profilaktička terapija migrene preferira kao metabolički neutralna kod pacijenata s gojaznošću ili metaboličkim rizikom?",
+    "options": ["Amitriptilin i venlafaksin", "Topiramat i anti-CGRP terapije", "Beta-blokatori i kandesartan", "Botulinum toksin i gepanti"],
+    "correctIndex": 1,
+    "category": "neurologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod gojaznosti/metaboličkog rizika preferiraju se metabolički neutralne opcije: topiramat (često dovodi do gubitka mase) te monoklonalna antitijela i gepanti (bez značajnog uticaja na masu, glukozu ili lipide). Amitriptilin/venlafaksin idu uz psihijatrijske, a beta-blokatori/kandesartan uz kardiovaskularne komorbiditete."
+  },
+  {
+    "text": "Koji se lijekovi navode kao opcija za perimenstrualnu profilaksu kod hormonski povezane migrene?",
+    "options": ["Topiramat, propranolol i amitriptilin", "Paracetamol i ibuprofen", "Frovatriptan, naratriptan, acetazolamid i naproksen", "Amitriptilin i propranolol/metoprolol"],
+    "correctIndex": 2,
+    "category": "neurologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Za perimenstrualnu profilaksu najbolji izbor su frovatriptan, naratriptan, acetazolamid i naproksen. Topiramat/propranolol/amitriptilin se preporučuju kod mlađih, monoklonalna antitijela i kandesartan kod starijih, a amitriptilin i propranolol/metoprolol (uz oprez) u trudnoći/dojenju."
+  }
+]
