@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import LevelUpOverlay from './LevelUpOverlay'
+import LevelUpOverlay from '../LevelUpOverlay'
 
 // Ekran rezultata kviza: kružni skor, poruka, osvojeni XP,
 // lista pitanja s ✓/✗ i objašnjenjima (klik za otvaranje).

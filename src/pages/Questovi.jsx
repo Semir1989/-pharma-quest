@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getTasks, progressForType, taskValue, claimTask } from '../services/tasks'
-import { levelFromXp } from '../utils/levels'
+import { levelFromXp, rankFromLevel } from '../utils/levels'
+import LevelUpOverlay from '../components/LevelUpOverlay'
 import {
   secondsUntilMidnight,
   formatCountdown,
@@ -16,6 +17,7 @@ export default function Questovi() {
   const { profile } = useAuth()
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
+  const [levelUp, setLevelUp] = useState(null) // { level, rank, rankChanged } ili null
 
   useEffect(() => {
     getTasks().then(setTasks).catch(() => setTasks({ daily: [], weekly: [], monthly: [] }))
@@ -27,11 +29,33 @@ export default function Questovi() {
     if (claiming) return
     setClaiming(task.id)
     try {
-      await claimTask(task)
+      const xpBefore = profile.xp || 0
+      const reward = await claimTask(task)
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
+      // Level-up animacija i ovdje, ne samo poslije kviza (Modul 5).
+      const oldLevel = levelFromXp(xpBefore)
+      const newLevel = levelFromXp(xpBefore + reward)
+      if (newLevel > oldLevel) {
+        setLevelUp({
+          level: newLevel,
+          rank: rankFromLevel(newLevel),
+          rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
+        })
+      }
     } finally {
       setClaiming(null)
     }
+  }
+
+  if (levelUp) {
+    return (
+      <LevelUpOverlay
+        level={levelUp.level}
+        rank={levelUp.rank}
+        rankChanged={levelUp.rankChanged}
+        onClose={() => setLevelUp(null)}
+      />
+    )
   }
 
   return (
