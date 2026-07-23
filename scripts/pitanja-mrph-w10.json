@@ -1,0 +1,191 @@
+[
+  {
+    "text": "Koja je tvrdnja o razlici gastričnog i duodenalnog ulkusa tačna?",
+    "options": ["Gastrični ulkus je češći kod starijih (uzrok NSAIL), a duodenalni kod mlađih (uzrok H. pylori)", "Gastrični ulkus je najčešće uzrokovan H. pylori, a duodenalni NSAIL-ima", "Kod gastričnog ulkusa hrana smanjuje bol, a kod duodenalnog ga povećava", "Duodenalni ulkus je češći kod starijih osoba"],
+    "correctIndex": 0,
+    "category": "gastroenterologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Gastrični ulkus je češći kod starijih i najčešće ga izazivaju NSAIL; duodenalni je češći kod mlađih i najčešće ga izaziva H. pylori. Kod gastričnog ulkusa hrana POVEĆAVA bol (gubitak mase), a kod duodenalnog ga SMANJUJE (bol noću, kada nema hrane)."
+  },
+  {
+    "text": "Koja je tvrdnja o dijagnostici Helicobacter pylori tačna?",
+    "options": ["Serološki test je najbolji za potvrdu uspješne eradikacije", "Invazivni testovi se koriste kod pacijenata s alarmantnim simptomima, a neinvazivni kod onih bez njih", "Testove uspješnosti terapije treba raditi odmah nakon prekida antibiotika", "Urea izdisajni test je isključivo invazivni test"],
+    "correctIndex": 1,
+    "category": "gastroenterologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Invazivni testovi (biopsijski ureaza, histologija, kultura, PCR) koriste se kod alarmantnih simptoma, a neinvazivni (urea izdisajni, antigen u stolici, serološki) kod onih bez njih. Serološki test ne potvrđuje eradikaciju (IgG ostaje pozitivan mjesecima); testovi uspješnosti se rade 4 sedmice nakon antibiotika i 2 sedmice nakon IPP (izbjegavanje lažno negativnih)."
+  },
+  {
+    "text": "Koja je tvrdnja o inicijalnoj terapiji GERB-a inhibitorima protonske pumpe (IPP) tačna?",
+    "options": ["IPP se uzimaju 15–30 minuta poslije doručka", "Ako nema efekta, preporučuje se povećanje doze IPP", "IPP se uzimaju natašte, 15–30 minuta prije doručka", "Nakon inicijalne terapije nije potrebna doza održavanja"],
+    "correctIndex": 2,
+    "category": "gastroenterologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "IPP se uzimaju natašte, 15–30 min prije doručka, jer djeluju na aktiviranu protonsku pumpu. Ako nema efekta, prelazi se na 2x dnevno (ne veća doza). Inicijalna terapija traje 1,5–2 mjeseca, a nakon nje je potrebna doza održavanja (najniža efikasna) jer je GERB hronična bolest."
+  },
+  {
+    "text": "Koji lijekovi mogu pogoršati simptome GERB-a?",
+    "options": ["Nesteroidni antiinflamatorni lijekovi", "Bisfosfonati", "Oralni kontraceptivi", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "gastroenterologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "NSAIL i bisfosfonati direktno iritiraju sluznicu jednjaka, a oralni kontraceptivi i tetraciklini smanjuju tonus donjeg ezofagusnog sfinktera — sve navedeno pogoršava GERB. Umjesto NSAIL preporučuje se paracetamol; bisfosfonate/tetracikline uzimati s puno vode i ostati uspravno."
+  },
+  {
+    "text": "Koja interakcija omeprazola postoji?",
+    "options": ["S klopidogrelom — smanjuje njegovu antitrombocitnu aktivnost (rizik tromboze)", "S visokim dozama metotreksata — povećava njegovu toksičnost", "S digoksinom — povećava njegovu apsorpciju i toksičnost", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Omeprazol inhibira CYP2C19 (aktivaciju klopidogrela → rizik tromboze; bolji su pantoprazol/rabeprazol), smanjuje renalnu eliminaciju metotreksata (toksičnost) i povećava bioraspoloživost digoksina (preko pH i P-gp) — sve navedeno je tačno."
+  },
+  {
+    "text": "Do čega može dovesti dugotrajna primjena inhibitora protonske pumpe (IPP)?",
+    "options": ["Frakture kostiju (kuk, kičma, ručni zglob)", "Hipermagnezijemije", "Povećane apsorpcije željeza", "Hipervitaminoze B12"],
+    "correctIndex": 0,
+    "category": "gastroenterologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Dugotrajna hipohlorhidrija smanjuje apsorpciju kalcija (rizik osteoporoze i fraktura), magnezija (hipomagnezijemija), željeza (mikrocitna anemija) i vitamina B12. Dakle nastaju frakture kostiju, a NE hipermagnezijemija ili hipervitaminoza."
+  },
+  {
+    "text": "Šta se može desiti pri naglom prekidu dugotrajne primjene inhibitora protonske pumpe?",
+    "options": ["Smanjena sekrecija želučane kiseline", "Rebound hipersekrecija želučane kiseline", "Potpuni nestanak simptoma refluksa", "Trajno oštećenje želučane sluznice"],
+    "correctIndex": 1,
+    "category": "gastroenterologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zbog dugotrajne blokade organizam poveća broj gastrinskih receptora i luči više gastrina; naglim prekidom protonske pumpe se reaktiviraju uz povišen gastrin → rebound hipersekrecija (žgaravica, refluks). Zato se IPP ukidaju postepeno, uz prelaz na H2 antagoniste ili antacide."
+  },
+  {
+    "text": "Koje su tri faze terapije depresije?",
+    "options": ["Faza reseta, fokusa i stabilizacije", "Faza intervencije, regulacije i psihomodifikacije", "Faza inicijacije, kontinuirane terapije i faza održavanja", "Faza predtretmana, neuroadaptacije i terminacije"],
+    "correctIndex": 2,
+    "category": "psihijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Faze su: inicijacija (postizanje remisije, 1,5–3 mjeseca), kontinuirana terapija (prevencija relapsa, 4–9 mjeseci, neophodna svima) i održavanje (prevencija recidiva kod rizičnih, 1–3 godine)."
+  },
+  {
+    "text": "Kada antidepresivi počinju ispoljavati svoj terapijski efekt?",
+    "options": ["Odmah nakon prve doze", "Nakon šest mjeseci", "Nakon 48 sati", "Nakon 2–4 sedmice"],
+    "correctIndex": 3,
+    "category": "psihijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Antidepresivi imaju odložen početak djelovanja — kliničko poboljšanje se javlja postepeno, najčešće između druge i četvrte sedmice. Važno je to naglasiti pacijentu da ne odustane zbog izostanka trenutnog efekta."
+  },
+  {
+    "text": "Šta je augmentacija u kontekstu liječenja depresije?",
+    "options": ["Dodavanje drugog lijeka (koji nije antidepresiv) osnovnom antidepresivu radi pojačanja efekta", "Postepena obustava svih lijekova radi procjene pravog stanja", "Povećanje frekvencije psihoterapije bez promjene farmakoterapije", "Zamjena postojećeg lijeka novim bez njihove istovremene primjene"],
+    "correctIndex": 0,
+    "category": "psihijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Augmentacija je dodavanje lijeka koji nije antidepresiv (npr. litij, atipični antipsihotik, tiroidni hormon) osnovnom antidepresivu radi pojačanja efekta korištenjem drugog mehanizma djelovanja."
+  },
+  {
+    "text": "Kod kojih se pacijenata posebno preporučuje mirtazapin?",
+    "options": ["Imaju hipertenziju kao primarni problem", "Imaju depresiju praćenu nesanicom i gubitkom apetita", "Pate od akutne manije", "Trebaju snažan stimulans za povećanje energije"],
+    "correctIndex": 1,
+    "category": "psihijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mirtazapin djeluje sedativno i poboljšava apetit (uzima se uvečer), pa je pogodan kod depresije s nesanicom i gubitkom apetita. Ne bi ga trebali koristiti pacijenti s hipersomnijom ili gojazni pacijenti."
+  },
+  {
+    "text": "Koje su kombinacije antidepresiva kontraindikovane zbog rizika od serotoninskog sindroma?",
+    "options": ["MAOI + SSRI", "MAOI + SNRI", "SSRI + SNRI", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "psihijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Sve navedene kombinacije povećavaju serotoninsku aktivnost i rizik od serotoninskog sindroma (agitacija, tremor, rigidnost, groznica, tahikardija). MAOI + SSRI traži 'wash-out' period; MAOI + TCA (posebno klomipramin) nosi i rizik hipertenzivne krize."
+  },
+  {
+    "text": "Kako treba prekinuti primjenu antidepresiva?",
+    "options": ["Postepeno smanjivati dozu i učestalost primjene", "Naglo prekinuti čim se osjeti blago poboljšanje", "Uvijek tačno nakon godinu dana, naglo", "Povećati dozu prije prekida pa naglo prekinuti"],
+    "correctIndex": 0,
+    "category": "psihijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Antidepresivi se ukidaju postepeno (sedmicama/mjesecima) da se izbjegne sindrom diskontinuacije — vrtoglavica, parestezije, poremećaji spavanja, agitacija, mučnina, tremor, glavobolja i konvulzije."
+  },
+  {
+    "text": "Koja je psihoterapijska metoda najčešće preporučena kao efikasna kod blage do umjerene depresije?",
+    "options": ["Elektrošok terapija", "Kognitivno-bihevioralna terapija", "Hipnoterapija", "Aromaterapija"],
+    "correctIndex": 1,
+    "category": "psihijatrija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Kognitivno-bihevioralna terapija (KBT) je dobro istražena, strukturisana metoda koja pomaže prepoznati i promijeniti negativne obrasce mišljenja i ponašanja — posebno efikasna kod blage do umjerene depresije."
+  },
+  {
+    "text": "Koji je tipičan (patognomoničan) znak trovanja ugljen-monoksidom?",
+    "options": ["Cijanotična koža", "Žutica", "Trešnja-crvena boja kože", "Hladna, siva koža"],
+    "correctIndex": 2,
+    "category": "toksikologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U trovanju ugljen-monoksidom nastaje karboksihemoglobin koji daje trešnja-crvenu boju kože — patognomoničan znak (iako se u praksi rijetko jasno vidi; pacijent često izgleda normalno ili blijedo)."
+  },
+  {
+    "text": "Koja supstanca uzrokuje methemoglobinemiju?",
+    "options": ["Acetilsalicilna kiselina", "Benzodiazepini", "Beta-blokatori", "Nitriti"],
+    "correctIndex": 3,
+    "category": "toksikologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Nitriti oksidišu željezo u hemoglobinu iz Fe²⁺ u Fe³⁺, stvarajući methemoglobin koji ne prenosi kisik — nastaje metabolička hipoksija i sivo-plavkasta cijanoza."
+  },
+  {
+    "text": "Koji toksin uzrokuje teške konvulzije i nekontrolisane grčeve blokadom glicinskih receptora?",
+    "options": ["Strihnin", "Botulin toksin", "Aflatoksin", "Amanitin"],
+    "correctIndex": 0,
+    "category": "toksikologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Strihnin blokira glicinske (inhibitorne) receptore u kičmenoj moždini, uklanjajući inhibiciju motoneurona — nastaju teške konvulzije, grčevi, hiperrefleksija i smrt zbog respiratorne paralize. (Botulin toksin, obrnuto, izaziva paralizu.)"
+  },
+  {
+    "text": "Koja supstanca se akumulira u trovanju acetilsalicilnom kiselinom (metabolička acidoza)?",
+    "options": ["Hlorovodonična kiselina", "Laktat", "Oksalat", "Bilirubin"],
+    "correctIndex": 1,
+    "category": "toksikologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Acetilsalicilna kiselina ometa oksidativnu fosforilaciju, metabolizam prelazi na anaerobni put i raste proizvodnja laktata — nastaje metabolička acidoza visokog anionskog gap-a."
+  },
+  {
+    "text": "Za trovanje kojom supstancom se koristi fomepizol kao antidot?",
+    "options": ["Živom", "Olovom", "Metanolom", "Cijanidom"],
+    "correctIndex": 2,
+    "category": "toksikologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Fomepizol inhibira alkohol dehidrogenazu, pa se metanol (i etilen-glikol) ne pretvaraju u toksične metabolite (mravlju/oksalnu kiselinu). Nemetabolisani otrov se eliminiše bubrezima ili hemodijalizom."
+  },
+  {
+    "text": "Koji je nalaz tipičan za trovanje željezom (rana faza)?",
+    "options": ["Hipoglikemija", "Metaloidni dah", "Bradikardija", "Hematemeza"],
+    "correctIndex": 3,
+    "category": "toksikologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Trovanje željezom (često kod djece, suplementi) u prvoj fazi (0–6 h) daje mučninu, povraćanje, abdominalni bol, dijareju te hematemezu i melenu zbog erozije i oštećenja sluznice GIT-a."
+  },
+  {
+    "text": "Koja supstanca daje miris 'gorkog badema'?",
+    "options": ["Cijanid", "Metanol", "Etilen-glikol", "Benzen"],
+    "correctIndex": 0,
+    "category": "toksikologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Cijanid (cijanovodonična kiselina) ima miris sličan gorkom bademu. Sposobnost detekcije tog mirisa je genetski varijabilna — ne mogu ga svi osjetiti."
+  }
+]
