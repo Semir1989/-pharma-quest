@@ -1,0 +1,191 @@
+[
+  {
+    "text": "Kada se obično uzima levotiroksin?",
+    "options": ["Ujutro na prazan želudac, 30–60 min prije doručka", "Poslije doručka", "Poslije ručka", "Uz obrok"],
+    "correctIndex": 0,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Levotiroksin se uzima ujutro na prazan želudac (30–60 min prije doručka) s čašom vode jer hrana smanjuje apsorpciju u tankom crijevu. Alternativa je uzimanje 3+ sata poslije večere, pred spavanje."
+  },
+  {
+    "text": "Koji neželjeni efekt može nastati kod predoziranja levotiroksinom?",
+    "options": ["Hipotenzija", "Tahikardija i palpitacije", "Bradikardija", "Edem"],
+    "correctIndex": 1,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Predoziranje levotiroksinom daje simptome hipertireoze — tahikardiju, palpitacije, nervozu, znojenje, tremor, gubitak mase i nesanicu, uz moguću anginu ili aritmije kod starijih i kardiovaskularnih bolesnika."
+  },
+  {
+    "text": "U kojem se periodu procjenjuje efekt terapije levotiroksinom nakon uvođenja ili promjene doze?",
+    "options": ["Nakon tri dana", "Nakon sedmicu dana", "Nakon 6–8 sedmica", "Nakon 24 sata"],
+    "correctIndex": 2,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Levotiroksin ima dugo poluvrijeme eliminacije (~7 dana), pa mu treba nekoliko sedmica za stabilnu koncentraciju. Efekt i TSH se procjenjuju nakon 6–8 sedmica, a doza se po potrebi mijenja za 25 μg."
+  },
+  {
+    "text": "Koji lijek može usloviti potrebu za povećanjem doze levotiroksina?",
+    "options": ["Barbiturati", "Karbamazepin", "Oralni kontraceptivi (estrogen)", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Barbiturati, karbamazepin i fenitoin induciraju jetrene enzime i ubrzavaju razgradnju levotiroksina; estrogen povećava tiroksin-vezujući globulin (TBG) pa opada slobodna frakcija. Sve to može zahtijevati povećanje doze — sve navedeno je tačno."
+  },
+  {
+    "text": "Koja populacija zahtijeva pažljivije titriranje doze levotiroksina?",
+    "options": ["Starije osobe", "Osobe s ishemijskom bolešću srca", "Osobe s aritmijama", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod starijih (sporiji metabolizam), osoba s ishemijskom bolešću srca (levotiroksin ubrzava srčani rad) i osoba s aritmijama (rizik atrijalne fibrilacije) terapija se počinje malom dozom (25 µg) i postepeno titrira — sve navedeno je tačno."
+  },
+  {
+    "text": "Koja je posljedica dugotrajnog predoziranja levotiroksinom?",
+    "options": ["Osteoporoza", "Hipogonadizam", "Hiperkalcemija", "Hiperkalemija"],
+    "correctIndex": 0,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Dugotrajno predoziranje daje jatrogenu tireotoksikozu; višak hormona ubrzava metabolizam kostiju i pojačava resorpciju, vodeći u osteopeniju i osteoporozu — posebno kod žena u postmenopauzi i na dugotrajnoj terapiji visokim dozama."
+  },
+  {
+    "text": "Šta se preporučuje trudnicama s hipotireozom koje su već na levotiroksinu?",
+    "options": ["Prekinuti primjenu levotiroksina u prvom trimestru", "Povećati dozu levotiroksina", "Smanjiti dozu levotiroksina", "Preći na liotironin"],
+    "correctIndex": 1,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U trudnoći se doza levotiroksina povećava za 25–50% (najčešće do trećeg trimestra) kako bi TSH ostao u ciljnom rasponu. Ako se hipotireoza dijagnostikuje u trudnoći, uvodi se puna supstituciona doza odmah."
+  },
+  {
+    "text": "Koji se vitamin koristi za smanjenje toksičnih efekata metotreksata kod reumatoidnog artritisa i kada?",
+    "options": ["B12, istog dana kada se primijeni metotreksat", "Vitamin D, dva dana prije primjene", "Folna kiselina (B9), dan nakon primjene metotreksata", "Vitamin C, jednom mjesečno"],
+    "correctIndex": 2,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Folna kiselina (B9) smanjuje toksičnost metotreksata na koštanu srž i GIT. Uzima se dan nakon metotreksata (npr. 5 mg jednom sedmično) ili 1 mg dnevno osim na dan metotreksata — nadoknađuje folate bez smanjenja terapijskog efekta."
+  },
+  {
+    "text": "Koji je način primjene metotreksata kod reumatoidnog artritisa?",
+    "options": ["Jednom dnevno oralno", "Svakih 12 sati", "Jednom dnevno intravenozno", "Jednom sedmično"],
+    "correctIndex": 3,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metotreksat se kod reumatoidnog artritisa daje JEDNOM SEDMIČNO (isti dan svake sedmice). Svakodnevna primjena može izazvati tešku toksičnost — to je česta i opasna greška."
+  },
+  {
+    "text": "Koji se neželjeni efekti mogu javiti pri primjeni metotreksata?",
+    "options": ["Pancitopenija, plućna fibroza i stomatitis", "Hipertenzija, plućna embolija i suha koža", "Hiperlipidemija, edem pluća i zamagljen vid", "Tahikardija, bronhospazam i svrbež"],
+    "correctIndex": 0,
+    "category": "reumatologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Metotreksat oštećuje brzodijeleće ćelije: pancitopenija (supresija koštane srži), stomatitis (oštećenje usne sluznice) i plućna toksičnost (intersticijska pneumonija → plućna fibroza). Kod teške pancitopenije ili sumnje na fibrozu terapija se odmah prekida."
+  },
+  {
+    "text": "Koji je najčešći organ toksičnosti metotreksata pri dugotrajnoj terapiji?",
+    "options": ["Srce", "Jetra", "Bubrezi", "Pluća"],
+    "correctIndex": 1,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Jetra je najčešći organ toksičnosti — metotreksat remeti metabolizam folata i uzrokuje hepatocelularno oštećenje, steatozu, fibrozu i u težim slučajevima cirozu. Prati se AST/ALT (svakih 1–3 mjeseca) i izbjegava alkohol."
+  },
+  {
+    "text": "Kada se metotreksat koristi u visokim dozama?",
+    "options": ["Za liječenje psorijaze", "Za liječenje anemije", "U hemoterapiji tumora", "Za liječenje depresije"],
+    "correctIndex": 2,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U malim dozama metotreksat je imunosupresiv (reumatoidni artritis, psorijaza), a u visokim dozama citostatik u hemoterapiji (akutna limfoblastna leukemija, limfomi, osteosarkom). Visoke doze uvijek prati 'leukovorin rescue' (folinat) za zaštitu zdravih ćelija."
+  },
+  {
+    "text": "Kod kojeg pacijenta treba biti naročito oprezan s doziranjem metotreksata?",
+    "options": ["Pacijent s dijabetes melitusom", "Pacijent s glavoboljom", "Mladi sportista", "Pacijent s oštećenom bubrežnom funkcijom"],
+    "correctIndex": 3,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metotreksat se izlučuje bubrezima; kod oštećene bubrežne funkcije se akumulira i raste rizik od teške toksičnosti. Treba smanjiti dozu ili produžiti interval, pratiti kreatinin i klirens te izbjegavati NSAIL i druge lijekove koji ometaju izlučivanje."
+  },
+  {
+    "text": "Koja je apsolutna kontraindikacija za metotreksat?",
+    "options": ["Trudnoća", "Bronhijalna astma", "Hipertireoza", "Migrena"],
+    "correctIndex": 0,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metotreksat je teratogen i strogo kontraindikovan u trudnoći — može izazvati ozbiljne malformacije fetusa i pobačaj. Žene trebaju efikasnu kontracepciju tokom i najmanje 6 mjeseci nakon terapije."
+  },
+  {
+    "text": "Koja hrana/napitak značajno povećava koncentraciju simvastatina u krvi?",
+    "options": ["Mliječni proizvodi", "Sok od grejpa", "Banane", "Kafa"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sok od grejpa inhibira CYP3A4 u jetri i crijevima, smanjuje metabolizam simvastatina i povećava mu koncentraciju — raste rizik od miopatije i rabdomiolize."
+  },
+  {
+    "text": "Koji lijek može izazvati tešku (disulfiramsku) reakciju ako se uzima s alkoholom?",
+    "options": ["Ibuprofen", "Loratadin", "Metronidazol", "Paracetamol"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metronidazol inhibira aldehid dehidrogenazu pa se nakuplja acetaldehid — nastaje disulfiramska reakcija (crvenilo, mučnina, povraćanje, tahikardija, glavobolja, hipotenzija). Alkohol se izbjegava tokom terapije i najmanje 48 h nakon."
+  },
+  {
+    "text": "Konzumacija koje hrane može pojačati efekt enalaprila i rizik od hiperkalemije?",
+    "options": ["Hrana bogata natrijem", "Hrana bogata kalcijem", "Hrana bogata mastima", "Hrana bogata kalijem"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Enalapril (ACE inhibitor) smanjuje izlučivanje kalija; uz hranu bogatu kalijem (banane, narandže, paradajz, krompir) raste rizik od hiperkalemije, koja može izazvati aritmije i mišićnu slabost."
+  },
+  {
+    "text": "Kofein može smanjiti efekt kojeg lijeka?",
+    "options": ["Diazepama", "Paracetamola", "Furosemida", "Amoksicilina"],
+    "correctIndex": 0,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kofein stimuliše CNS, a diazepam ga deprimira — suprotni farmakodinamički efekti se poništavaju, pa je anksiolitički i sedativni efekt diazepama slabiji. Kod anksioznosti/nesanice savjetuje se izbjegavanje većih količina kofeina."
+  },
+  {
+    "text": "Koja hrana može smanjiti efekt ciprofloksacina?",
+    "options": ["Masna hrana", "Mliječni proizvodi", "Voće", "Integralne žitarice"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ciprofloksacin (fluorohinolon) stvara netopive helate s kalcijem iz mliječnih proizvoda, čime se smanjuje apsorpcija i antibakterijski efekt. Uzima se 2 h prije ili 4–6 h nakon mliječnih proizvoda; isto vrijedi za tetracikline."
+  },
+  {
+    "text": "Koji napitak smanjuje apsorpciju željeza?",
+    "options": ["Voda", "Mlijeko", "Kafa", "Sok od narandže"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kafa sadrži polifenole i tanine koji vežu željezo u netopive komplekse i smanjuju apsorpciju (i do 40–60% ako se pije uz obrok). Pacijentima s anemijom se savjetuje piti kafu najmanje sat nakon obroka. (Sok od narandže, obrnuto, vitaminom C pojačava apsorpciju.)"
+  },
+  {
+    "text": "Konzumacija čega može povećati sedativni efekt antihistaminika prve generacije?",
+    "options": ["Kafa", "Mliječni proizvodi", "Sok od narandže", "Alkohol"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Antihistaminici prve generacije (difenhidramin, prometazin) prolaze krvno-moždanu barijeru i djeluju sedativno; alkohol dodatno deprimira CNS, pa se efekti zbrajaju — pojačana pospanost, vrtoglavica, usporeni refleksi (opasno pri vožnji i kod starijih)."
+  }
+]
