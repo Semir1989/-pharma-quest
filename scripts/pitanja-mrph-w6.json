@@ -1,0 +1,182 @@
+[
+  {
+    "text": "Koja je tvrdnja o insomniji tačna?",
+    "options": ["Insomnija se može klasifikovati kao prolazna, kratkotrajna i hronična", "Insomnija je češća kod muškaraca i osoba boljeg socioekonomskog statusa", "Najčešći uzrok insomnije je konzumacija magnezija", "Insomnija isključivo podrazumijeva isprekidano spavanje"],
+    "correctIndex": 0,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Insomnija se prema trajanju dijeli na prolaznu (<1 sedmica), kratkotrajnu (1–4 sedmice) i hroničnu (>4 sedmice). Češća je kod žena, starijih osoba i osoba lošijeg socioekonomskog statusa, a uključuje teškoće s usnivanjem, isprekidano spavanje i prerano buđenje."
+  },
+  {
+    "text": "Koja preporuka spada u osnovne principe higijene spavanja?",
+    "options": ["Korištenje mobitela u krevetu prije spavanja", "Redovno vježbanje, ali ne neposredno prije spavanja", "Odlazak na spavanje u različito vrijeme vikendom", "Konzumiranje kofeina prije spavanja"],
+    "correctIndex": 1,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Higijena spavanja uključuje redovan ritam (i vikendom), izbjegavanje ekrana, buke i svjetla prije spavanja, redovno vježbanje ali ne 2–4 sata prije spavanja, lagan obrok najmanje 2 sata prije te izbjegavanje kofeina, nikotina i alkohola 4–6 sati prije spavanja."
+  },
+  {
+    "text": "U kojoj je situaciji najvažnije izbjegavati samoliječenje insomnije i prvo potražiti medicinsku procjenu?",
+    "options": ["Povremena insomnija zbog promjene dnevne rutine", "Kratkotrajne teškoće nakon stresnog događaja", "Hronična insomnija uz sumnju na psihijatrijsku bolest", "Teškoće nakon kasnog konzumiranja kofeina"],
+    "correctIndex": 2,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Samoliječenje se ne preporučuje kod djece <12 g., osoba >65 g., trudnoće, hronične insomnije, insomnije kao posljedice tjelesne/psihijatrijske bolesti, kod korisnika varfarina ili sumnje na apneju u spavanju."
+  },
+  {
+    "text": "Koja je tvrdnja tačna za biljne pripravke s odoljenom, matičnjakom i paprenom metvicom?",
+    "options": ["Koriste se za tešku insomniju kao prva linija terapije", "Aktivne supstance paprene metvice imaju sedativni efekt", "Preporučeno trajanje primjene je do šest mjeseci", "Aktivne supstance matičnjaka imaju sedativni i karminativni efekt"],
+    "correctIndex": 3,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Matičnjak ima sedativni i karminativni efekt; odoljen (valerijana) djeluje sedativno (interakcije s GABA, A1 adenozinskim i 5-HT1A receptorom); paprena metvica djeluje spazmolitički/karminativno. Indikacija je blaga insomnija; kombinacija se koristi do dvije sedmice, a sam odoljen do četiri."
+  },
+  {
+    "text": "Koja je tvrdnja o melatoninu tačna?",
+    "options": ["Preporučena doza kod insomnije je 1 mg 30 minuta prije spavanja", "Lučenje melatonina potiče svjetlost, a suprimira tama", "Melatonin se preporučuje u trudnoći zbog sigurnog profila", "Dugotrajna upotreba melatonina se preporučuje bez ograničenja"],
+    "correctIndex": 0,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Melatonin luči epifiza; lučenje potiče tama, a suprimira svjetlost. Doza kod insomnije je 1 mg 30 minuta prije spavanja (za jet lag 0,5–1 mg). Ne preporučuje se u trudnoći i dojenju, a dugotrajna upotreba se ne preporučuje bez ograničenja."
+  },
+  {
+    "text": "Koja je tvrdnja o pasiflori i lavandinom eteričnom ulju tačna?",
+    "options": ["Pasiflora se ne smije kombinovati s odoljenom", "Pasiflora može pojačati sedativni efekt kada se kombinuje s hipnoticima", "Pasiflora djeluje primarno na dopaminske receptore u mozgu", "Lavandino eterično ulje se primjenjuje isključivo u obliku injekcija"],
+    "correctIndex": 1,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pasiflora djeluje na GABA receptore (sedacija), često se kombinuje s odoljenom i matičnjakom, a s hipnoticima, barbituratima i tricikličkim antidepresivima ima pojačan sedativni efekt. Lavandino ulje se koristi oralno ili u kupkama, samo kod odraslih i djece starije od 12 godina."
+  },
+  {
+    "text": "Koja je tvrdnja o magneziju i snu tačna?",
+    "options": ["Magnezij ne igra veliku ulogu u enzimatskim reakcijama u organizmu", "Starenjem se povećava količina magnezija u organizmu", "Nedostatak magnezija može doprinijeti insomniji, napetosti i grčevima", "Magnezij nema uticaj na kvalitetu sna"],
+    "correctIndex": 2,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Magnezij je kofaktor brojnih enzimatskih reakcija; starenjem se njegova količina smanjuje. Nedostatak može uzrokovati insomniju, napetost, grčeve i umor. Preporučena doza je 375–500 mg/dan, a simptomi insomnije se smanjuju uz kontinuiranu primjenu."
+  },
+  {
+    "text": "Šta je dermatitis?",
+    "options": ["Bakterijska bolest kože", "Tumor kože", "Virusna bolest kože", "Inflamatorna reakcija kože"],
+    "correctIndex": 3,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Dermatitis je opći pojam za inflamaciju kože. U akutnoj fazi javljaju se crvenilo, otok i vlaženje, a u hroničnoj suhoća, ljuštenje i lihenifikacija, uz svrbež, peckanje ili žarenje."
+  },
+  {
+    "text": "Koji je čest znak atopijskog dermatitisa?",
+    "options": ["Intenzivan svrbež", "Gubitak kose", "Zubobolja", "Povišena tjelesna temperatura"],
+    "correctIndex": 0,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Atopijski dermatitis je hronično recidivirajuća inflamatorna bolest s intenzivnim svrbežom i suhom kožom, tipično počinje između 2. i 6. mjeseca života i često je udružen s drugim atopijskim bolestima (alergija na hranu, astma, alergijski rinitis)."
+  },
+  {
+    "text": "Koji je čest znak seboreičnog dermatitisa?",
+    "options": ["Krvarenje kože", "Ljuštenje kože", "Plikovi puni krvi", "Ožiljci"],
+    "correctIndex": 1,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Seboreični dermatitis je hronična inflamacija na seboreičnim zonama (tjeme, obrve, lice oko nosa i usta, grudni koš) s ljuštenjem kože. Povezuje se s kvascima roda Malassezia, hormonima i nasljednom predispozicijom."
+  },
+  {
+    "text": "Zbog nedostatka kojeg minerala u krvi može nastati perioralni dermatitis?",
+    "options": ["Magnezija", "Natrija", "Cinka", "Kalija"],
+    "correctIndex": 2,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Perioralni dermatitis (promjene oko usta, nosa i očiju) može nastati zbog iritacije pljuvačkom, kontaktnih alergena, kao dio atopijskog dermatitisa ili zbog nedostatka cinka u krvi. Poseban oblik je steroidni dermatitis od nekontrolisane primjene lokalnih kortikosteroida na licu."
+  },
+  {
+    "text": "Kada se samoliječenje dermatitisa NE preporučuje?",
+    "options": ["Kod djece mlađe od dvije godine", "Kod sumnje na komplikacije i razvoj komorbiditeta", "Kod djece i adolescenata na sistemskoj terapiji", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Samoliječenje se ne preporučuje kod djece mlađe od 2 godine, kod sumnje na komplikacije (infekcije, otežano disanje) ili komorbiditete, kod djece/adolescenata na sistemskoj terapiji te uz povišenu temperaturu i opće loše stanje — sve navedeno je tačno."
+  },
+  {
+    "text": "Šta rade emolijensi za kožu?",
+    "options": ["Vlaže kožu", "Opskrbljuju suhu kožu potrebnim lipidima", "Sprečavaju gubitak vode iz kože", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Emolijensi vlaže kožu, opskrbljuju je lipidima, sprečavaju prolazak alergena i gubitak vode te smanjuju potrebu za lokalnim kortikosteroidima — sve navedeno je tačno. Preporučuje se 150–200 g sedmično za dijete, odnosno 250–500 g za odraslu osobu, nanošeno najmanje dva puta dnevno."
+  },
+  {
+    "text": "Koji je preporučeni postupak u liječenju tjemenice (seboreičnog dermatitisa tjemena) kod dojenčadi?",
+    "options": ["Odmah ukloniti ljuske češljanjem bez prethodne pripreme", "Natopiti tjeme dječijim uljem, ostaviti 20 minuta do dva sata, zatim nježno umasirati i iščešljati ljuske", "Koristiti isključivo antibiotike u obliku kreme", "Prati tjeme vodom bez upotrebe ulja ili šampona"],
+    "correctIndex": 1,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tjeme se natopi dječijim uljem, ulje se ostavi 20 minuta do dva sata, pa se nježno umasira i mekom četkicom/češljem iščešljaju ljuske. Preporučuju se i šamponi s niskim koncentracijama antimikotika i salicilne kiseline dozvoljeni za tu dob."
+  },
+  {
+    "text": "Koji simptom NIJE tipičan za hemoroide?",
+    "options": ["Svijetlocrveno krvarenje", "Svrbež", "Crna katranasta stolica", "Prolaps"],
+    "correctIndex": 2,
+    "category": "hemoroidi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Najčešći simptom hemoroida je bezbolno svijetlocrveno rektalno krvarenje pri defekaciji (stolica ostaje normalne boje), uz svrbež, prolaps i osjećaj nepotpunog pražnjenja. Crna katranasta stolica (melena) ukazuje na krvarenje iz gornjeg GIT-a, ne na hemoroide."
+  },
+  {
+    "text": "Šta uključuje prva linija liječenja hemoroida?",
+    "options": ["Operaciju", "Antibiotike", "Kortikosteroide dugotrajno", "Promjenu prehrambenih i životnih navika"],
+    "correctIndex": 3,
+    "category": "hemoroidi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prva linija su nefarmakološke mjere: više biljnih vlakana, rješavanje konstipacije/dijareje, dovoljno tečnosti, tople sjedeće kupke (do 40–42°C, 3 minute), izbjegavanje naprezanja i higijena analne regije. Kod početnih stadija često su dovoljne za nestanak simptoma."
+  },
+  {
+    "text": "Koja grupa topikalnih sastojaka smanjuje bol i svrbež kod hemoroida?",
+    "options": ["Lokalni anestetici", "Adstringensi", "Protektanti", "Antiseptici"],
+    "correctIndex": 0,
+    "category": "hemoroidi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Lokalni anestetici (npr. lidokain) smanjuju bol i svrbež. Protektanti stvaraju zaštitni film, adstringensi stežu tkivo i sprečavaju vlaženje, a antiseptici sprečavaju sekundarnu infekciju. Topikalni pripravci djeluju brzo, ali kratkotrajno (obično do 7 dana)."
+  },
+  {
+    "text": "Koja grupa lijekova ima najviše kliničkih dokaza za oralno liječenje hemoroida?",
+    "options": ["Antibiotici", "Flavonoidi", "Kortikosteroidi", "Antacidi"],
+    "correctIndex": 1,
+    "category": "hemoroidi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Venoaktivni flavonoidi (hesperidin, diosmin, rutin) povećavaju venski tonus, kapilarnu otpornost i limfnu drenažu, a smanjuju kapilarnu permeabilnost. Dokazano smanjuju sve simptome hemoroida (otok, krvarenje, prolaps, svrbež) i stopu povratka simptoma."
+  },
+  {
+    "text": "Kako djeluje psilijum kod hemoroida?",
+    "options": ["Smanjuje bol lokalno", "Djeluje antiseptički", "Povećava volumen stolice i omekšava je", "Smanjuje kiselost želuca"],
+    "correctIndex": 2,
+    "category": "hemoroidi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Psilijum (vlakna) uzet s puno vode bubri i prelazi u gel, povećava volumen stolice i aktivira peristaltiku, dajući mekanu stolicu. Time se rješava konstipacija i naprezanje (glavni uzroci hemoroida) i smanjuje bol pri defekaciji. Mora se uzimati s dovoljno tečnosti."
+  },
+  {
+    "text": "Koje stanje zahtijeva obavezno upućivanje ljekaru u slučaju hemoroida?",
+    "options": ["Kolorektalni karcinom ili IBD u porodičnoj anamnezi", "Neobjašnjiv gubitak tjelesne mase", "Trajni prolaps ili prolaps koji se mora manualno vraćati", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "hemoroidi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Upućivanje ljekaru je obavezno kod: pozitivne porodične anamneze na kolorektalni karcinom/IBD, neobjašnjivog gubitka mase, trajnog prolapsa, čestih promjena u pražnjenju, anemije, imunosupresije, tamne krvi u stolici, krvarenja duljeg od 7 dana i djece <12 g. — sve navedeno je tačno."
+  }
+]
