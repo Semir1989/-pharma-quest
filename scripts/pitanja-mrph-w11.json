@@ -1,0 +1,182 @@
+[
+  {
+    "text": "Kako se dozira sirup amoksicilina kod djece do 40 kg?",
+    "options": ["20–40 mg/kg/dan (blage) i 40–90 mg/kg/dan (teške infekcije), podijeljeno u 2–3 doze", "10–15 mg/kg/dan (blage) i 15–30 mg/kg/dan (teške), podijeljeno u 2–3 doze", "40–50 mg/kg/dan (blage) i 50–80 mg/kg/dan (teške), podijeljeno u 2–3 doze", "1 g/kg/dan podijeljeno u tri doze"],
+    "correctIndex": 0,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod djece do 40 kg amoksicilin se dozira 20–40 mg/kg/dan kod blagih i 40–90 mg/kg/dan kod težih infekcija, podijeljeno u dvije ili tri doze."
+  },
+  {
+    "text": "Kako se dozira sirup amoksicilin + klavulanska kiselina kod djece do 40 kg?",
+    "options": ["15/1,5–30/3 mg/kg/dan podijeljeno u tri doze", "25/3,6–45/6,4 mg/kg/dan podijeljeno u dvije doze", "50/15–100/30 mg/kg/dan podijeljeno u dvije doze", "1,5/0,25–3/0,5 mg/kg/dan podijeljeno u tri doze"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Amoksicilin + klavulanska kiselina kod djece do 40 kg dozira se 25/3,6–45/6,4 mg/kg/dan, podijeljeno u dvije doze."
+  },
+  {
+    "text": "Koja je uobičajena preporučena doza sirupa cefaleksina za djecu?",
+    "options": ["5–10 mg/kg/dan podijeljeno u četiri doze", "10–15 mg/kg/dan podijeljeno u dvije doze", "25–50 mg/kg/dan podijeljeno u dvije ili tri doze", "60–70 mg/kg/dan podijeljeno u tri doze"],
+    "correctIndex": 2,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Cefaleksin se kod djece uobičajeno dozira 25–50 mg/kg/dan, podijeljeno u dvije ili tri doze."
+  },
+  {
+    "text": "Koja je uobičajena preporučena doza sirupa cefaklora za djecu?",
+    "options": ["50–60 mg/kg/dan podijeljeno u dvije doze", "5–10 mg/kg/dan podijeljeno u tri doze", "100 mg/kg/dan kao pojedinačna doza", "20–40 mg/kg/dan podijeljeno u dvije ili tri doze"],
+    "correctIndex": 3,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Cefaklor se kod djece uobičajeno dozira 20–40 mg/kg/dan, podijeljeno u dvije ili tri doze."
+  },
+  {
+    "text": "Koja je uobičajena preporučena doza sirupa cefiksima za djecu?",
+    "options": ["8 mg/kg/dan (jednokratno ili 2 × 4 mg/kg svakih 12 h)", "10 mg/kg/dan (jednokratno ili 2 × 5 mg/kg)", "20 mg/kg/dan (jednokratno ili 2 × 10 mg/kg)", "50 mg/kg/dan (jednokratno ili 2 × 25 mg/kg)"],
+    "correctIndex": 0,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Cefiksim se kod djece dozira 8 mg/kg/dan, kao pojedinačna doza ili podijeljeno u dvije doze od 4 mg/kg svakih 12 sati."
+  },
+  {
+    "text": "Kako se dozira sirup sulfametoksazol + trimetoprim za djecu?",
+    "options": ["Djeca 6–12 g.: 10 ml (2 kašike) svakih 12 h", "Djeca 6 mj–5 g.: 5 ml (1 kašika) svakih 12 h", "Djeca 6 sedmica–5 mj.: 2,5 ml (pola kašike) svakih 12 h", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Doziranje sulfametoksazol + trimetoprim sirupa: djeca 6–12 g. → 10 ml, 6 mj–5 g. → 5 ml, 6 sedmica–5 mj. → 2,5 ml, sve svakih 12 sati (a stariji od 12 g. → 20 ml) — sve navedeno je tačno."
+  },
+  {
+    "text": "Kako se dozira sirup azitromicina kod djece?",
+    "options": ["Ukupna doza od 10 mg/kg koja se daje 3 dana", "Ukupna doza od 30 mg/kg koja se daje 3 dana", "Ukupna doza od 100 mg/kg koja se daje 3 dana", "Ukupna doza od 50 mg/kg koja se daje 3 dana"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Azitromicin sirup se dozira ukupnom dozom od 30 mg/kg koja se daje tokom 3 dana (npr. 10 mg/kg/dan × 3 dana)."
+  },
+  {
+    "text": "Zbog čega je kod starijih pacijenata potrebno smanjiti dozu digoksina?",
+    "options": ["Povećane apsorpcije lijeka u crijevima", "Bržeg metabolizma u jetri", "Smanjenog renalnog klirensa", "Povećane mišićne mase"],
+    "correctIndex": 2,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Digoksin se eliminiše bubrezima; kod starijih je renalni klirens smanjen, pa se poluvrijeme produžava za 50–150% i raste rizik od akumulacije i toksičnosti. Primjenjuje se 'start low, go slow', prati klirens kreatinina i doza obično ne prelazi 0,125 mg/dan."
+  },
+  {
+    "text": "Koji se benzodiazepin preporučuje kod starijih pacijenata zbog sigurnijeg profila (bez aktivnih metabolita)?",
+    "options": ["Diazepam", "Klonazepam", "Alprazolam", "Lorazepam"],
+    "correctIndex": 3,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod starijih se preporučuju 'LOT' benzodiazepini — lorazepam, oksazepam, temazepam — jer nemaju aktivne metabolite, metabolišu se glukuronidacijom i imaju kraće djelovanje, uz manji rizik od akumulacije, sedacije i padova."
+  },
+  {
+    "text": "Koji se nesteroidni antiinflamatorni lijek smatra najmanje preporučljivim kod starijih pacijenata?",
+    "options": ["Indometacin", "Ibuprofen", "Naproksen", "Ketoprofen"],
+    "correctIndex": 0,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Indometacin se kod starijih izbjegava zbog neurotoksičnosti (vrtoglavica, konfuzija), visokog rizika od GI krvarenja i pogoršanja bubrežne funkcije. Preporučuje se ibuprofen (<1800 mg/dan) ili COX-2 selektivni inhibitor u najmanjoj efikasnoj dozi."
+  },
+  {
+    "text": "Koji su antidijabetici najmanje preporučljivi kod starijih pacijenata?",
+    "options": ["Bigvanidi", "Derivati sulfonilureje", "DPP-4 inhibitori", "Agonisti GLP-1 receptora"],
+    "correctIndex": 1,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Derivati sulfonilureje nose visok rizik od hipoglikemije (povećavaju lučenje inzulina bez obzira na glikemiju) i duže se zadržavaju zbog smanjenog renalnog klirensa. Kod starijih hipoglikemija je opasnija (padovi, konfuzija, aritmije)."
+  },
+  {
+    "text": "Koja grupa antibiotika ima najveći rizik od nefrotoksičnosti kod starijih pacijenata?",
+    "options": ["Makrolidi", "Cefalosporini", "Aminoglikozidi", "Tetraciklini"],
+    "correctIndex": 2,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Aminoglikozidi su izrazito nefrotoksični, posebno kod starijih sa smanjenom bubrežnom funkcijom. Treba pratiti klirens kreatinina te prilagoditi dozu i interval doziranja."
+  },
+  {
+    "text": "Koji se antihipertenzivi smatraju najboljim izborom kod starijih pacijenata?",
+    "options": ["Beta-blokatori i alfa-blokatori", "ACE inhibitori i diuretici Henlejeve petlje", "Direktni vazodilatatori i antagonisti mineralokortikoidnih receptora", "Tiazidni diuretici i blokatori kalcijevih kanala"],
+    "correctIndex": 3,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tiazidni diuretici dokazano smanjuju kardiovaskularne događaje i moždani udar kod starijih, a blokatori kalcijevih kanala ne pogoršavaju bubrežnu funkciju i dobri su kod izolovane sistolne hipertenzije (česte kod starijih)."
+  },
+  {
+    "text": "Zašto triciklični antidepresivi nisu lijek izbora kod starijih pacijenata?",
+    "options": ["Imaju jake antiholinergičke neželjene efekte", "Uzrokuju ortostatsku hipotenziju", "Povećavaju rizik od aritmija i kardiotoksičnosti", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "gerijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "TCA kod starijih nose antiholinergičke efekte (suha usta, opstipacija, konfuzija, delirij), ortostatsku hipotenziju (padovi), sedaciju/kognitivne smetnje i kardiotoksičnost (aritmije) — sve navedeno je tačno."
+  },
+  {
+    "text": "Koji je primarni mehanizam sniženja glikemije agonista GLP-1 receptora?",
+    "options": ["Direktna inhibicija α-glukozidaze", "Glukozno-nezavisna stimulacija β-ćelija pankreasa", "Glukozno-zavisna stimulacija β-ćelija pankreasa", "Inhibicija reapsorpcije glukoze u bubrezima"],
+    "correctIndex": 2,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Agonisti GLP-1 receptora povećavaju lučenje inzulina iz β-ćelija ISKLJUČIVO kada je glukoza povišena (glukozno-zavisno). Kada je glikemija normalna/niska, sekrecija se ne stimuliše — zato je rizik od hipoglikemije nizak u monoterapiji."
+  },
+  {
+    "text": "Zašto semaglutid ima najduže poluvrijeme eliminacije od svih agonista GLP-1 receptora?",
+    "options": ["Konjugacije s polietilen-glikolom", "Aktivne tubularne reapsorpcije", "Metabolizma preko enzima CYP3A4", "Otpornosti na DPP-4 i vezivanja za albumin"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Semaglutid ima poluvrijeme ~7 dana zahvaljujući otpornosti na razgradnju enzimom DPP-4 i reverzibilnom vezivanju za albumin (lanac masnih kiselina), što djeluje kao 'rezervoar' i omogućava primjenu jednom sedmično."
+  },
+  {
+    "text": "Kojim mehanizmom agonisti GLP-1 receptora prvenstveno snižavaju tjelesnu masu?",
+    "options": ["Usporavanjem pražnjenja želuca i centralnom supresijom apetita", "Povećanjem lipolize u masnom tkivu", "Smanjenjem apsorpcije masti", "Povećanjem bazalnog metabolizma"],
+    "correctIndex": 0,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Snižavaju masu usporavanjem pražnjenja želuca (duži osjećaj sitosti, manji postprandijalni porast glukoze) i centralnom supresijom apetita (GLP-1 receptori u hipotalamusu smanjuju želju za unosom hrane)."
+  },
+  {
+    "text": "Koji se agonist GLP-1 receptora primjenjuje i oralno?",
+    "options": ["Liraglutid", "Semaglutid", "Eksenatid", "Dulaglutid"],
+    "correctIndex": 1,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Većina GLP-1 agonista se primjenjuje supkutano, ali semaglutid postoji i kao oralni preparat (uz apsorpcioni pojačivač SNAC koji omogućava difuziju kroz sluznicu želuca i otpornost na proteolizu)."
+  },
+  {
+    "text": "Koja je klinički značajna interakcija agonista GLP-1 receptora?",
+    "options": ["S inhibitorima angiotenzin-konvertujućeg enzima", "Sa statinima", "S oralnim kontraceptivima", "S metforminom"],
+    "correctIndex": 2,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Usporavajući pražnjenje želuca, GLP-1 agonisti mogu odložiti apsorpciju oralnih kontraceptiva i smanjiti im efikasnost ako se ne uzmu prema uputama (odvojeno od obroka)."
+  },
+  {
+    "text": "Zbog čega se terapija agonistima GLP-1 receptora titrira postepeno?",
+    "options": ["Izbjegavanja hepatotoksičnosti", "Prevencije hipoglikemije", "Povećanja bioraspoloživosti", "Smanjenja gastrointestinalnih neželjenih efekata"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "GLP-1 agonisti često izazivaju mučninu, povraćanje i dijareju, posebno na početku (glavni razlog prekida). Postepenom titracijom (niža doza pa povećanje) organizam se adaptira i smanjuje se intenzitet GI neželjenih efekata."
+  }
+]
