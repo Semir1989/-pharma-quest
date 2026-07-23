@@ -1,0 +1,191 @@
+[
+  {
+    "text": "Šta histamin izaziva u alergijskoj reakciji (preko H1 receptora)?",
+    "options": ["Vazodilataciju i povećanu propustljivost kapilara", "Hiperglikemiju", "Smanjenje srčane frekvencije", "Smanjenje bronhijalne sekrecije"],
+    "correctIndex": 0,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Histamin je glavni medijator tip I alergijske reakcije; preko H1 receptora izaziva vazodilataciju (eritem, hipotenzija), povećanu propustljivost kapilara (edem, urtikarija), bronhokonstrikciju i pojačanu bronhijalnu sekreciju."
+  },
+  {
+    "text": "Koji se antihistaminik često koristi kod mučnine i kinetoze?",
+    "options": ["Feksofenadin", "Prometazin", "Loratadin", "Desloratadin"],
+    "correctIndex": 1,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prometazin je antihistaminik prve generacije koji lako prolazi krvno-moždanu barijeru i djeluje na CNS, pa ima izražen antiemetički, sedativni i antiholinergički efekt — zato se koristi kod mučnine i kinetoze."
+  },
+  {
+    "text": "Koja je najvažnija kontraindikacija/poseban oprez za antihistaminike prve generacije?",
+    "options": ["Hipotireoza", "Osteoporoza", "Glaukom zatvorenog ugla", "Hemofilija"],
+    "correctIndex": 2,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Antihistaminici prve generacije imaju antiholinergički (atropinski) efekt koji izaziva midrijazu i porast intraokularnog pritiska; kod glaukoma zatvorenog ugla to može izazvati akutni napad glaukoma — hitno stanje."
+  },
+  {
+    "text": "Koji se antihistaminik često koristi kao pomoć kod nesanice?",
+    "options": ["Loratadin", "Feksofenadin", "Cetirizin", "Difenhidramin"],
+    "correctIndex": 3,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Difenhidramin je antihistaminik prve generacije koji lako prolazi krvno-moždanu barijeru i ima jak sedativni efekt, pa se koristi kao pomoć kod nesanice i kao sastojak preparata za spavanje i protiv prehlade."
+  },
+  {
+    "text": "Zbog čega se kod starijih osoba izbjegavaju antihistaminici prve generacije?",
+    "options": ["Rizika od konfuzije, padova i depresije disanja", "Povećanja apetita", "Rizika od hipoglikemije", "Oštećenja bubrega"],
+    "correctIndex": 0,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zbog prolaska kroz krvno-moždanu barijeru i sedativno-antiholinergičkog efekta kod starijih izazivaju konfuziju, delirij, vrtoglavicu, padove i frakture, a u težim slučajevima depresiju disanja. Preferiraju se antihistaminici druge generacije (loratadin, cetirizin, feksofenadin, bilastin)."
+  },
+  {
+    "text": "Koji paradoksalni efekt antihistaminici prve generacije mogu izazvati kod djece?",
+    "options": ["Hipotenziju", "Ekscitaciju i nesanicu", "Depresiju koštane srži", "Bradikardiju"],
+    "correctIndex": 1,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Iako imaju sedativni efekt, kod djece mogu paradoksalno izazvati nemir, razdražljivost, hiperaktivnost i nesanicu, a u većim dozama i konvulzije — to je paradoksalna stimulacija CNS-a."
+  },
+  {
+    "text": "Koji antihistaminik treba izbjegavati pacijent s benignom hiperplazijom prostate?",
+    "options": ["Loratadin", "Feksofenadin", "Difenhidramin", "Bilastin"],
+    "correctIndex": 2,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Difenhidramin (prva generacija) ima izražen antiholinergički efekt — opušta detruzor i povećava tonus sfinktera, što kod BHP-a pogoršava otežano mokrenje i rizik od retencije urina."
+  },
+  {
+    "text": "Kada se lijek za mršavljenje smatra efikasnim?",
+    "options": ["Ako pacijent izgubi 2% tjelesne mase za šest mjeseci", "Ako pacijent izgubi 10% tjelesne mase u prvoj sedmici", "Ako pacijent izgubi 3% tjelesne mase za godinu dana", "Ako pacijent izgubi 4–5% tjelesne mase za tri mjeseca i to održava"],
+    "correctIndex": 3,
+    "category": "gojaznost",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Lijek za mršavljenje smatra se efikasnim ako gubitak tjelesne mase prelazi 4–5% početne tjelesne mase nakon tri mjeseca primjene terapijske doze i održava se na tom nivou."
+  },
+  {
+    "text": "Zašto je teško 'održavati' postignuti gubitak tjelesne mase?",
+    "options": ["Zbog promjena u potrošnji energije i hormonskih medijatora apetita", "Zbog povećanja mišićne mase", "Zbog povećanja unosa proteina", "Zbog povećanja vitamina u ishrani"],
+    "correctIndex": 0,
+    "category": "gojaznost",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Gubitak mase mijenja potrošnju energije i hormonske medijatore apetita, što pogoduje povratku kilograma. Zato se, budući da je gojaznost hronična bolest, preporučuje dugoročna primjena lijekova ako se dobro tolerišu i daju klinički značajan gubitak (>5%)."
+  },
+  {
+    "text": "Tirzepatid djeluje kao agonist kojih receptora?",
+    "options": ["Samo GLP-1 receptora", "GLP-1 i GIP receptora", "Samo GIP receptora", "Dopaminskih receptora"],
+    "correctIndex": 1,
+    "category": "gojaznost",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Tirzepatid je dvostruki agonist GLP-1 (glukagonu sličan peptid-1) i GIP (glukozno-zavisni insulinotropni polipeptid) receptora, s izraženom efikasnošću u smanjenju tjelesne mase; primjenjuje se supkutano jednom sedmično."
+  },
+  {
+    "text": "Kod kojih je pacijenata fentermin-topiramat posebno dobra opcija?",
+    "options": ["S nekontrolisanom hipertenzijom", "S kardiovaskularnim bolestima", "Bez kardiovaskularnih bolesti i bez nekontrolisane hipertenzije", "Samo kod djece"],
+    "correctIndex": 2,
+    "category": "gojaznost",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Fentermin (stimuliše oslobađanje noradrenalina, smanjuje glad) + topiramat (produžava sitost) opcija je za osobe bez kardiovaskularnih bolesti i bez nekontrolisane hipertenzije koje ne tolerišu GLP-1 agoniste. Indikovan pri ITM ≥30 ili ≥27 uz komorbiditet."
+  },
+  {
+    "text": "Na šta prvenstveno djeluje kombinacija naltrekson-bupropion u liječenju gojaznosti?",
+    "options": ["Pankreasne lipaze", "Jetrene enzime", "Bubrežne tubule", "Hipotalamus i limbički sistem"],
+    "correctIndex": 3,
+    "category": "gojaznost",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Bupropion povećava dopamin i norepinefrin u regionima mozga koji kontrolišu apetit, a naltrekson blokira opioidne receptore i smanjuje žudnju za hranom — zajedno djeluju na centar za glad u hipotalamusu i limbičkom sistemu. To je kombinacija druge linije."
+  },
+  {
+    "text": "Kojim mehanizmom orlistat izaziva gubitak tjelesne mase?",
+    "options": ["Inhibira pankreasne lipaze i povećava eliminaciju masti fecesom", "Smanjuje nivo dopamina u mozgu", "Pojačava djelovanje inzulina", "Djeluje kao agonist GLP-1 receptora"],
+    "correctIndex": 0,
+    "category": "gojaznost",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Orlistat inhibira pankreasne lipaze pa se masti ne hidrolizuju u potpunosti i ne apsorbuju, čime raste eliminacija masti fecesom (inhibira apsorpciju ~25–30% unesenih masti). Lijek je druge linije zbog niže efikasnosti i GI neželjenih efekata."
+  },
+  {
+    "text": "Koja je početna, a koja doza održavanja semaglutida za liječenje gojaznosti?",
+    "options": ["1 mg jednom sedmično; 1 mg", "0,25 mg jednom sedmično; 2,4 mg", "1,7 mg dnevno; 3 mg", "0,6 mg dnevno; 2 mg"],
+    "correctIndex": 1,
+    "category": "gojaznost",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Semaglutid se primjenjuje supkutano; početna doza je 0,25 mg jednom sedmično tokom mjesec dana, uz postepenu titraciju (0,5; 1; 1,7; 2,4 mg) do doze održavanja 1,7 ili 2,4 mg jednom sedmično."
+  },
+  {
+    "text": "Koja kombinacija hidrosolubilnog i liposolubilnog vitamina predstavlja snažne antioksidanse koji se međusobno regenerišu?",
+    "options": ["B1 i A", "B2 i D", "C i E", "B9 i K"],
+    "correctIndex": 2,
+    "category": "antioksidansi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vitamin C (hidrosolubilan) djeluje u plazmi/citosolu, vitamin E (liposolubilan) štiti lipidne dijelove membrana. Vitamin C regeneriše oksidirani vitamin E natrag u aktivni oblik, pa se njihovo djelovanje pojačava — jedna od najvažnijih antioksidativnih kombinacija."
+  },
+  {
+    "text": "Koji je najvažniji intracelularni antioksidans?",
+    "options": ["Kvercetin", "Metionin", "Glukuronska kiselina", "Glutation"],
+    "correctIndex": 3,
+    "category": "antioksidansi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Glutation (GSH) je u visokoj koncentraciji u ćelijama, direktno neutralizuje slobodne radikale, dio je glutation-peroksidaze (razgrađuje perokside), pomaže detoksikaciju u jetri i regeneriše vitamine C i E."
+  },
+  {
+    "text": "Koji je slobodni radikal najreaktivniji i najopasniji za biomolekule?",
+    "options": ["Hidroksilni radikal", "Superoksidni anion", "Vodik-peroksid", "Azot-monoksid"],
+    "correctIndex": 0,
+    "category": "antioksidansi",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Hidroksilni radikal reaguje odmah i nespecifično sa skoro svim biomolekulama — oštećuje DNK, lipide (lipidna peroksidacija) i proteine. Toliko je reaktivan da organizam nema enzim koji ga direktno neutrališe, već se mora spriječiti njegovo nastajanje."
+  },
+  {
+    "text": "Koji je antioksidans posebno važan za zdravlje očiju i makule?",
+    "options": ["Kofein", "Lutein", "Kreatin", "Natrij"],
+    "correctIndex": 1,
+    "category": "antioksidansi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Lutein je karotenoidni antioksidans koji se nakuplja u makuli, filtrira štetno plavo svjetlo i štiti mrežnjaču od oksidativnog stresa, smanjujući rizik od degeneracije makule."
+  },
+  {
+    "text": "Gdje su polifenoli najčešće prisutni?",
+    "options": ["Vodi iz česme", "Morskoj soli", "Biljkama (voće, povrće, čaj, kakao)", "Životinjskim mastima"],
+    "correctIndex": 2,
+    "category": "antioksidansi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Polifenoli se najviše nalaze u biljkama — bobičastom voću, grožđu, jabukama, povrću, čaju, kafi, kakau, crnom vinu i začinima. Kod ljudi djeluju kao antioksidansi i antiinflamatorne supstance te štite krvne sudove i srce."
+  },
+  {
+    "text": "Koji je slobodni radikal primarni produkt mitohondrijalnog respiratornog lanca?",
+    "options": ["Hidroksilni radikal", "Vodik-peroksid", "Singletni kisik", "Superoksidni anion"],
+    "correctIndex": 3,
+    "category": "antioksidansi",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "U respiratornom lancu dio elektrona 'pobjegne' s kompleksa I i III i reaguje s kisikom stvarajući superoksidni anion — primarni radikal mitohondrijalne respiracije. On se superoksid-dismutazom pretvara u vodik-peroksid, koji uz Fe²⁺ može dati hidroksilni radikal."
+  },
+  {
+    "text": "S čime je najviše povezana uloga koenzima Q10 kao antioksidansa?",
+    "options": ["Prenosom elektrona u mitohondrijama i zaštitom lipida od oksidacije", "Sintezom DNK u jedru", "Aktivacijom inzulin receptora", "Razgradnjom proteina u lizosomima"],
+    "correctIndex": 0,
+    "category": "antioksidansi",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Koenzim Q10 (ubihinon/ubihinol) prenosi elektrone u respiratornom lancu (stvaranje ATP-a), a u obliku ubihinola je snažan liposolubilni antioksidans — štiti membranske lipide i LDL holesterol od oksidacije i pomaže regeneraciju vitamina E."
+  }
+]

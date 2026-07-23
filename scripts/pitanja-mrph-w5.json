@@ -1,0 +1,200 @@
+[
+  {
+    "text": "Šta su prebiotici?",
+    "options": ["Neprobavljive supstance koje stimulišu rast korisnih bakterija", "Žive bakterije u hrani", "Antibiotici koji štite crijevnu floru", "Enzimi pankreasa"],
+    "correctIndex": 0,
+    "category": "probiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prebiotici su neprobavljive komponente hrane (npr. inulin, fruktooligosaharidi) koje ne razgrađuje naš GIT, nego dolaze do debelog crijeva gdje služe kao hrana korisnim bakterijama, podstičući njihov rast i aktivnost."
+  },
+  {
+    "text": "Kombinaciju čega predstavljaju simbiotici?",
+    "options": ["Dva antibiotika", "Probiotika i prebiotika", "Dva prebiotika", "Enzima i vlakana"],
+    "correctIndex": 1,
+    "category": "probiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Simbiotici sadrže kombinaciju probiotika (živih korisnih bakterija) i prebiotika (hrane za te bakterije), pa se probiotičke bakterije lakše naseljavaju i bolje razmnožavaju u crijevima."
+  },
+  {
+    "text": "Koja je standardna mjera jačine probiotika u suplementima?",
+    "options": ["mg", "IU", "CFU", "mmol"],
+    "correctIndex": 2,
+    "category": "probiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Jačina probiotika se izražava u CFU (Colony Forming Units) — broju bakterija sposobnih da formiraju kolonije, npr. 1 milijarda CFU."
+  },
+  {
+    "text": "Koji je mehanizam probiotika povezan sa zaštitom crijevne barijere?",
+    "options": ["Povećanje intestinalne permeabilnosti", "Inhibicija eritropoetina", "Aktivacija renin-angiotenzin sistema", "Povećanje integriteta tight junction (čvrstih spojeva)"],
+    "correctIndex": 3,
+    "category": "probiotici",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Tight junctions (čvrsti spojevi) između ćelija crijevne sluznice ključni su za barijeru koja sprečava prolazak toksina i patogena u krv. Probiotici jačaju tight junction proteine, smanjuju inflamaciju i 'propusnost' crijeva."
+  },
+  {
+    "text": "Koji je najčešći neželjeni efekt probiotika kod imunokompetentnih osoba?",
+    "options": ["Nadutost i gasovi", "Hepatotoksičnost", "Teška alergijska reakcija", "Krvarenje"],
+    "correctIndex": 0,
+    "category": "probiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod imunokompetentnih osoba probiotici su uglavnom sigurni; najčešće su blage GI tegobe na početku (nadutost, gasovi, blaga nelagoda) dok se flora prilagođava. Kod imunokompromitovanih moguća je rijetka ali ozbiljna bakterijemija/fungemija."
+  },
+  {
+    "text": "Koji od navedenih NIJE tipičan probiotik?",
+    "options": ["Lactobacillus rhamnosus", "Mycobacterium tuberculosis", "Bifidobacterium longum", "Saccharomyces boulardii"],
+    "correctIndex": 1,
+    "category": "probiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tipični probiotici su Lactobacillus rhamnosus, Bifidobacterium longum, Saccharomyces boulardii i Escherichia coli Nissle 1917. Mycobacterium tuberculosis je patogena bakterija koja uzrokuje tuberkulozu — nema probiotski efekt."
+  },
+  {
+    "text": "Koja je tvrdnja o probioticima kod sindroma iritabilnog crijeva (IBS) najtačnija?",
+    "options": ["Probiotici uvijek pogoršavaju simptome", "Probiotici su dokazano 100% efikasni", "Probiotici mogu pomoći kod nekih pacijenata, zavisno od soja", "Probiotici su kontraindikovani kod IBS"],
+    "correctIndex": 2,
+    "category": "probiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod IBS-a efekt probiotika zavisi od soja (strain-specific), tipa IBS-a (IBS-D, IBS-C, mješoviti) i individualnog odgovora. Neki sojevi Bifidobacterium i Lactobacillus mogu ublažiti bol, nadutost i poboljšati stolicu kod dijela pacijenata."
+  },
+  {
+    "text": "Šta znači off-label primjena lijeka?",
+    "options": ["Lijek se koristi nakon isteka roka", "Lijek se koristi bez recepta", "Lijek se koristi samo u bolnici", "Lijek se koristi za indikaciju, dozu, uzrast ili način primjene za koji nije odobren"],
+    "correctIndex": 3,
+    "category": "off-label",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Off-label primjena je korištenje lijeka na način koji nije naveden u registraciji — druga indikacija, doza, dobna grupa ili put primjene. Može biti medicinski opravdana, ali zahtijeva stručnu procjenu i često informisani pristanak pacijenta."
+  },
+  {
+    "text": "Osim za umjerenu do tešku demenciju kod Alzheimerove bolesti, memantin off-label primjenu pronalazi i u liječenju:",
+    "options": ["Opsesivno-kompulsivnog poremećaja", "Hipertenzije", "Insomnije", "Parkinsonove bolesti"],
+    "correctIndex": 0,
+    "category": "off-label",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Memantin je antagonist NMDA receptora; zbog uticaja na glutamatnu neurotransmisiju off-label se koristi kao augmentacija (uz SSRI) kod opsesivno-kompulsivnog poremećaja, posebno kod teških, rezistentnih slučajeva."
+  },
+  {
+    "text": "Koji se lijek primjenjuje u medikamentoznom liječenju ektopijske (vanmaterične) trudnoće?",
+    "options": ["Propranolol", "Metotreksat", "Metformin", "Beklometazon"],
+    "correctIndex": 1,
+    "category": "off-label",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metotreksat (folatni antagonist) zaustavlja diobu trofoblastnih ćelija i prekida razvoj trudnoće bez operacije. Primjenjuje se kod hemodinamski stabilnih pacijentica bez rupture jajovoda i uz dodatne kriterije (niži β-hCG i sl.)."
+  },
+  {
+    "text": "Koji se antidepresiv može off-label koristiti u liječenju prijevremene ejakulacije?",
+    "options": ["Amitriptilin", "Duloksetin", "Sertralin", "Moklobemid"],
+    "correctIndex": 2,
+    "category": "off-label",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sertralin (SSRI) se off-label koristi kod prijevremene ejakulacije jer SSRI često uzrokuju odgođenu ejakulaciju kao neželjeni efekt, što se ovdje terapijski iskorištava."
+  },
+  {
+    "text": "Kvetiapin svoju najčešću off-label primjenu kod odraslih ima u liječenju:",
+    "options": ["Poremećaja pažnje s hiperaktivnošću", "Autizma", "Sindroma stečene imunodeficijencije", "Insomnije"],
+    "correctIndex": 3,
+    "category": "off-label",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kvetiapin je antipsihotik odobren za šizofreniju, bipolarni poremećaj i kao dodatak kod depresije; najčešća off-label primjena kod odraslih je za insomniju, obično u malim dozama, zbog sedativnog efekta."
+  },
+  {
+    "text": "Koji lijek off-label primjenu ima u liječenju teške, refraktorne depresije?",
+    "options": ["Buprenorfin", "Kodein", "Kolhicin", "Klonidin"],
+    "correctIndex": 0,
+    "category": "off-label",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Buprenorfin (opioid za hronični bol) off-label se istražuje kod teške, refraktorne depresije — njegov djelimični agonistički efekt na opioidne receptore može brzo poboljšati raspoloženje kod pacijenata koji ne reaguju na standardne antidepresive."
+  },
+  {
+    "text": "U kojem se stanju najčešće nalazi off-label primjena prazosina?",
+    "options": ["Karcinoma pankreasa", "Post-traumatskog stresnog poremećaja (noćne more)", "Moždanog udara", "Dijabetes melitusa tip 2"],
+    "correctIndex": 1,
+    "category": "off-label",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Prazosin (alfa-1 blokator za hipertenziju i BHP) off-label se koristi kod PTSP-a, posebno za noćne more i poremećaje spavanja — smanjuje prekomjernu simpatičku aktivaciju tokom sna i poboljšava kvalitet sna."
+  },
+  {
+    "text": "Koji se lijek off-label koristi za prevenciju i liječenje perikarditisa?",
+    "options": ["Digoksin", "Tamsulozin", "Kolhicin", "Febuksostat"],
+    "correctIndex": 2,
+    "category": "off-label",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kolhicin se off-label koristi za prevenciju i liječenje akutnog i rekurentnog perikarditisa — smanjuje inflamaciju perikarda i rizik od ponovnih napada; obično 0,5–1 mg dnevno tokom 3–6 mjeseci."
+  },
+  {
+    "text": "Koji regulatorni princip najčešće važi za suplemente (dodatke prehrani) u EU?",
+    "options": ["Registruju se kao lijekovi", "Odobravaju se kroz istu proceduru kao medicinska sredstva", "Ne podliježu nikakvoj regulativi", "Smatraju se hranom i podliježu regulativi o hrani"],
+    "correctIndex": 3,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U EU se suplementi regulišu kao hrana, ne kao lijekovi — potpadaju pod propise o sigurnosti hrane i specifične propise (Direktiva 2002/46/EC, Regulativa 1924/2006 o tvrdnjama, EC 178/2002 o sigurnosti hrane)."
+  },
+  {
+    "text": "Šta su zdravstvene tvrdnje (health claims)?",
+    "options": ["Tvrdnje koje povezuju hranu ili sastojak sa zdravljem ili funkcijom organizma", "Tvrdnje koje opisuju boju, miris i okus proizvoda", "Tvrdnje o cijeni, popustu ili promociji proizvoda", "Tvrdnje o porijeklu sirovina i mjestu proizvodnje"],
+    "correctIndex": 0,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zdravstvene tvrdnje sugerišu da hrana ili sastojak ima pozitivan efekt na zdravlje/funkciju organizma, npr. 'Kalcij doprinosi normalnoj funkciji kostiju' ili 'Vitamin C doprinosi normalnoj funkciji imunološkog sistema'."
+  },
+  {
+    "text": "Šta su prehrambene tvrdnje (nutrition claims)?",
+    "options": ["Tvrdnje da suplement liječi ili prevenira bolest", "Tvrdnje koje navode da proizvod ima posebna nutritivna svojstva", "Tvrdnje o cijeni i promociji proizvoda", "Tvrdnje o porijeklu sirovina"],
+    "correctIndex": 1,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prehrambene tvrdnje navode da proizvod ima određena nutritivna svojstva, npr. 'izvor vitamina C', 'bogato vlaknima', 'bez šećera', 'nizak sadržaj masti', 'visok sadržaj proteina'."
+  },
+  {
+    "text": "Šta je obavezno navesti na deklaraciji suplementa prema EU regulativi?",
+    "options": ["Samo sastojke i njihove količine", "Samo upozorenja za specifične grupe", "Samo informacije o alergenima", "Sastojke i količine, upozorenja, alergene i preporučenu dnevnu dozu (sve navedeno)"],
+    "correctIndex": 3,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Deklaracija mora sadržavati sastojke i njihove količine, upozorenja za specifične grupe (trudnice, dojilje, djeca), informacije o alergenima i preporučenu dnevnu dozu, uz naziv, neto količinu, podatke o proizvođaču, uslove čuvanja te seriju i rok trajanja."
+  },
+  {
+    "text": "Koja je izjava obavezna na suplementima prema EU regulativi?",
+    "options": ["'Dodatak prehrani nije zamjena za raznovrsnu i uravnoteženu prehranu'", "'Garantovano liječi bolest'", "'Koristiti samo uz recept'", "'Samo za bolničku upotrebu'"],
+    "correctIndex": 0,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Izjava 'Dodatak prehrani nije zamjena za raznovrsnu i uravnoteženu prehranu' je obavezna u EU jer suplementi nisu lijekovi i ne liječe bolesti — potrošači moraju biti svjesni da su dodatak, a ne zamjena za uravnoteženu prehranu."
+  },
+  {
+    "text": "Šta prema EU regulativi znači tvrdnja 'bez šećera'?",
+    "options": ["Proizvod ima više od 5 g šećera na 100 g", "Proizvod smije imati maksimalno 0,5 g šećera na 100 g ili 100 mL", "Proizvod ima med umjesto šećera", "Proizvod nema ugljikohidrate"],
+    "correctIndex": 1,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Prema Regulativi (EC) 1924/2006, tvrdnja 'bez šećera' znači da proizvod smije sadržavati maksimalno 0,5 g šećera na 100 g (čvrsti) ili 100 mL (tečni) — praktično bez šećera u značajnoj količini."
+  },
+  {
+    "text": "Koja je najčešća greška u oglašavanju suplemenata?",
+    "options": ["Previše informacija o sastavu", "Navođenje preporučene doze", "Korištenje medicinskih tvrdnji (da proizvod liječi ili prevenira bolest)", "Navođenje alergena"],
+    "correctIndex": 2,
+    "category": "regulativa",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Najčešća greška je predstavljanje suplementa kao da liječi, prevenira ili dijagnostikuje bolest — to je medicinska tvrdnja koja je za suplemente (regulisane kao hrana) strogo zabranjena. Npr. 'liječi prehladu', 'smanjuje pritisak', 'prevenira dijabetes'."
+  }
+]
