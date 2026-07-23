@@ -11,6 +11,12 @@ import { getFirestore } from 'firebase-admin/firestore'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const KEY_PATH = join(__dirname, 'serviceAccountKey.json')
 
+// Uz '--emulator' piše u lokalni Firestore emulator umjesto u pravu bazu.
+if (process.argv.includes('--emulator')) {
+  process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080'
+  console.log('(emulator mod: pišem u lokalni Firestore na portu 8080)')
+}
+
 if (!existsSync(KEY_PATH)) {
   console.error('GREŠKA: nedostaje scripts/serviceAccountKey.json')
   process.exit(1)

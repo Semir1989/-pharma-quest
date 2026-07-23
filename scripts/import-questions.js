@@ -11,14 +11,21 @@ import { readFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { initializeApp, cert } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+
+// Uz '--emulator' skripta piše u lokalni Firestore emulator umjesto u pravu bazu.
+if (process.argv.includes('--emulator')) {
+  process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080'
+  console.log('(emulator mod: pišem u lokalni Firestore na portu 8080)')
+}
+
+const { initializeApp, cert } = await import('firebase-admin/app')
+const { getFirestore } = await import('firebase-admin/firestore')
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const KEY_PATH = join(__dirname, 'serviceAccountKey.json')
 
 // ---- 1. Provjere prije starta ----
-const jsonPath = process.argv[2]
+const jsonPath = process.argv.slice(2).find((a) => a !== '--emulator')
 if (!jsonPath) {
   console.error('GREŠKA: navedi putanju do JSON fajla s pitanjima.')
   console.error('Primjer: npm run uvoz-pitanja -- scripts/pitanja-primjer.json')
@@ -81,26 +88,34 @@ const db = getFirestore()
 // nego ažurira postojeća pitanja (možeš slobodno ispraviti tipfeler i uvesti ponovo).
 const docId = (text) => createHash('sha1').update(text.trim().toLowerCase()).digest('hex').slice(0, 20)
 
-// ---- 4. Upis u serijama (batch po 500, Firestore limit) ----
+// ---- 4. Upis u serijama (batch po 250 pitanja = 500 dokumenata, Firestore limit) ----
+// Etapa 6: pitanje se dijeli na JAVNI dio (questions — bez tačnog odgovora!)
+// i TAJNI dio (questionSecrets — čita ga samo server).
 const col = db.collection('questions')
+const secrets = db.collection('questionSecrets')
 let written = 0
-for (let i = 0; i < questions.length; i += 500) {
+for (let i = 0; i < questions.length; i += 250) {
   const batch = db.batch()
-  for (const q of questions.slice(i, i + 500)) {
-    batch.set(col.doc(docId(q.text)), {
+  for (const q of questions.slice(i, i + 250)) {
+    const id = docId(q.text)
+    batch.set(col.doc(id), {
       text: q.text.trim(),
       options: q.options.map((o) => String(o).trim()),
-      correctIndex: q.correctIndex,
       category: q.category.trim().toLowerCase(),
       difficulty: q.difficulty,
       points: q.points,
-      explanation: q.explanation.trim(),
       active: true,
       updatedAt: new Date(),
+      // Napomena: set() ZAMJENJUJE cijeli dokument, pa stari correctIndex/
+      // explanation nestaju iz javnog dokumenta (migracija starih uvoza).
+    })
+    batch.set(secrets.doc(id), {
+      correctIndex: q.correctIndex,
+      explanation: q.explanation.trim(),
     })
   }
   await batch.commit()
-  written += Math.min(500, questions.length - i)
+  written += Math.min(250, questions.length - i)
   console.log(`  ...upisano ${written}/${questions.length}`)
 }
 

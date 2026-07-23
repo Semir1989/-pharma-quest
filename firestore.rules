@@ -36,5 +36,16 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+
+    // 'questionSecrets' — tačni odgovori i objašnjenja (Etapa 6).
+    // NIKO s klijenta; čita ih isključivo server (Cloud Functions).
+    match /questionSecrets/{questionId} {
+      allow read, write: if false;
+    }
+
+    // 'quizSessions' — aktivne kviz sesije (Etapa 6). Samo server.
+    match /quizSessions/{sessionId} {
+      allow read, write: if false;
+    }
   }
 }
