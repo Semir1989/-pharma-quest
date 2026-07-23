@@ -1,0 +1,182 @@
+[
+  {
+    "text": "Uz koji lijek treba izbjegavati primjenu melatonina?",
+    "options": ["Zolpidem", "Fluvoksamin", "Karbamazepin", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Uz zolpidem/benzodiazepine melatonin daje pojačanu sedaciju; fluvoksamin inhibira CYP1A2/CYP2C19 i podiže koncentraciju melatonina; uz klopidogrel/antikoagulanse raste rizik krvarenja; uz karbamazepin (epilepsija) može provocirati napade — sve navedeno je tačno."
+  },
+  {
+    "text": "Koji suplement može povećati rizik od hipoglikemije kod pacijenata na antidijabeticima i uticati na krvni pritisak kod pacijenata na antihipertenzivima?",
+    "options": ["Ginseng", "Melatonin", "Probiotici", "Vitamin B12"],
+    "correctIndex": 0,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Ginseng povećava lučenje inzulina, poboljšava osjetljivost na inzulin i usporava apsorpciju ugljikohidrata — uz antidijabetike može izazvati hipoglikemiju. Stupa i u varijabilne interakcije s antihipertenzivima (može ih pojačati vazodilatacijom ili oslabiti simpatičkom stimulacijom)."
+  },
+  {
+    "text": "U kojoj kombinaciji dolazi do smanjene ili sporije apsorpcije antibiotika?",
+    "options": ["Cinka i fluorohinolona", "Magnezija i tetraciklina", "Antacida s aluminijem i azitromicina", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Cink helira fluorohinolone, magnezij helira tetracikline (smanjena apsorpcija — razmak 2–6 h), a aluminij iz antacida usporava apsorpciju azitromicina. Zato se preporučuje vremenski razmak pri istovremenoj primjeni — sve navedeno je tačno."
+  },
+  {
+    "text": "Uz koji lijek treba izbjegavati primjenu ginkgo bilobe?",
+    "options": ["Varfarin", "Naproksen", "Amlodipin", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Ginkgo inhibira agregaciju trombocita — uz varfarin i uz NSAIL (naproksen) povećava rizik od krvarenja; uz amlodipin/antihipertenzive može uzrokovati oscilacije pritiska; može smanjiti osjetljivost tkiva na inzulin — sve navedeno je tačno."
+  },
+  {
+    "text": "Koja je tvrdnja o kantarionu (gospina trava) NETAČNA?",
+    "options": ["Indukuje enzime CYP3A4, CYP2C9, CYP1A2 i P-glikoprotein", "S antikoagulansima može doći do povećanog rizika od krvarenja", "S oralnim kontraceptivima može doći do neplanirane trudnoće", "S imunosupresivima može doći do odbacivanja transplantata"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Netačna je tvrdnja o povećanom riziku krvarenja: kantarion je induktor CYP2C9 pa SMANJUJE koncentraciju varfarina i njegov antikoagulantni efekt (rizik tromboze), a ne povećava krvarenje. Indukcijom enzima smanjuje i efekt kontraceptiva, imunosupresiva i antiretrovirusnih lijekova."
+  },
+  {
+    "text": "Pacijent uzima tiazidni diuretik i želi početi uzimati vitamin D. Koja je tvrdnja tačna?",
+    "options": ["Vitamin D smanjuje antihipertenzivni efekt tiazida", "Vitamin D uzrokuje hipokalijemiju kod pacijenata na tiazidima", "Vitamin D može povećati rizik od hiperkalcemije kod pacijenata na tiazidnim diureticima", "Vitamin D i tiazidni diuretici se ne smiju koristiti zajedno"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tiazidi smanjuju izlučivanje kalcija urinom, a vitamin D povećava apsorpciju kalcija iz crijeva — zajedno mogu povisiti kalcij u krvi (rizik hiperkalcemije). Kod ovih pacijenata treba pratiti koncentraciju kalcija."
+  },
+  {
+    "text": "Pacijent uzima levodopu zbog Parkinsonove bolesti i želi početi uzimati vitamin B6. Koja je tvrdnja tačna?",
+    "options": ["Vitamin B6 može povećati efekt levodope", "Vitamin B6 nema nikakvu interakciju s levodopom", "Vitamin B6 potpuno inhibira levodopu čak i uz karbidopu", "Vitamin B6 može smanjiti efekt levodope ako se uzima bez karbidope ili benzerazida"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vitamin B6 povećava perifernu aktivnost dopa-dekarboksilaze pa se levodopa pretvara u dopamin izvan mozga, smanjujući terapijski efekt. Uz karbidopu ili benzerazid (inhibitore dopa-dekarboksilaze) ova interakcija praktično nestaje."
+  },
+  {
+    "text": "Pacijent s cirozom jetre prima lijek koji se metabolizuje u jetri. Koja je promjena najvjerovatnija?",
+    "options": ["Povećanje koncentracije lijeka u krvi", "Povećanje volumena distribucije lijeka", "Povećanje renalnog klirensa lijeka", "Smanjenje koncentracije lijeka u krvi"],
+    "correctIndex": 0,
+    "category": "farmakokinetika",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod ciroze je metabolizam lijekova koji se razgrađuju u jetri smanjen, pa koncentracija lijeka u krvi raste, uz povećan rizik od toksičnosti."
+  },
+  {
+    "text": "Pacijent već prima statin metabolizovan preko CYP3A4 i uvodi se jak inhibitor CYP3A4. Koja je promjena najvjerovatnija?",
+    "options": ["Koncentracija statina u krvi opada", "Koncentracija statina u krvi raste", "Koncentracija statina se ne mijenja", "Koncentracija inhibitora CYP3A4 opada"],
+    "correctIndex": 1,
+    "category": "farmakokinetika",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Jak inhibitor CYP3A4 (npr. klaritromicin, ketokonazol, verapamil) smanjuje metabolizam statina (npr. simvastatin, atorvastatin), pa mu koncentracija raste — povećava se rizik od miopatije i rabdomiolize."
+  },
+  {
+    "text": "Kod kontinuirane IV infuzije, koji farmakokinetički parametar određuje vrijeme do postizanja terapijske (steady-state) koncentracije?",
+    "options": ["Volumen distribucije", "Bioraspoloživost", "Poluvrijeme eliminacije", "Klirens"],
+    "correctIndex": 2,
+    "category": "farmakokinetika",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vrijeme do steady state zavisi isključivo od poluvremena eliminacije — potrebno je oko 5 poluvremena da se postigne ~95% terapijske koncentracije."
+  },
+  {
+    "text": "Pacijent prima lijek oralno, ali je koncentracija u krvi manja od očekivane. Najvjerovatniji razlog je:",
+    "options": ["Smanjen volumen distribucije", "Smanjen renalni klirens", "Dugo poluvrijeme eliminacije", "Efekt prvog prolaska lijeka kroz jetru"],
+    "correctIndex": 3,
+    "category": "farmakokinetika",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod oralne primjene najčešći razlog niže koncentracije je efekt prvog prolaska (first-pass) — značajan dio lijeka se razgradi u jetri prije nego uđe u sistemsku cirkulaciju."
+  },
+  {
+    "text": "Dehidrirani pacijent prima lijek koji se dominantno eliminiše bubrezima. Koja je promjena najvjerovatnija?",
+    "options": ["Smanjuje se klirens lijeka", "Povećava se klirens lijeka", "Povećava se volumen distribucije lijeka", "Smanjuje se volumen distribucije lijeka"],
+    "correctIndex": 0,
+    "category": "farmakokinetika",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Dehidracija smanjuje renalnu perfuziju i glomerularnu filtraciju, pa se klirens lijeka koji se eliminiše bubrezima smanjuje — lijek se duže zadržava, koncentracija raste i raste rizik od toksičnosti."
+  },
+  {
+    "text": "Šta znači ako lijek ima mali volumen distribucije?",
+    "options": ["Lijek se akumulira u masnom tkivu", "Lijek ostaje uglavnom u krvi (intravaskularnom prostoru)", "Lijek se brzo eliminiše", "Lijek ima značajan efekt prvog prolaska kroz jetru"],
+    "correctIndex": 1,
+    "category": "farmakokinetika",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mali volumen distribucije znači da se lijek ne raspoređuje značajno u tkiva, već ostaje pretežno u intravaskularnom prostoru (krvi)."
+  },
+  {
+    "text": "Koji farmakokinetički parametar omogućava doziranje lijeka jednom dnevno?",
+    "options": ["Mali volumen distribucije", "Velika bioraspoloživost", "Dugo poluvrijeme eliminacije", "Mali klirens"],
+    "correctIndex": 2,
+    "category": "farmakokinetika",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Dugo poluvrijeme eliminacije znači da lijek dovoljno dugo ostaje u organizmu i održava terapijsku koncentraciju, pa se može davati jednom dnevno. Lijekovi s kratkim poluvremenom zahtijevaju više doza dnevno."
+  },
+  {
+    "text": "Koji se lijek koristi za brzo ublažavanje adrenergičkih simptoma hipertireoze?",
+    "options": ["Tiamazol", "Propiltiouracil", "Levotiroksin", "Propranolol"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Beta-blokator propranolol brzo ublažava adrenergičke simptome (nervozu, palpitacije, tremor, intoleranciju toplote), posebno u početku liječenja dok se ne ispolje efekti tioamida. Savjetuje se kod svih simptomatskih pacijenata i pri pulsu >90/min u miru."
+  },
+  {
+    "text": "Kada se u trudnoći preporučuje prelazak s propiltiouracila na tiamazol?",
+    "options": ["U drugom i trećem trimestru", "U prvom trimestru", "Prije začeća", "Tokom porođaja"],
+    "correctIndex": 0,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "U prvom trimestru se koristi propiltiouracil (tiamazol može biti teratogen), a u drugom i trećem trimestru se prelazi na tiamazol zbog manjeg rizika od hepatotoksičnosti (koja prati dugotrajni propiltiouracil) i jednostavnijeg režima."
+  },
+  {
+    "text": "Koji tioamid ima prednost kod dojenja ako je majka hipertireoidna?",
+    "options": ["Propiltiouracil", "Tiamazol", "Propranolol", "Jodidi"],
+    "correctIndex": 1,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tiamazol je lijek izbora tokom dojenja jer prelazi u mlijeko u malim količinama, ne izaziva klinički značajne promjene funkcije štitne žlijezde novorođenčeta (uz najmanju efikasnu dozu) i manje je hepatotoksičan od propiltiouracila."
+  },
+  {
+    "text": "Koji je neželjeni efekt razlog za trajni prekid terapije tioamidima?",
+    "options": ["Blagi osip", "Glavobolja", "Agranulocitoza", "Mučnina"],
+    "correctIndex": 2,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Agranulocitoza (nagli pad granulocita) je razlog za prekid tioamida. Simptomi (visoka temperatura, grlobolja) razvijaju se naglo, pa se tada provjeri krvna slika; rutinska provjera nije korisna, ali krvnu sliku treba provjeriti prije početka terapije."
+  },
+  {
+    "text": "Koja je tvrdnja o oftalmopatiji u hipertireozi tačna?",
+    "options": ["Simptomi se mogu ublažiti vještačkim suzama i tamnim naočalama", "Periorbitalni edem se ublažava višim uzglavljem tokom spavanja ili diureticima", "Kod teške oftalmopatije koriste se kortikosteroidi (uz mogući ciklosporin)", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod blage oftalmopatije simptomi obično regrediraju nakon postizanja eutiroidnog stanja; vještačke suze i tamne naočale ublažavaju tegobe, više uzglavlje i blagi diuretici smanjuju edem, a kod teške oftalmopatije se koriste kortikosteroidi (ponekad uz ciklosporin) — sve navedeno je tačno."
+  },
+  {
+    "text": "Koliko je vremena obično potrebno da se pojavi klinički efekt tioamida?",
+    "options": ["3–4 sedmice", "Odmah nakon prve doze", "1–2 dana", "5–6 dana"],
+    "correctIndex": 0,
+    "category": "endokrinologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tioamidi inhibiraju sintezu novih hormona, ali ne djeluju na već pohranjene zalihe. Zato se kliničko poboljšanje vidi tek nakon 3–4 sedmice, kada se postojeće zalihe hormona iscrpe — važno je da pacijenti to znaju da ne odustanu od terapije."
+  }
+]
