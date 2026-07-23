@@ -1,0 +1,191 @@
+[
+  {
+    "text": "U koje doba dana / uz šta se najbolje uzima vitamin D?",
+    "options": ["Uz obrok koji sadrži masnoće", "Neposredno prije spavanja", "Tri sata prije spavanja", "U podne, natašte"],
+    "correctIndex": 0,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Vitamin D je liposolubilan, pa se najbolje apsorbuje uz obrok koji sadrži masnoće (npr. doručak s jajima). Uzimanje natašte smanjuje apsorpciju."
+  },
+  {
+    "text": "U koje doba dana se najbolje uzima vitamin C?",
+    "options": ["Navečer, prije spavanja", "Ujutro, uz obrok", "Tokom noći kada se probudite", "Uvijek uz mliječne proizvode"],
+    "correctIndex": 1,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Vitamin C (hidrosolubilan) najbolje se uzima ujutro uz obrok — jača imunitet i daje energiju, a uzimanje uz obrok smanjuje moguću iritaciju želuca koju može izazvati ako se uzme natašte."
+  },
+  {
+    "text": "U koje doba dana se preporučuje uzimati magnezij?",
+    "options": ["Ujutro, natašte", "Uvijek u podne", "Navečer, prije spavanja", "Neposredno poslije konzumacije kafe"],
+    "correctIndex": 2,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Magnezij se uzima navečer, prije spavanja, jer ima opuštajući efekt na mišiće i živce, pa pomaže boljem snu i opuštanju organizma."
+  },
+  {
+    "text": "U koje doba dana se najbolje uzimaju multivitaminski preparati?",
+    "options": ["Navečer, prije spavanja", "Samo tokom večere", "Samo poslije fizičke aktivnosti", "Ujutro, uz obrok"],
+    "correctIndex": 3,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Multivitamini se uzimaju ujutro uz obrok (smanjuje iritaciju želuca), a organizam tokom dana bolje iskoristi nutrijente. Navečer mogu uzrokovati blagi stimulativni efekt zbog vitamina B i poremetiti san."
+  },
+  {
+    "text": "U koje doba dana se najbolje uzima B kompleks?",
+    "options": ["Ujutro, uz obrok", "Navečer, prije spavanja", "Oko 15 sati", "Neposredno prije konzumacije kafe"],
+    "correctIndex": 0,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "B kompleks se uzima ujutro uz obrok jer vitamini B aktiviraju metabolizam i podržavaju energiju i koncentraciju tokom dana. Navečer mogu poremetiti san zbog blagog stimulativnog efekta."
+  },
+  {
+    "text": "U koje doba dana se preporučuje uzimati kalcij?",
+    "options": ["Ujutro, natašte", "Navečer, uz obrok", "Uvijek zajedno s vitaminom D", "Oko 15 sati"],
+    "correctIndex": 1,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Kalcij se uzima navečer uz obrok — pomaže opuštanju mišića i zdravlju kostiju u fazi noćnog oporavka, a uz obrok jer mu treba želučana kiselina za apsorpciju."
+  },
+  {
+    "text": "U koje doba dana se najbolje uzima cink?",
+    "options": ["Navečer, uz mlijeko", "Uvijek u podne", "Ujutro, natašte", "Navečer, prije spavanja"],
+    "correctIndex": 2,
+    "category": "suplementi",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Cink se najbolje apsorbuje ujutro natašte, najmanje sat prije ili dva sata poslije obroka — jer mliječni proizvodi i velike količine vlakana smanjuju njegovu apsorpciju."
+  },
+  {
+    "text": "Koji je lijek za tretman dijareje kontraindikovan u trudnoći?",
+    "options": ["Loperamid", "Oralni rehidratacijski rastvori", "Aktivni ugalj", "Bizmut subsalicilat"],
+    "correctIndex": 3,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Bizmut subsalicilat je kontraindikovan jer sadrži salicilate (rizik krvarenja, zatvaranje ductus arteriosus). Prva linija su oralni rehidratacijski rastvori; probiotici i aktivni ugalj su sigurni, a loperamid samo kratkotrajno i uz oprez."
+  },
+  {
+    "text": "Koji se laksativ smatra sigurnim kod hemoroida i bolne defekacije u trudnoći?",
+    "options": ["Natrij dokuzat", "Sena", "Bisakodil", "Natrij pikosulfat"],
+    "correctIndex": 0,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Natrij dokuzat je omekšivač stolice — povlači vodu u stolicu bez snažnih kontrakcija crijeva, čini defekaciju manje bolnom i minimalno se apsorbuje. Stimulativni laksativi (sena, bisakodil, pikosulfat) izazivaju grčeve i kontrakcije materice."
+  },
+  {
+    "text": "Koji je lijek prvi izbor za tretman dispepsije u trudnoći (kada su potrebni lijekovi)?",
+    "options": ["Omeprazol", "Antacidi", "Famotidin", "Misoprostol"],
+    "correctIndex": 1,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Nakon nefarmakoloških mjera, antacidi su sigurni tokom cijele trudnoće i prvi su izbor. H2 antagonisti (famotidin) i IPP (omeprazol) koriste se ako antacidi nisu dovoljni. Misoprostol je kontraindikovan (indukuje kontrakcije materice)."
+  },
+  {
+    "text": "Koji antitusik trudnica može koristiti za suhi, nadražajni kašalj?",
+    "options": ["Kodein", "Noskapin", "Dekstrometorfan", "Levodropropizin"],
+    "correctIndex": 2,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Dekstrometorfan je siguran antitusik za kratkotrajnu primjenu u trudnoći kod suhog kašlja. Kodein nosi rizik zavisnosti i respiratornih komplikacija kod fetusa, a sigurnost noskapina i levodropropizina nije dovoljno proučena."
+  },
+  {
+    "text": "Koji ekspektorans trudnica može koristiti za produktivni kašalj?",
+    "options": ["Ambroksol", "N-acetilcistein", "Dornaza alfa", "Gvaifenezin"],
+    "correctIndex": 3,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Gvaifenezin je siguran ekspektorans za kratkotrajnu primjenu u trudnoći. Sigurnost ambroksola nije dovoljno proučena, za N-acetilcistein su podaci ograničeni, a dornaza alfa se koristi samo kod specifičnih indikacija (npr. cistična fibroza)."
+  },
+  {
+    "text": "Šta se smatra najsigurnijom opcijom za alergijski rinitis u prvom trimestru trudnoće?",
+    "options": ["Lokalni antihistaminici (nazalni sprejevi)", "Oralni antihistaminici", "Dekongestivi", "Oralni steroidi"],
+    "correctIndex": 0,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Lokalni antihistaminici (nazalni sprejevi) imaju minimalnu apsorpciju u krv i smatraju se najsigurnijima. Dekongestivi u prvom trimestru nose rizik od malformacija; oralni steroidi su rezervisani za teže slučajeve, uz nadzor."
+  },
+  {
+    "text": "U kojem su periodu trudnoće nesteroidni antiinflamatorni lijekovi (NSAIL) kontraindikovani?",
+    "options": ["U prvom trimestru trudnoće", "U trećem trimestru trudnoće", "U drugom trimestru trudnoće", "Tokom cijele trudnoće"],
+    "correctIndex": 1,
+    "category": "trudnoca-dojenje",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "NSAIL su kontraindikovani u trećem trimestru — inhibicijom prostaglandina mogu izazvati prijevremeno zatvaranje ductus arteriosus, fetalnu plućnu hipertenziju, smanjenu renalnu perfuziju i oligohidramnion. Lijek izbora je paracetamol, siguran u svim trimestrima."
+  },
+  {
+    "text": "Koja se biljka najčešće koristi protiv mučnine i povraćanja u trudnoći?",
+    "options": ["Kantarion (Hypericum perforatum)", "Aloe vera (Aloe barbadensis)", "Đumbir (Zingiber officinale)", "Kadulja (Salvia officinalis)"],
+    "correctIndex": 2,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Đumbir ima dokaze o efikasnosti protiv mučnine i povraćanja u trudnoći (posebno prvi trimestar). Smatra se sigurnim u malim do umjerenim dozama (do 1–1,5 g suhog đumbira dnevno), uz oprez pri istovremenoj upotrebi antikoagulanasa."
+  },
+  {
+    "text": "Zašto trudnice trebaju izbjegavati ginseng (Panax ginseng)?",
+    "options": ["Uzrokuje konstipaciju", "Povećava rizik od anemije", "Usporava cirkulaciju", "Djeluje hormonski (estrogensko djelovanje)"],
+    "correctIndex": 3,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ginseng ima estrogensko djelovanje i može uticati na hormonsku ravnotežu, pa je opasan u trudnoći zbog mogućeg uticaja na razvoj fetusa."
+  },
+  {
+    "text": "Zašto se aloe vera (Aloe barbadensis) oralno ne preporučuje trudnicama?",
+    "options": ["Povećava rizik od pobačaja jer antrahinoni izazivaju kontrakcije maternice", "Djeluje kao snažan diuretik", "Uzrokuje konstipaciju", "Djeluje depresivno na centralni nervni sistem"],
+    "correctIndex": 0,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Aloe vera sadrži antrahinone koji djeluju kao snažni laksativi i mogu izazvati kontrakcije maternice te povećati rizik od pobačaja ili prijevremenog poroda. Topikalni preparati se smatraju sigurnim jer se slabo apsorbuju."
+  },
+  {
+    "text": "Zašto se trudnicama ne preporučuju kadulja (Salvia officinalis) i pelin (Artemisia absinthium)?",
+    "options": ["Uzrokuju gubitak kalcija", "Mogu izazvati pobačaj jer sadrže tujon", "Povećavaju apetit", "Smanjuju krvni pritisak"],
+    "correctIndex": 1,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kadulja i pelin sadrže tujon, koji je neurotoksičan i može stimulisati kontrakcije materice — rizik od pobačaja ili prijevremenog poroda. Topikalnu kadulju treba koristiti oprezno i razrijeđeno, a pelin nikako."
+  },
+  {
+    "text": "Koji se oblik biljnog preparata smatra najrizičnijim u trudnoći?",
+    "options": ["Čaj", "Topikalna krema", "Tinktura", "Aromaterapijsko ulje"],
+    "correctIndex": 2,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tinktura je koncentrovani biljni ekstrakt (obično u alkoholu) — visoka koncentracija aktivnih supstanci nosi veći rizik od toksičnih efekata, a sadržaj alkohola može štetiti fetusu, posebno u ranoj trudnoći."
+  },
+  {
+    "text": "Zašto treba izbjegavati preparate koji sadrže efedru (Ephedra sinica) u trudnoći?",
+    "options": ["Povećava nesanicu", "Uzrokuje konstipaciju", "Povećava rizik od krvarenja", "Može uzrokovati hipertenziju i tahikardiju"],
+    "correctIndex": 3,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Efedra snažno stimuliše kardiovaskularni sistem — povećava krvni pritisak i srčani ritam, pa nosi velik rizik od pobačaja ili prijevremenog poroda i komplikacija za trudnicu i fetus."
+  },
+  {
+    "text": "Koja je biljka povezana s povećanim rizikom od krvarenja pri porodu?",
+    "options": ["Češnjak (Allium sativum)", "Nana (Mentha piperita)", "Kamilica (Matricaria chamomilla)", "Valerijana (Valeriana officinalis)"],
+    "correctIndex": 0,
+    "category": "fitoterapija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Češnjak u visokim dozama ima antikoagulantno djelovanje, pa povećava rizik od krvarenja pri porodu. Nana, kamilica i kopriva se smatraju umjereno sigurnim u trudnoći uz umjerene doze."
+  }
+]
