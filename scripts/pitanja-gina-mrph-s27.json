@@ -1,0 +1,65 @@
+[
+  {
+    "text": "Zašto GINA više ne preporučuje liječenje astme samo kratkodjelujućim beta-2 agonistima (SABA)?",
+    "options": ["Povećavaju rizik od teških egzacerbacija i ne liječe upalu disajnih puteva", "Nemaju bronhodilatatorni efekt", "Izazivaju trajnu tahikardiju kod svih pacijenata", "Kontraindikovani su kod djece"],
+    "correctIndex": 0,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "SABA (npr. salbutamol) pružaju samo brzo ublažavanje bronhokonstrikcije, ali ne djeluju na osnovni mehanizam bolesti — hroničnu upalu disajnih puteva — a monoterapija njima povećava rizik od teških egzacerbacija. Zato ih GINA više ne preporučuje kao samostalnu terapiju."
+  },
+  {
+    "text": "Šta predstavlja MART (Maintenance and Reliever Therapy) pristup u liječenju astme?",
+    "options": ["Samo kratkodjelujući beta-2 agonist po potrebi", "Inhalacioni glukokortikoid-formoterol inhalator", "Inhalacioni glukokortikoid jednom sedmično", "Monoterapiju dugodjelujućim beta-2 agonistom"],
+    "correctIndex": 1,
+    "category": "astma",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "MART znači da pacijent koristi isti inhalator koji sadrži inhalacioni kortikosteroid + formoterol i kao redovnu kontrolnu terapiju i kao terapiju po potrebi. Zbog brzog početka djelovanja formoterola i istovremenog antiinflamatornog djelovanja kortikosteroida, ovaj pristup smanjuje rizik od teških egzacerbacija u odnosu na SABA."
+  },
+  {
+    "text": "Koji lijek se NE smije koristiti kao monoterapija u liječenju astme?",
+    "options": ["Budesonid", "Flutikazon", "Salmeterol", "Beklometazon"],
+    "correctIndex": 2,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Salmeterol je dugodjelujući beta-2 agonist (LABA) i ne smije se koristiti kao monoterapija — djeluje na bronhodilataciju, ali ne liječi upalu disajnih puteva. LABA bez inhalacionog kortikosteroida povezan je s povećanim rizikom od teških egzacerbacija. Ostali navedeni su inhalacioni kortikosteroidi."
+  },
+  {
+    "text": "Koliko često GINA preporučuje procjenu kontrole astme nakon uvođenja ili promjene terapije?",
+    "options": ["Nakon 24 sata", "Nakon jedne godine", "Nakon šest mjeseci isključivo", "Nakon 1–3 mjeseca"],
+    "correctIndex": 3,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Nakon uvođenja ili promjene terapije kontrolu astme treba procijeniti približno nakon 1–3 mjeseca — da se utvrdi jesu li simptomi pod kontrolom, je li smanjen rizik od egzacerbacija, koristi li pacijent inhalator pravilno te treba li pojačati (step-up) ili smanjiti (step-down) terapiju."
+  },
+  {
+    "text": "Koji biomarker može pomoći pri odabiru biološke terapije kod teške astme?",
+    "options": ["Eozinofili", "Hemoglobin", "Trombociti", "Kreatinin"],
+    "correctIndex": 0,
+    "category": "astma",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Broj eozinofila u krvi je pokazatelj tip-2 upale i pomaže pri odabiru anti-eozinofilnih bioloških lijekova (npr. anti-IL-5/IL-5R terapije). Uz eozinofile, važni su i FeNO (frakcija izdahnutog azot-monoksida) te IgE (kod alergijske astme)."
+  },
+  {
+    "text": "Šta se preporučuje kod teške astme koja nije kontrolisana maksimalnom inhalacijskom terapijom uz dobru adherenciju?",
+    "options": ["Dugotrajna primjena antibiotika", "Procjena za biološku terapiju", "Samo povećanje doze kratkodjelujućih beta-2 agonista", "Teofilin kao prvi izbor"],
+    "correctIndex": 1,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod teške astme nekontrolisane maksimalnom inhalacijskom terapijom preporučuje se procjena fenotipa (eozinofilna, alergijska, T2-upalna), određivanje biomarkera (eozinofili, FeNO, IgE) i razmatranje biološke terapije kod odgovarajućih pacijenata."
+  },
+  {
+    "text": "Koja tvrdnja o inhalacijskoj tehnici kod astme je tačna?",
+    "options": ["Dovoljno ju je provjeriti pri prvom izdavanju lijeka", "Nije važna ako pacijent nema simptome", "Treba je procijeniti pri svakoj kontroli", "Važna je samo kod djece"],
+    "correctIndex": 2,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pravilna inhalacijska tehnika je ključna — nepravilna upotreba smanjuje dospijevanje lijeka u pluća, dovodi do lošije kontrole i prividnog neuspjeha terapije. Prema GINA smjernicama, tehniku treba provjeravati i korigovati pri svakoj posjeti/kontroli, zajedno s procjenom adherencije."
+  }
+]
