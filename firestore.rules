@@ -5,6 +5,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Admin = korisnik s custom claimom admin:true (postavi-admina.js).
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     // 'users' dokumenti
     match /users/{userId} {
       // Svaki prijavljen korisnik može čitati profile (za leaderboard/javne profile).
@@ -26,35 +31,36 @@ service cloud.firestore {
     // koja ide preko Admin SDK-a i zaobilazi ova pravila.
     match /questions/{questionId} {
       allow read: if request.auth != null;
-      allow write: if false;
+      allow write: if isAdmin(); // admin panel; inače uvoz preko Admin SDK-a
     }
 
-    // 'config' — konfiguracija igre (XP kriva itd., Modul 5).
-    // Čitanje za prijavljene; pisanje samo admin skriptom (Admin SDK).
+    // 'config' — konfiguracija igre (XP kriva, survival prozor...).
+    // Čitanje za prijavljene; piše admin (panel) ili Admin SDK.
     match /config/{docId} {
       allow read: if request.auth != null;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // 'tasks' — definicije dnevnih/sedmičnih/mjesečnih taskova (Modul 6).
-    // Čitanje za prijavljene; pisanje samo admin skriptom (Admin SDK).
+    // Čitanje za prijavljene; piše admin (panel) ili Admin SDK.
     match /tasks/{taskId} {
       allow read: if request.auth != null;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // 'badges' — definicije bedževa (achievements).
     // Čitanje za prijavljene; dodjelu (users/{uid}.badges) radi ISKLJUČIVO
-    // server (Cloud Functions, awardBadges), koji zaobilazi ova pravila.
+    // server (Cloud Functions, awardBadges). Definicije piše admin (panel).
     match /badges/{badgeId} {
       allow read: if request.auth != null;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // 'questionSecrets' — tačni odgovori i objašnjenja (Etapa 6).
-    // NIKO s klijenta; čita ih isključivo server (Cloud Functions).
+    // Čita ih server (Cloud Functions). Admin ih čita/mijenja iz panela da
+    // ispravi pogrešan tačan odgovor; obični klijent NEMA pristup.
     match /questionSecrets/{questionId} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
     }
 
     // 'quizSessions' — aktivne kviz sesije (Etapa 6). Samo server.

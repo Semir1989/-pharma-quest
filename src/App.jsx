@@ -15,6 +15,7 @@ import Klan from './pages/Klan'
 import Profil from './pages/Profil'
 import Leaderboard from './pages/Leaderboard'
 import JavniProfil from './pages/JavniProfil'
+import Admin from './pages/Admin'
 
 function App() {
   return (
@@ -34,6 +35,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DovrsiProfil />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin panel (prijavljen + admin claim; bez bottom nav) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
                 </ProtectedRoute>
               }
             />

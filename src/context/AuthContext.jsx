@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true) // učitavanje auth stanja
   const [profileLoading, setProfileLoading] = useState(true) // učitavanje profila
+  const [isAdmin, setIsAdmin] = useState(false) // custom claim admin:true
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -22,6 +23,14 @@ export function AuthProvider({ children }) {
       // bi ProtectedRoute pomislio "nema profila" i pogrešno redirektovao na
       // /dovrsi-profil prije nego profil stigne.
       setProfileLoading(true)
+      // Admin ovlast iz custom claima (postavi-admina.js).
+      if (u) {
+        u.getIdTokenResult()
+          .then((res) => setIsAdmin(res.claims.admin === true))
+          .catch(() => setIsAdmin(false))
+      } else {
+        setIsAdmin(false)
+      }
     })
     return unsubscribe
   }, [])
@@ -48,7 +57,7 @@ export function AuthProvider({ children }) {
   }, [user])
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, profileLoading }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileLoading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

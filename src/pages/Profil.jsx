@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { useAuth } from '../context/AuthContext'
@@ -7,7 +8,7 @@ import { getBadges } from '../services/badges'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 
 export default function Profil() {
-  const { profile } = useAuth()
+  const { profile, isAdmin } = useAuth()
   const [badges, setBadges] = useState([])
 
   useEffect(() => {
@@ -126,6 +127,21 @@ export default function Profil() {
           </div>
         )}
       </section>
+
+      {isAdmin && (
+        <div className="mx-4 mt-4">
+          <Link
+            to="/admin"
+            className="flex items-center justify-between rounded-2xl bg-slate-900 p-4 text-white shadow-sm active:bg-black"
+          >
+            <span className="flex items-center gap-3">
+              <span className="text-xl">🛠️</span>
+              <span className="font-bold">Admin panel</span>
+            </span>
+            <span className="text-sm font-bold text-amber-300">Otvori →</span>
+          </Link>
+        </div>
+      )}
 
       <div className="px-4 py-6">
         <button
