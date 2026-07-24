@@ -9,6 +9,7 @@
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { setGlobalOptions } from 'firebase-functions/v2'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
@@ -476,6 +477,257 @@ async function addWeekendXp(uid, delta) {
     xp: (cur?.xp || 0) + delta,
   }))
 }
+
+// ---------------------------------------------------------------------------
+// 1v1 DUEL TURNIR (Faza 2, korak C) — bracket single-elimination, async dueli
+// Prijave [regOpenAt, regCloseAt] → bracket (nasumično) → runde s rokovima.
+// tournamentTick (scheduled) zatvara runde: veći skor prolazi, walkover ako
+// protivnik ne odigra. Skor protivnika je skriven do zatvaranja runde.
+// ---------------------------------------------------------------------------
+const DUEL_QUESTIONS = 10
+const DUEL_WINNER_BONUS = 500
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// Prijava na duel turnir (unutar prozora prijava).
+export const registerForDuel = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const cfg = await getTournamentConfig()
+  if (!cfg || !cfg.enabled || !cfg.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const now = Date.now()
+  if (cfg.regOpenAt && now < cfg.regOpenAt) throw new HttpsError('failed-precondition', 'Prijave još nisu otvorene.')
+  if (cfg.regCloseAt && now > cfg.regCloseAt) throw new HttpsError('failed-precondition', 'Prijave su zatvorene.')
+  const us = await db.doc(`users/${uid}`).get()
+  const p = us.exists ? us.data() : {}
+  await db.doc(`tournaments/${cfg.key}/participants/${uid}`).set(
+    { name: p.displayName || 'Farmaceut', avatar: p.avatar || 'a1', registeredAt: FieldValue.serverTimestamp() },
+    { merge: true }
+  )
+  return { ok: true }
+})
+
+// Generisanje bracketa iz prijavljenih (na kraju prozora prijava).
+async function buildBracket(tid, cfg) {
+  const tRef = db.doc(`tournaments/${tid}`)
+  const partSnap = await db.collection(`tournaments/${tid}/participants`).get()
+  let participants = partSnap.docs.map((d) => d.id)
+  if (participants.length < 2) {
+    await tRef.set(
+      { status: 'finished', key: tid, participantCount: participants.length, cancelled: true, builtAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    )
+    return
+  }
+  participants = shuffle(participants)
+  let size = 2
+  while (size < participants.length) size *= 2
+  const rounds = Math.round(Math.log2(size))
+  const seats = [...participants, ...Array(size - participants.length).fill(null)]
+
+  const qids = (await db.collection('questions').where('active', '==', true).get()).docs.map((d) => d.id)
+  const pickQs = () => shuffle(qids).slice(0, DUEL_QUESTIONS)
+
+  const batch = db.batch()
+  const mcol = db.collection(`tournaments/${tid}/matches`)
+  for (let r = 1; r <= rounds; r++) {
+    const count = size / 2 ** r
+    for (let s = 0; s < count; s++) {
+      const p1 = r === 1 ? seats[s * 2] || null : null
+      const p2 = r === 1 ? seats[s * 2 + 1] || null : null
+      batch.set(mcol.doc(`r${r}s${s}`), {
+        round: r, slot: s, p1, p2, questionIds: pickQs(),
+        p1Score: null, p2Score: null, p1Played: false, p2Played: false,
+        winner: null, status: 'pending',
+      })
+    }
+  }
+  const start = cfg.openAt || Date.now()
+  const end = cfg.closeAt || Date.now() + 48 * 3600000
+  const step = (end - start) / rounds
+  const roundDeadlines = Array.from({ length: rounds }, (_, i) => Math.round(start + step * (i + 1)))
+  batch.set(
+    tRef,
+    { status: 'active', key: tid, rounds, size, participantCount: participants.length, currentRound: 1, roundDeadlines, builtAt: FieldValue.serverTimestamp() },
+    { merge: true }
+  )
+  await batch.commit()
+  await resolveByes(tid, 1, rounds)
+}
+
+// Prosljeđivanje pobjednika u sljedeću rundu (fiksni bracket).
+async function propagate(tid, round, slot, winner) {
+  const field = slot % 2 === 0 ? 'p1' : 'p2'
+  await db.doc(`tournaments/${tid}/matches/r${round + 1}s${Math.floor(slot / 2)}`).update({ [field]: winner })
+}
+
+// Odredi pobjednika meča (bye/walkover/skor; neriješeno → žrijeb).
+function resolveMatch(m) {
+  if (m.p1 && !m.p2) return m.p1
+  if (m.p2 && !m.p1) return m.p2
+  if (!m.p1 && !m.p2) return null
+  if (m.p1Played && !m.p2Played) return m.p1
+  if (m.p2Played && !m.p1Played) return m.p2
+  if (!m.p1Played && !m.p2Played) return Math.random() < 0.5 ? m.p1 : m.p2
+  if ((m.p1Score || 0) > (m.p2Score || 0)) return m.p1
+  if ((m.p2Score || 0) > (m.p1Score || 0)) return m.p2
+  return Math.random() < 0.5 ? m.p1 : m.p2
+}
+
+// Riješi bye/prazne mečeve u rundi (igrač bez protivnika odmah prolazi).
+async function resolveByes(tid, round, rounds) {
+  const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
+  for (const d of snap.docs) {
+    const m = d.data()
+    if (m.status !== 'pending' || (m.p1 && m.p2)) continue
+    const winner = m.p1 || m.p2 || null
+    await d.ref.update({ winner, status: 'done' })
+    if (round < rounds) await propagate(tid, round, m.slot, winner)
+  }
+}
+
+// Zatvori tekuću rundu na rok: odredi pobjednike, prosljedi, pomjeri rundu.
+async function resolveRound(tid, t) {
+  const round = t.currentRound
+  const rounds = t.rounds
+  const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
+  for (const d of snap.docs) {
+    const m = d.data()
+    if (m.status === 'done') continue
+    const winner = resolveMatch(m)
+    await d.ref.update({ winner, status: 'done' })
+    if (round < rounds) await propagate(tid, round, m.slot, winner)
+  }
+  if (round >= rounds) {
+    await finalizeTournament(tid, rounds)
+  } else {
+    await db.doc(`tournaments/${tid}`).update({ currentRound: round + 1 })
+    await resolveByes(tid, round + 1, rounds)
+  }
+}
+
+// Kraj turnira: pobjednik finala dobija bonus XP + bedž šampiona.
+async function finalizeTournament(tid, rounds) {
+  const fm = await db.doc(`tournaments/${tid}/matches/r${rounds}s0`).get()
+  const winner = fm.exists ? fm.data().winner : null
+  await db.doc(`tournaments/${tid}`).update({ status: 'finished', winnerUid: winner, finishedAt: FieldValue.serverTimestamp() })
+  if (winner) {
+    const uRef = db.doc(`users/${winner}`)
+    await db.runTransaction(async (tx) => {
+      const s = await tx.get(uRef)
+      if (!s.exists) return
+      tx.update(uRef, { xp: (s.data().xp || 0) + DUEL_WINNER_BONUS, [`badges.turnir-sampion`]: FieldValue.serverTimestamp() })
+    })
+  }
+}
+
+// Scheduled tick: gradi bracket i zatvara runde po rasporedu (svakih 30 min).
+export const tournamentTick = onSchedule('every 30 minutes', async () => {
+  const snap = await db.doc('config/tournament').get()
+  const cfg = snap.exists ? snap.data() : null
+  if (!cfg || !cfg.enabled || !cfg.key) return
+  const tid = cfg.key
+  const now = Date.now()
+  const tSnap = await db.doc(`tournaments/${tid}`).get()
+  if (!tSnap.exists) {
+    if (cfg.regCloseAt && now >= cfg.regCloseAt) await buildBracket(tid, cfg)
+    return
+  }
+  const t = tSnap.data()
+  if (t.status === 'active') {
+    const dl = t.roundDeadlines || []
+    const idx = t.currentRound - 1
+    if (idx >= 0 && idx < dl.length && now >= dl[idx]) await resolveRound(tid, t)
+  }
+})
+
+// Pokreni/nastavi svoj duel u tekućoj rundi.
+export const startDuel = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema turnira.')
+  const tid = cfg.key
+  const tSnap = await db.doc(`tournaments/${tid}`).get()
+  if (!tSnap.exists || tSnap.data().status !== 'active') return { noMatch: true }
+  const round = tSnap.data().currentRound
+  const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
+  const md = snap.docs.find((d) => d.data().p1 === uid || d.data().p2 === uid)
+  if (!md) return { noMatch: true }
+  const m = md.data()
+  const isP1 = m.p1 === uid
+  if ((isP1 && m.p1Played) || (!isP1 && m.p2Played)) {
+    return { alreadyPlayed: true, score: isP1 ? m.p1Score : m.p2Score }
+  }
+  const sRef = db.doc(`duelSessions/${tid}_${uid}`)
+  const sSnap = await sRef.get()
+  let session
+  if (sSnap.exists && sSnap.data().matchId === md.id && !sSnap.data().finished) {
+    session = sSnap.data()
+  } else {
+    session = { tid, uid, matchId: md.id, questionIds: m.questionIds, answers: [], current: 0, finished: false, askedAt: Date.now() }
+    await sRef.set(session)
+  }
+  const qid = session.questionIds[session.current]
+  const qDoc = await db.doc(`questions/${qid}`).get()
+  return {
+    matchId: md.id,
+    total: session.questionIds.length,
+    question: publicQuestion(qid, qDoc.data(), session.current, QUESTION_SECONDS),
+  }
+})
+
+// Odgovor u duelu; na zadnjem pitanju upisuje skor u meč (skriven protivniku).
+export const submitDuelAnswer = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const cfg = await getTournamentConfig()
+  const tid = cfg?.key
+  const { answerIndex } = request.data || {}
+  const answer = Number.isInteger(answerIndex) && answerIndex >= 0 && answerIndex <= 3 ? answerIndex : null
+  const sRef = db.doc(`duelSessions/${tid}_${uid}`)
+  const sSnap = await sRef.get()
+  if (!sSnap.exists) throw new HttpsError('failed-precondition', 'Nema aktivnog duela.')
+  const session = sSnap.data()
+  if (session.finished) throw new HttpsError('failed-precondition', 'Duel je završen.')
+
+  const elapsed = (Date.now() - (session.askedAt || Date.now())) / 1000
+  const effective = elapsed > QUESTION_SECONDS + GRACE_SECONDS ? null : answer
+  const qid = session.questionIds[session.current]
+  const secret = await getSecret(qid)
+  const correct = effective !== null && effective === secret.correctIndex
+  const answers = [...session.answers, { correct }]
+  const isLast = session.current + 1 >= session.questionIds.length
+
+  if (!isLast) {
+    const nextQid = session.questionIds[session.current + 1]
+    const qDoc = await db.doc(`questions/${nextQid}`).get()
+    await sRef.update({ answers, current: session.current + 1, askedAt: Date.now() })
+    return {
+      correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: false,
+      question: publicQuestion(nextQid, qDoc.data(), session.current + 1, QUESTION_SECONDS),
+    }
+  }
+
+  const score = answers.filter((a) => a.correct).length
+  await sRef.update({ answers, finished: true })
+  const mRef = db.doc(`tournaments/${tid}/matches/${session.matchId}`)
+  await db.runTransaction(async (tx) => {
+    const ms = await tx.get(mRef)
+    if (!ms.exists) return
+    const m = ms.data()
+    if (m.p1 === uid) tx.update(mRef, { p1Score: score, p1Played: true })
+    else if (m.p2 === uid) tx.update(mRef, { p2Score: score, p2Played: true })
+  })
+  return { correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: true, myScore: score, total: session.questionIds.length }
+})
 
 // ---------------------------------------------------------------------------
 // PREŽIVLJAVANJE (Etapa 8) — endless mod, jedan pokušaj sedmično (reset srijedom)

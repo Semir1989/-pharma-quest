@@ -44,6 +44,9 @@ const BADGES = [
   { id: 'ekspert', emoji: '🥉', name: 'Iskusni ekspert', description: 'Dostigni level 30', metric: 'level', goal: 30, order: 11 },
   { id: 'majstor', emoji: '🥈', name: 'Veliki majstor', description: 'Dostigni level 50', metric: 'level', goal: 50, order: 12 },
   { id: 'ziva-legenda', emoji: '💎', name: 'Živa legenda', description: 'Dostigni level 100', metric: 'level', goal: 100, order: 13 },
+  // Bedž šampiona vikend duela — dodjeljuje ga isključivo finale turnira
+  // (metric 'manual' s ogromnim pragom da ga awardBadges nikad ne dodijeli).
+  { id: 'turnir-sampion', emoji: '👑', name: 'Šampion turnira', description: 'Pobijedi vikend duel turnir', metric: 'manual', goal: 999999, order: 14 },
 ]
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })

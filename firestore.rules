@@ -73,5 +73,25 @@ service cloud.firestore {
     match /survivalRuns/{uid} {
       allow read, write: if false;
     }
+
+    // 'tournaments' — duel turnir: doc + učesnici + mečevi (bracket).
+    // Čitanje za prijavljene (prikaz bracketa/statusa); piše samo server.
+    match /tournaments/{tid} {
+      allow read: if request.auth != null;
+      allow write: if false;
+      match /participants/{uid} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+      match /matches/{mid} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+
+    // 'duelSessions' — aktivni duel (pitanja + odgovori). Samo server.
+    match /duelSessions/{sid} {
+      allow read, write: if false;
+    }
   }
 }
