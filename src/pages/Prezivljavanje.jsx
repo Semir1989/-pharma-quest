@@ -16,10 +16,11 @@ export default function Prezivljavanje() {
   const { profile, user } = useAuth()
   const navigate = useNavigate()
 
-  const [phase, setPhase] = useState('intro') // intro | loading | locked | playing | ended | error
+  const [phase, setPhase] = useState('intro') // intro | loading | locked | closed | playing | ended | error
   const [question, setQuestion] = useState(null)
   const [streak, setStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0) // za locked/ended prikaz
+  const [eventWindow, setEventWindow] = useState(null) // { openAt, closeAt } kad je zatvoreno
   const [rows, setRows] = useState([])
   const [levelUp, setLevelUp] = useState(null)
   const [badgeQueue, setBadgeQueue] = useState([])
@@ -35,6 +36,11 @@ export default function Prezivljavanje() {
     xpAtStartRef.current = profile?.xp || 0
     try {
       const res = await startSurvival()
+      if (res.closed) {
+        setEventWindow({ openAt: res.openAt, closeAt: res.closeAt })
+        setPhase('closed')
+        return
+      }
       if (res.locked) {
         setBestStreak(res.streak || 0)
         setPhase('locked')
@@ -139,6 +145,25 @@ export default function Prezivljavanje() {
             </p>
           </div>
         )}
+
+        {phase === 'closed' && (
+          <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
+            <p className="text-sm text-slate-300">
+              {eventWindow?.openAt && Date.now() < eventWindow.openAt
+                ? 'Izazov još nije počeo'
+                : 'Izazov je za ovu sedmicu završen'}
+            </p>
+            <p className="mt-1 font-title text-lg font-extrabold text-amber-300">
+              {formatEventWindow(eventWindow)}
+            </p>
+            <button
+              onClick={begin}
+              className="mt-3 rounded-xl bg-white/15 px-4 py-2 text-sm font-bold text-white active:bg-white/25"
+            >
+              Provjeri ponovo
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Pravila + dugme (intro/error) */}
@@ -202,4 +227,13 @@ export default function Prezivljavanje() {
       </section>
     </div>
   )
+}
+
+// "sub 25.07. 08:00–20:00" — prozor eventa u lokalnom (BiH) vremenu.
+function formatEventWindow(w) {
+  if (!w?.openAt || !w?.closeAt) return ''
+  const opts = { timeZone: 'Europe/Sarajevo' }
+  const day = new Date(w.openAt).toLocaleDateString('bs-BA', { ...opts, weekday: 'short', day: '2-digit', month: '2-digit' })
+  const t = (ms) => new Date(ms).toLocaleTimeString('bs-BA', { ...opts, hour: '2-digit', minute: '2-digit' })
+  return `${day} ${t(w.openAt)}–${t(w.closeAt)}`
 }

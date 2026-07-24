@@ -408,6 +408,30 @@ export const claimTask = onCall(async (request) => {
 // PREŽIVLJAVANJE (Etapa 8) — endless mod, jedan pokušaj sedmično (reset srijedom)
 // ---------------------------------------------------------------------------
 
+// Vremenski prozor eventa: config/survival { enabled, openAt, closeAt } (ms).
+// Ako doc ne postoji ili enabled=false → nema gejta (uvijek otvoreno).
+let survivalConfigCache = null
+let survivalConfigAt = 0
+async function getSurvivalConfig() {
+  // Kratki keš (30s) da promjena prozora iz admin panela brzo stupi na snagu.
+  if (survivalConfigCache && Date.now() - survivalConfigAt < 30000) return survivalConfigCache
+  const snap = await db.doc('config/survival').get()
+  survivalConfigCache = snap.exists ? snap.data() : null
+  survivalConfigAt = Date.now()
+  return survivalConfigCache
+}
+
+// Vraća null ako je otvoreno, inače { openAt, closeAt } (event zatvoren).
+async function survivalWindowClosed() {
+  const cfg = await getSurvivalConfig()
+  if (!cfg || !cfg.enabled) return null
+  const now = Date.now()
+  if ((cfg.openAt && now < cfg.openAt) || (cfg.closeAt && now > cfg.closeAt)) {
+    return { openAt: cfg.openAt || null, closeAt: cfg.closeAt || null }
+  }
+  return null
+}
+
 // Nasumično aktivno pitanje koje NIJE u 'seen' listi (bez ponavljanja u run-u).
 async function pickSurvivalQuestion(seen) {
   const snap = await db.collection('questions').where('active', '==', true).get()
@@ -432,6 +456,9 @@ async function writeSurvivalLeaderboard(uid, week, streak) {
 export const startSurvival = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  // Van zakazanog prozora eventa → ne može se započeti/nastaviti.
+  const closed = await survivalWindowClosed()
+  if (closed) return { closed: true, openAt: closed.openAt, closeAt: closed.closeAt }
   const week = survivalWeekKey()
   const runRef = db.doc(`survivalRuns/${uid}`)
   const runSnap = await runRef.get()

@@ -11,7 +11,8 @@
     "uvoz-pitanja": "node scripts/import-questions.js",
     "postavi-levele": "node scripts/postavi-level-config.js",
     "postavi-taskove": "node scripts/postavi-taskove.js",
-    "postavi-bedzeve": "node scripts/postavi-bedzeve.js"
+    "postavi-bedzeve": "node scripts/postavi-bedzeve.js",
+    "postavi-survival": "node scripts/postavi-survival-config.js"
   },
   "dependencies": {
     "firebase": "^12.16.0",
