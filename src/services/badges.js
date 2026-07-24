@@ -7,7 +7,19 @@ import { db } from '../firebase'
 // isključivo server (Cloud Functions). Klijent samo čita i prikazuje.
 
 // Sve aktivne bedževe, sortirane po redoslijedu prikaza.
-export async function getBadges() {
+// Keširano po sesiji (definicije se rijetko mijenjaju) — štedi Firestore reads.
+let badgesPromise = null
+export function getBadges() {
+  if (!badgesPromise) {
+    badgesPromise = fetchBadges().catch((e) => {
+      badgesPromise = null
+      throw e
+    })
+  }
+  return badgesPromise
+}
+
+async function fetchBadges() {
   const snap = await getDocs(query(collection(db, 'badges'), where('active', '==', true)))
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))

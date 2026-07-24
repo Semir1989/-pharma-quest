@@ -236,17 +236,50 @@ function publicQuestion(id, data, index, seconds = QUESTION_SECONDS) {
   }
 }
 
-// Tajna pitanja žive u questionSecrets/{id}; fallback na staro polje u
-// questions/{id} dok migracija banke ne prođe (prelazni period).
+// ---------------------------------------------------------------------------
+// Keš sadržaja (u memoriji instance) — ključno za smanjenje Firestore reads.
+// Bez ovoga startQuiz i SVAKI survival odgovor skeniraju cijelu banku (302 reads).
+// Keš se osvježi najviše jednom u CONTENT_TTL po instanci; admin izmjene se
+// vide poslije isteka TTL-a (do 10 min).
+// ---------------------------------------------------------------------------
+const CONTENT_TTL = 10 * 60 * 1000 // 10 min
+let questionsCache = null
+let questionsCacheAt = 0
+async function getActiveQuestions() {
+  if (questionsCache && Date.now() - questionsCacheAt < CONTENT_TTL) return questionsCache
+  const snap = await db.collection('questions').where('active', '==', true).get()
+  questionsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  questionsCacheAt = Date.now()
+  return questionsCache
+}
+async function getQuestionById(id) {
+  return (await getActiveQuestions()).find((q) => q.id === id) || null
+}
+
+// Tajni odgovori — keširani po id-u (TTL). questionSecrets/{id} ili fallback
+// na staro polje u questions/{id} (prelazni period).
+const secretsCache = new Map()
+let secretsCacheAt = 0
 async function getSecret(questionId) {
-  const secretSnap = await db.doc(`questionSecrets/${questionId}`).get()
-  if (secretSnap.exists) return secretSnap.data()
-  const qSnap = await db.doc(`questions/${questionId}`).get()
-  const data = qSnap.exists ? qSnap.data() : {}
-  if (typeof data.correctIndex !== 'number') {
-    throw new HttpsError('internal', 'Pitanje nema definisan tačan odgovor.')
+  if (Date.now() - secretsCacheAt > CONTENT_TTL) {
+    secretsCache.clear()
+    secretsCacheAt = Date.now()
   }
-  return { correctIndex: data.correctIndex, explanation: data.explanation || '' }
+  if (secretsCache.has(questionId)) return secretsCache.get(questionId)
+  let result
+  const secretSnap = await db.doc(`questionSecrets/${questionId}`).get()
+  if (secretSnap.exists) {
+    result = secretSnap.data()
+  } else {
+    const qSnap = await db.doc(`questions/${questionId}`).get()
+    const data = qSnap.exists ? qSnap.data() : {}
+    if (typeof data.correctIndex !== 'number') {
+      throw new HttpsError('internal', 'Pitanje nema definisan tačan odgovor.')
+    }
+    result = { correctIndex: data.correctIndex, explanation: data.explanation || '' }
+  }
+  secretsCache.set(questionId, result)
+  return result
 }
 
 // ---------------------------------------------------------------------------
@@ -256,11 +289,11 @@ export const startQuiz = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se za igranje kviza.')
 
-  const snap = await db.collection('questions').where('active', '==', true).get()
-  if (snap.empty) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
+  const pool = await getActiveQuestions()
+  if (pool.length === 0) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
 
-  // Fisher-Yates shuffle pa uzmi prvih N.
-  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  // Fisher-Yates shuffle (kopije) pa uzmi prvih N.
+  const all = [...pool]
   for (let i = all.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[all[i], all[j]] = [all[j], all[i]]
@@ -320,14 +353,14 @@ export const submitAnswer = onCall(async (request) => {
 
   if (!isLast) {
     const nextMeta = session.questions[session.current + 1]
-    const nextSnap = await db.doc(`questions/${nextMeta.id}`).get()
+    const nextData = await getQuestionById(nextMeta.id)
     await sessionRef.update({ answers, current: session.current + 1, askedAt: Date.now() })
     return {
       correct,
       correctIndex: secret.correctIndex,
       explanation: secret.explanation,
       finished: false,
-      question: publicQuestion(nextMeta.id, nextSnap.data(), session.current + 1),
+      question: publicQuestion(nextMeta.id, nextData, session.current + 1),
     }
   }
 
@@ -574,7 +607,7 @@ async function buildBracket(tid, cfg) {
   const rounds = Math.round(Math.log2(size))
   const seats = [...participants, ...Array(size - participants.length).fill(null)]
 
-  const qids = (await db.collection('questions').where('active', '==', true).get()).docs.map((d) => d.id)
+  const qids = (await getActiveQuestions()).map((q) => q.id)
   const pickQs = () => shuffle(qids).slice(0, DUEL_QUESTIONS)
 
   const batch = db.batch()
@@ -726,11 +759,11 @@ export const startDuel = onCall(async (request) => {
     await sRef.set(session)
   }
   const qid = session.questionIds[session.current]
-  const qDoc = await db.doc(`questions/${qid}`).get()
+  const qDoc = await getQuestionById(qid)
   return {
     matchId: md.id,
     total: session.questionIds.length,
-    question: publicQuestion(qid, qDoc.data(), session.current, QUESTION_SECONDS),
+    question: publicQuestion(qid, qDoc, session.current, QUESTION_SECONDS),
   }
 })
 
@@ -758,11 +791,11 @@ export const submitDuelAnswer = onCall(async (request) => {
 
   if (!isLast) {
     const nextQid = session.questionIds[session.current + 1]
-    const qDoc = await db.doc(`questions/${nextQid}`).get()
+    const nextData = await getQuestionById(nextQid)
     await sRef.update({ answers, current: session.current + 1, askedAt: Date.now() })
     return {
       correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: false,
-      question: publicQuestion(nextQid, qDoc.data(), session.current + 1, QUESTION_SECONDS),
+      question: publicQuestion(nextQid, nextData, session.current + 1, QUESTION_SECONDS),
     }
   }
 
@@ -810,11 +843,9 @@ async function survivalWindowClosed() {
 
 // Nasumično aktivno pitanje koje NIJE u 'seen' listi (bez ponavljanja u run-u).
 async function pickSurvivalQuestion(seen) {
-  const snap = await db.collection('questions').where('active', '==', true).get()
-  const pool = snap.docs.filter((d) => !seen.includes(d.id))
+  const pool = (await getActiveQuestions()).filter((q) => !seen.includes(q.id))
   if (pool.length === 0) return null
-  const d = pool[Math.floor(Math.random() * pool.length)]
-  return { id: d.id, ...d.data() }
+  return pool[Math.floor(Math.random() * pool.length)]
 }
 
 // Upis trenutnog niza u survival leaderboard (RTDB) — živo penjanje liste.
@@ -846,13 +877,13 @@ export const startSurvival = onCall(async (request) => {
   }
   // Aktivan run ove sedmice → nastavi s trenutnim pitanjem.
   if (run && run.week === week && run.active && run.currentQid) {
-    const qSnap = await db.doc(`questions/${run.currentQid}`).get()
-    if (qSnap.exists) {
+    const qData = await getQuestionById(run.currentQid)
+    if (qData) {
       return {
         locked: false,
         streak: run.streak || 0,
         week,
-        question: publicQuestion(run.currentQid, qSnap.data(), run.streak || 0, SURVIVAL_SECONDS),
+        question: publicQuestion(run.currentQid, qData, run.streak || 0, SURVIVAL_SECONDS),
       }
     }
   }

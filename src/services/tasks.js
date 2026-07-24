@@ -8,7 +8,20 @@ import { claimTaskReward } from './quizApi'
 // a napredak korisnika u users/{uid}.taskProgress po periodu (daily/weekly/monthly).
 
 // Sve aktivne taskove grupisane po tipu: { daily: [...], weekly: [...], monthly: [...] }
-export async function getTasks() {
+// Keširano po sesiji (taskovi se rijetko mijenjaju) — štedi Firestore reads jer
+// Home i Questovi oba traže taskove. Osvježava se pri reloadu aplikacije.
+let tasksPromise = null
+export function getTasks() {
+  if (!tasksPromise) {
+    tasksPromise = fetchTasks().catch((e) => {
+      tasksPromise = null
+      throw e
+    })
+  }
+  return tasksPromise
+}
+
+async function fetchTasks() {
   const snap = await getDocs(query(collection(db, 'tasks'), where('active', '==', true)))
   const grouped = { daily: [], weekly: [], monthly: [] }
   for (const d of snap.docs) {
