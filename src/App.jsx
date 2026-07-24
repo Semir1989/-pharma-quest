@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './components/AppLayout'
+import UpdatePrompt from './components/UpdatePrompt'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ResetLozinke from './pages/ResetLozinke'
@@ -19,6 +20,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <div className="mx-auto min-h-svh max-w-md bg-slate-50">
+          <UpdatePrompt />
           <Routes>
             {/* Javne rute (bez bottom nav) */}
             <Route path="/prijava" element={<Login />} />

@@ -8,9 +8,11 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    // PWA sloj (Modul 8): manifest + service worker (offline shell, auto-update).
+    // PWA sloj (Modul 8): manifest + service worker (offline shell).
+    // registerType 'prompt' → kad stigne nova verzija, ne primjenjuje se tiho
+    // nego UpdatePrompt.jsx prikaže toast "Dostupna nova verzija — osvježi".
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Pharma Quest',
