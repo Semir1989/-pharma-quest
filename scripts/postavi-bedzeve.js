@@ -41,6 +41,9 @@ const BADGES = [
   { id: 'xp-lovac', emoji: '⚡', name: 'XP lovac', description: 'Skupi 1000 XP', metric: 'xp', goal: 1000, order: 8 },
   { id: 'xp-masina', emoji: '🚀', name: 'XP mašina', description: 'Skupi 5000 XP', metric: 'xp', goal: 5000, order: 9 },
   { id: 'znalac', emoji: '🌟', name: 'Znalac', description: 'Dostigni level 10', metric: 'level', goal: 10, order: 10 },
+  { id: 'ekspert', emoji: '🥉', name: 'Iskusni ekspert', description: 'Dostigni level 30', metric: 'level', goal: 30, order: 11 },
+  { id: 'majstor', emoji: '🥈', name: 'Veliki majstor', description: 'Dostigni level 50', metric: 'level', goal: 50, order: 12 },
+  { id: 'ziva-legenda', emoji: '💎', name: 'Živa legenda', description: 'Dostigni level 100', metric: 'level', goal: 100, order: 13 },
 ]
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })

@@ -32,16 +32,17 @@ export default function Questovi() {
     setClaiming(task.id)
     try {
       const xpBefore = profile.xp || 0
-      const { reward, newBadges } = await claimTask(task)
+      const { reward, newLevel: serverLevel, levelBonus, newBadges } = await claimTask(task)
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
       // Level-up animacija i ovdje, ne samo poslije kviza (Modul 5).
       const oldLevel = levelFromXp(xpBefore)
-      const newLevel = levelFromXp(xpBefore + reward)
+      const newLevel = serverLevel ?? levelFromXp(xpBefore + reward)
       if (newLevel > oldLevel) {
         setLevelUp({
           level: newLevel,
           rank: rankFromLevel(newLevel),
           rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
+          bonusXp: levelBonus?.bonusXp || 0,
         })
       }
       // Novododijeljeni bedževi — animacija poslije level-upa (Etapa 8).
@@ -58,6 +59,7 @@ export default function Questovi() {
         level={levelUp.level}
         rank={levelUp.rank}
         rankChanged={levelUp.rankChanged}
+        bonusXp={levelUp.bonusXp}
         onClose={() => setLevelUp(null)}
       />
     )

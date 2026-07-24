@@ -7,7 +7,7 @@
 export const DEFAULT_LEVEL_CONFIG = {
   baseXp: 100, // XP za prelazak s levela 1 na 2
   stepXp: 25, // koliko svaki sljedeći prelazak poskupljuje
-  maxLevel: 60,
+  maxLevel: 100,
 }
 
 let config = { ...DEFAULT_LEVEL_CONFIG }

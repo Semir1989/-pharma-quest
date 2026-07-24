@@ -55,14 +55,15 @@ export default function Kviz() {
     ])
     if (res.finished) {
       setSummary(res.summary)
-      // Detekcija level-upa (server je već upisao XP u profil).
+      // Level-up: server vraća konačni newLevel (uključuje bonus na 10. level).
       const oldLevel = levelFromXp(xpAtStartRef.current)
-      const newLevel = levelFromXp(xpAtStartRef.current + res.summary.earnedXp)
+      const newLevel = res.newLevel ?? levelFromXp(xpAtStartRef.current + res.summary.earnedXp)
       if (newLevel > oldLevel) {
         setLevelUp({
           level: newLevel,
           rank: rankFromLevel(newLevel),
           rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
+          bonusXp: res.levelBonus?.bonusXp || 0,
         })
       }
       // Novododijeljeni bedževi — animacija poslije level-upa (Etapa 8).

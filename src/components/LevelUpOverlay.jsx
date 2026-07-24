@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 
 // Level-up animacija (Modul 5) — puni ekran preko rezultata kviza.
-// props: level (novi level), rank, rankChanged (bool), onClose
-export default function LevelUpOverlay({ level, rank, rankChanged, onClose }) {
+// props: level (novi level), rank, rankChanged (bool), bonusXp (opciono,
+// bonus za prelazak 10. levela — Etapa 8), onClose
+export default function LevelUpOverlay({ level, rank, rankChanged, bonusXp = 0, onClose }) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden px-6"
@@ -45,6 +46,17 @@ export default function LevelUpOverlay({ level, rank, rankChanged, onClose }) {
           'Odlično napreduješ — nastavi tako!'
         )}
       </motion.p>
+
+      {bonusXp > 0 && (
+        <motion.div
+          className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/15 px-5 py-2.5 font-title text-lg font-extrabold text-amber-200"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.85 }}
+        >
+          🎁 Bonus +{bonusXp} XP!
+        </motion.div>
+      )}
 
       <motion.button
         onClick={onClose}

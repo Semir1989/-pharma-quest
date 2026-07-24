@@ -26,7 +26,7 @@ if (!existsSync(KEY_PATH)) {
 const LEVEL_CONFIG = {
   baseXp: 100, // XP za prelazak s levela 1 na 2
   stepXp: 25, // koliko svaki sljedeći prelazak poskupljuje
-  maxLevel: 60,
+  maxLevel: 100,
 }
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })

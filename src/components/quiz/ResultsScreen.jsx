@@ -30,6 +30,7 @@ export default function ResultsScreen({
         level={levelUp.level}
         rank={levelUp.rank}
         rankChanged={levelUp.rankChanged}
+        bonusXp={levelUp.bonusXp}
         onClose={onLevelUpSeen}
       />
     )

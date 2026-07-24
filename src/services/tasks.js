@@ -38,6 +38,6 @@ export function taskValue(progress, task) {
 // klijent više ništa ne upisuje sam. Vraća { reward, newBadges } — reward za
 // level-up provjeru, newBadges za animaciju otključavanja bedža (Etapa 8).
 export async function claimTask(task) {
-  const { reward, newBadges } = await claimTaskReward(task.id)
-  return { reward, newBadges: newBadges || [] }
+  const { reward, newLevel, levelBonus, newBadges } = await claimTaskReward(task.id)
+  return { reward, newLevel, levelBonus, newBadges: newBadges || [] }
 }

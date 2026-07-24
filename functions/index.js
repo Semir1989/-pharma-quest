@@ -79,7 +79,7 @@ let levelConfigCache = null
 async function getLevelConfig() {
   if (levelConfigCache) return levelConfigCache
   const snap = await db.doc('config/levels').get()
-  levelConfigCache = { baseXp: 100, stepXp: 25, maxLevel: 60, ...(snap.exists ? snap.data() : {}) }
+  levelConfigCache = { baseXp: 100, stepXp: 25, maxLevel: 100, ...(snap.exists ? snap.data() : {}) }
   return levelConfigCache
 }
 
@@ -91,6 +91,37 @@ function levelFromXp(xp, cfg) {
   let level = 1
   while (level < cfg.maxLevel && xp >= xpFor(level + 1)) level++
   return level
+}
+
+// Bonus XP na svaki 10. level: lvl 10 → +100, 20 → +200 ... 100 → +1000.
+// Dodjeljuje se jednokratno po pragu (users.levelRewardMilestone pamti zadnji).
+// Bonus može podići level i otključati sljedeći prag, pa ide u petlji.
+async function awardLevelMilestones(uid) {
+  const cfg = await getLevelConfig()
+  const userRef = db.doc(`users/${uid}`)
+  let bonusXp = 0
+  const milestones = []
+  let totalXp = 0
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef)
+    if (!snap.exists) return
+    const p = snap.data()
+    let xp = p.xp || 0
+    let last = p.levelRewardMilestone || 0
+    for (let guard = 0; guard < 20; guard++) {
+      const level = levelFromXp(xp, cfg)
+      const next = last + 10
+      if (next > level || next > cfg.maxLevel) break
+      const reward = (next / 10) * 100
+      xp += reward
+      bonusXp += reward
+      milestones.push(next)
+      last = next
+    }
+    totalXp = xp
+    if (bonusXp > 0) tx.update(userRef, { xp, levelRewardMilestone: last })
+  })
+  return { bonusXp, milestones, totalXp }
 }
 
 // ---------------------------------------------------------------------------
@@ -344,7 +375,9 @@ export const submitAnswer = onCall(async (request) => {
   })
 
   await sessionRef.update({ answers, finished: true, finishedAt: FieldValue.serverTimestamp() })
-  await syncLeaderboard(uid, profileAfter, totalXp, earnedXp, levelFromXp(totalXp, cfg))
+  const levelBonus = await awardLevelMilestones(uid) // { bonusXp, milestones, totalXp }
+  const finalXp = levelBonus.totalXp || totalXp
+  await syncLeaderboard(uid, profileAfter, finalXp, earnedXp, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
 
   return {
@@ -353,6 +386,8 @@ export const submitAnswer = onCall(async (request) => {
     explanation: secret.explanation,
     finished: true,
     summary: { earnedXp, correctCount, total: answers.length },
+    newLevel: levelFromXp(finalXp, cfg),
+    levelBonus,
     newBadges,
   }
 })
@@ -401,10 +436,12 @@ export const claimTask = onCall(async (request) => {
     })
   })
 
-  await syncLeaderboard(uid, profileAfter, totalXp, task.reward, levelFromXp(totalXp, cfg))
+  const levelBonus = await awardLevelMilestones(uid)
+  const finalXp = levelBonus.totalXp || totalXp
+  await syncLeaderboard(uid, profileAfter, finalXp, task.reward, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
 
-  return { reward: task.reward, newBadges }
+  return { reward: task.reward, newLevel: levelFromXp(finalXp, cfg), levelBonus, newBadges }
 })
 
 // ---------------------------------------------------------------------------
@@ -534,6 +571,7 @@ export const submitSurvivalAnswer = onCall(async (request) => {
     if (!us.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
     tx.update(userRef, { xp: (us.data().xp || 0) + SURVIVAL_XP_PER_CORRECT })
   })
+  const levelBonus = await awardLevelMilestones(uid)
 
   const seen = run.seen || []
   const next = await pickSurvivalQuestion(seen)
@@ -549,6 +587,7 @@ export const submitSurvivalAnswer = onCall(async (request) => {
       finished: true,
       exhausted: true,
       streak: newStreak,
+      levelBonus,
       newBadges,
     }
   }
@@ -563,6 +602,7 @@ export const submitSurvivalAnswer = onCall(async (request) => {
     finished: false,
     streak: newStreak,
     question: publicQuestion(next.id, next, newStreak, SURVIVAL_SECONDS),
+    levelBonus,
     newBadges,
   }
 })

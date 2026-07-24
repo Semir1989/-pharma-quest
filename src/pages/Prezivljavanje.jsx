@@ -26,6 +26,7 @@ export default function Prezivljavanje() {
   const [badgeQueue, setBadgeQueue] = useState([])
   const xpAtStartRef = useRef(0)
   const badgesRef = useRef([]) // skupljeni novi bedževi tokom run-a
+  const bonusRef = useRef(0) // skupljeni level-bonus XP tokom run-a
 
   // Live leaderboard tekuće sedmice.
   useEffect(() => subscribeSurvivalLeaderboard(setRows), [])
@@ -33,6 +34,7 @@ export default function Prezivljavanje() {
   async function begin() {
     setPhase('loading')
     badgesRef.current = []
+    bonusRef.current = 0
     xpAtStartRef.current = profile?.xp || 0
     try {
       const res = await startSurvival()
@@ -58,6 +60,7 @@ export default function Prezivljavanje() {
     const res = await submitSurvivalAnswer(selected)
     setStreak(res.streak)
     if (res.newBadges?.length) badgesRef.current.push(...res.newBadges)
+    if (res.levelBonus?.bonusXp) bonusRef.current += res.levelBonus.bonusXp
     return res
   }
 
@@ -72,6 +75,7 @@ export default function Prezivljavanje() {
           level: newLevel,
           rank: rankFromLevel(newLevel),
           rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
+          bonusXp: bonusRef.current,
         })
       }
       if (badgesRef.current.length) setBadgeQueue(badgesRef.current)
@@ -88,6 +92,7 @@ export default function Prezivljavanje() {
         level={levelUp.level}
         rank={levelUp.rank}
         rankChanged={levelUp.rankChanged}
+        bonusXp={levelUp.bonusXp}
         onClose={() => setLevelUp(null)}
       />
     )
