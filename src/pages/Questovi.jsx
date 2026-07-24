@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getTasks, progressForType, taskValue, claimTask } from '../services/tasks'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
+import { track } from '../services/analytics'
 import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import {
@@ -33,11 +34,13 @@ export default function Questovi() {
     try {
       const xpBefore = profile.xp || 0
       const { reward, newLevel: serverLevel, levelBonus, newBadges } = await claimTask(task)
+      track('task_claim', { taskId: task.id, reward })
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
       // Level-up animacija i ovdje, ne samo poslije kviza (Modul 5).
       const oldLevel = levelFromXp(xpBefore)
       const newLevel = serverLevel ?? levelFromXp(xpBefore + reward)
       if (newLevel > oldLevel) {
+        track('level_up', { level: newLevel })
         setLevelUp({
           level: newLevel,
           rank: rankFromLevel(newLevel),

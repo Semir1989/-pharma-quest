@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { startQuizSession, submitQuizAnswer } from '../services/quizApi'
+import { track } from '../services/analytics'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 import ResultsScreen from '../components/quiz/ResultsScreen'
@@ -23,6 +24,7 @@ export default function Kviz() {
 
   async function startQuiz() {
     setPhase('loading')
+    track('quiz_start')
     try {
       const res = await startQuizSession()
       setSession({ sessionId: res.sessionId, total: res.total })
@@ -55,10 +57,12 @@ export default function Kviz() {
     ])
     if (res.finished) {
       setSummary(res.summary)
+      track('quiz_complete', { score: res.summary.correctCount, total: res.summary.total, xp: res.summary.earnedXp })
       // Level-up: server vraća konačni newLevel (uključuje bonus na 10. level).
       const oldLevel = levelFromXp(xpAtStartRef.current)
       const newLevel = res.newLevel ?? levelFromXp(xpAtStartRef.current + res.summary.earnedXp)
       if (newLevel > oldLevel) {
+        track('level_up', { level: newLevel })
         setLevelUp({
           level: newLevel,
           rank: rankFromLevel(newLevel),

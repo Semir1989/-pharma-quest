@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { startDuel, submitDuelAnswer } from '../services/quizApi'
+import { track } from '../services/analytics'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 
 // Duel play (Faza 2, korak C) — 10 istih pitanja kao protivnik; skor se upisuje
@@ -25,6 +26,7 @@ export default function Duel() {
         setTotal(res.total || 10)
         setQuestion(res.question)
         setPhase('playing')
+        track('duel_start')
       })
       .catch(() => !cancelled && setPhase('error'))
     return () => { cancelled = true }

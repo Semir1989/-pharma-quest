@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
 import { authErrorToBosnian } from '../utils/authErrors'
+import { track } from '../services/analytics'
 import BrandHeader from '../components/BrandHeader'
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon, UserPlusIcon } from '../components/icons'
 
@@ -20,6 +21,7 @@ export default function Login() {
     setLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password)
+      track('login', { method: 'password' })
       navigate('/')
     } catch (err) {
       setError(authErrorToBosnian(err.code))

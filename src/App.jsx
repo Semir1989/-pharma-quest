@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { track } from './services/analytics'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './components/AppLayout'
 import UpdatePrompt from './components/UpdatePrompt'
@@ -23,6 +25,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <RouteTracker />
         <div className="mx-auto min-h-svh max-w-md bg-slate-50">
           <UpdatePrompt />
           <Routes>
@@ -75,6 +78,15 @@ function App() {
       </BrowserRouter>
     </AuthProvider>
   )
+}
+
+// Bilježi screen_view pri svakoj promjeni rute (za "gdje odustaju" u GA4).
+function RouteTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    track('screen_view', { firebase_screen: location.pathname, page_path: location.pathname })
+  }, [location.pathname])
+  return null
 }
 
 export default App

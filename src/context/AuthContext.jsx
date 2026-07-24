@@ -3,6 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { loadLevelConfig } from '../services/levelConfig'
+import { setAnalyticsUser } from '../services/analytics'
 
 const AuthContext = createContext(null)
 
@@ -23,6 +24,7 @@ export function AuthProvider({ children }) {
       // bi ProtectedRoute pomislio "nema profila" i pogrešno redirektovao na
       // /dovrsi-profil prije nego profil stigne.
       setProfileLoading(true)
+      setAnalyticsUser(u?.uid || null)
       // Admin ovlast iz custom claima (postavi-admina.js).
       if (u) {
         u.getIdTokenResult()

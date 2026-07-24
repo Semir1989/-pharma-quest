@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
 import { authErrorToBosnian } from '../utils/authErrors'
 import { createUserProfile } from '../services/userProfile'
+import { track } from '../services/analytics'
 import BrandHeader from '../components/BrandHeader'
 import AvatarPicker from '../components/AvatarPicker'
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from '../components/icons'
@@ -39,6 +40,7 @@ export default function Register() {
         displayName: name.trim(),
         avatar,
       })
+      track('sign_up', { method: 'password' })
       navigate('/')
     } catch (err) {
       setError(authErrorToBosnian(err.code))

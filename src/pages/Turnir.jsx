@@ -10,6 +10,7 @@ import {
   subscribeMatches,
 } from '../services/tournament'
 import { registerForDuel } from '../services/quizApi'
+import { track } from '../services/analytics'
 import Avatar from '../components/Avatar'
 import Bracket from '../components/Bracket'
 
@@ -56,6 +57,7 @@ export default function Turnir() {
     setRegistering(true)
     try {
       await registerForDuel()
+      track('tournament_register')
     } catch (e) {
       setRegError(e?.message || 'Greška pri prijavi.')
     } finally {

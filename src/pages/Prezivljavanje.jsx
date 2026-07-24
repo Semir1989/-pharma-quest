@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { startSurvival, submitSurvivalAnswer } from '../services/quizApi'
 import { subscribeSurvivalLeaderboard } from '../services/survival'
 import { secondsUntilSurvivalReset, formatCountdown } from '../utils/periods'
+import { track } from '../services/analytics'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 import SurvivalQuestion from '../components/SurvivalQuestion'
 import LevelUpOverlay from '../components/LevelUpOverlay'
@@ -51,6 +52,7 @@ export default function Prezivljavanje() {
       setStreak(res.streak || 0)
       setQuestion(res.question)
       setPhase('playing')
+      track('survival_start')
     } catch {
       setPhase('error')
     }
@@ -71,6 +73,7 @@ export default function Prezivljavanje() {
       const oldLevel = levelFromXp(xpAtStartRef.current)
       const newLevel = levelFromXp(profile?.xp || 0)
       if (newLevel > oldLevel) {
+        track('level_up', { level: newLevel })
         setLevelUp({
           level: newLevel,
           rank: rankFromLevel(newLevel),
