@@ -66,6 +66,25 @@ function survivalWeekKey(d = new Date()) {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
 }
 
+// Dnevni streak — niz uzastopnih dana igranja (UTC dan). profile.streak raste
+// za 1 ako je zadnji dan igranja bio juče, resetuje na 1 ako je bio prekid.
+function utcDayKey(d = new Date()) {
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
+}
+async function bumpStreak(uid) {
+  const today = utcDayKey()
+  const yesterday = utcDayKey(new Date(Date.now() - 86400000))
+  const uRef = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(uRef)
+    if (!s.exists) return
+    const p = s.data()
+    if (p.lastPlayDay === today) return // već zabilježeno danas
+    const streak = p.lastPlayDay === yesterday ? (p.streak || 0) + 1 : 1
+    tx.update(uRef, { streak, lastPlayDay: today })
+  })
+}
+
 function periodKey(type) {
   if (type === 'daily') return dailyKey()
   if (type === 'weekly') return weeklyKey()
@@ -381,6 +400,7 @@ export const submitAnswer = onCall(async (request) => {
   await syncLeaderboard(uid, profileAfter, finalXp, earnedXp, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
   await addWeekendXp(uid, earnedXp)
+  await bumpStreak(uid)
 
   return {
     correct,
@@ -726,6 +746,7 @@ export const submitDuelAnswer = onCall(async (request) => {
     if (m.p1 === uid) tx.update(mRef, { p1Score: score, p1Played: true })
     else if (m.p2 === uid) tx.update(mRef, { p2Score: score, p2Played: true })
   })
+  await bumpStreak(uid)
   return { correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: true, myScore: score, total: session.questionIds.length }
 })
 
@@ -809,6 +830,7 @@ export const startSurvival = onCall(async (request) => {
   const q = await pickSurvivalQuestion([])
   if (!q) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
   await runRef.set({ week, streak: 0, active: true, currentQid: q.id, seen: [q.id], askedAt: Date.now() })
+  await bumpStreak(uid)
   return { locked: false, streak: 0, week, question: publicQuestion(q.id, q, 0, SURVIVAL_SECONDS) }
 })
 
