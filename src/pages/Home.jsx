@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import CircleProgress from '../components/CircleProgress'
 import InstallBanner from '../components/InstallBanner'
+import { TrophyIcon } from '../components/icons'
 import { levelFromXp, xpProgress } from '../utils/levels'
 import { getTasks, progressForType, taskValue } from '../services/tasks'
 
@@ -57,6 +58,23 @@ export default function Home() {
 
       {/* Dnevni taskovi — kružići napretka (Modul 6) */}
       <DailyTasksCard profile={profile} />
+
+      {/* Vikend turnir — XP trka (Faza 2) */}
+      <Link
+        to="/turnir"
+        className="mt-4 flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+            <TrophyIcon className="h-6 w-6" />
+          </span>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Vikend turnir</h2>
+            <p className="text-xs text-slate-500">XP trka — petak 18h do nedjelja 18h</p>
+          </div>
+        </div>
+        <span className="text-sm font-bold text-teal-700">Uđi →</span>
+      </Link>
 
       {/* Preživljavanje — sedmični izazov (Etapa 8) */}
       <Link

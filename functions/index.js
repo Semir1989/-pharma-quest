@@ -379,6 +379,7 @@ export const submitAnswer = onCall(async (request) => {
   const finalXp = levelBonus.totalXp || totalXp
   await syncLeaderboard(uid, profileAfter, finalXp, earnedXp, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
+  await addWeekendXp(uid, earnedXp)
 
   return {
     correct,
@@ -440,9 +441,41 @@ export const claimTask = onCall(async (request) => {
   const finalXp = levelBonus.totalXp || totalXp
   await syncLeaderboard(uid, profileAfter, finalXp, task.reward, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
+  await addWeekendXp(uid, task.reward)
 
   return { reward: task.reward, newLevel: levelFromXp(finalXp, cfg), levelBonus, newBadges }
 })
+
+// ---------------------------------------------------------------------------
+// VIKEND TURNIR — XP TRKA (Faza 2, korak B)
+// Tokom prozora [openAt, closeAt] sav osvojeni XP (kviz/task/survival) se sabira
+// na poseban leaderboard tournament/{key}/{uid}. config/tournament drži prozor.
+// ---------------------------------------------------------------------------
+let tournamentConfigCache = null
+let tournamentConfigAt = 0
+async function getTournamentConfig() {
+  if (tournamentConfigCache && Date.now() - tournamentConfigAt < 30000) return tournamentConfigCache
+  const snap = await db.doc('config/tournament').get()
+  tournamentConfigCache = snap.exists ? snap.data() : null
+  tournamentConfigAt = Date.now()
+  return tournamentConfigCache
+}
+
+// Dodaj osvojeni XP na turnirsku listu ako smo unutar prozora eventa.
+async function addWeekendXp(uid, delta) {
+  if (!delta || delta <= 0) return
+  const cfg = await getTournamentConfig()
+  if (!cfg || !cfg.enabled || !cfg.key) return
+  const now = Date.now()
+  if ((cfg.openAt && now < cfg.openAt) || (cfg.closeAt && now > cfg.closeAt)) return
+  const us = await db.doc(`users/${uid}`).get()
+  const p = us.exists ? us.data() : {}
+  await rtdb.ref(`tournament/${cfg.key}/${uid}`).transaction((cur) => ({
+    name: p.displayName || 'Farmaceut',
+    avatar: p.avatar || 'a1',
+    xp: (cur?.xp || 0) + delta,
+  }))
+}
 
 // ---------------------------------------------------------------------------
 // PREŽIVLJAVANJE (Etapa 8) — endless mod, jedan pokušaj sedmično (reset srijedom)
@@ -572,6 +605,7 @@ export const submitSurvivalAnswer = onCall(async (request) => {
     tx.update(userRef, { xp: (us.data().xp || 0) + SURVIVAL_XP_PER_CORRECT })
   })
   const levelBonus = await awardLevelMilestones(uid)
+  await addWeekendXp(uid, SURVIVAL_XP_PER_CORRECT)
 
   const seen = run.seen || []
   const next = await pickSurvivalQuestion(seen)

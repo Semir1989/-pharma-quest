@@ -19,6 +19,12 @@
         ".read": "auth != null",
         ".indexOn": ["streak"]
       }
+    },
+    "tournament": {
+      "$key": {
+        ".read": "auth != null",
+        ".indexOn": ["xp"]
+      }
     }
   }
 }

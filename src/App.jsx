@@ -11,6 +11,7 @@ import Home from './pages/Home'
 import Kviz from './pages/Kviz'
 import Questovi from './pages/Questovi'
 import Prezivljavanje from './pages/Prezivljavanje'
+import Turnir from './pages/Turnir'
 import Klan from './pages/Klan'
 import Profil from './pages/Profil'
 import Leaderboard from './pages/Leaderboard'
@@ -61,6 +62,7 @@ function App() {
               <Route path="/kviz" element={<Kviz />} />
               <Route path="/questovi" element={<Questovi />} />
               <Route path="/prezivljavanje" element={<Prezivljavanje />} />
+              <Route path="/turnir" element={<Turnir />} />
               <Route path="/klan" element={<Klan />} />
               <Route path="/profil" element={<Profil />} />
               <Route path="/leaderboard" element={<Leaderboard />} />

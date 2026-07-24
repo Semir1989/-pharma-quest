@@ -13,7 +13,8 @@
     "postavi-taskove": "node scripts/postavi-taskove.js",
     "postavi-bedzeve": "node scripts/postavi-bedzeve.js",
     "postavi-survival": "node scripts/postavi-survival-config.js",
-    "postavi-admina": "node scripts/postavi-admina.js"
+    "postavi-admina": "node scripts/postavi-admina.js",
+    "postavi-turnir": "node scripts/postavi-turnir-config.js"
   },
   "dependencies": {
     "firebase": "^12.16.0",
