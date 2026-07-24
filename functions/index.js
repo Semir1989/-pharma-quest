@@ -24,7 +24,10 @@ const rtdb = getDatabase()
 
 const QUESTIONS_PER_QUIZ = 10
 const QUESTION_SECONDS = 30
-const GRACE_SECONDS = 6 // tolerancija za mrežno kašnjenje
+// Tolerancija za mrežno kašnjenje: server broji vrijeme od SLANJA pitanja, a
+// klijentski tajmer kreće tek kad pitanje stigne i iscrta se. Na sporoj mobilnoj
+// mreži ta razlika zna poništiti tačan odgovor, pa dajemo velikodušan grace.
+const GRACE_SECONDS = 15
 
 // Preživljavanje (Etapa 8): endless mod, +3 XP po tačnom, kraj na prvu grešku.
 const SURVIVAL_XP_PER_CORRECT = 3
