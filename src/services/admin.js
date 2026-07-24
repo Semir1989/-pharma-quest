@@ -24,3 +24,18 @@ export async function saveQuestion(id, pub, secret) {
   await updateDoc(doc(db, 'questions', id), { ...pub, updatedAt: new Date() })
   await setDoc(doc(db, 'questionSecrets', id), secret, { merge: true })
 }
+
+// ID pitanja = hash teksta (isto kao import skripta) → isti tekst = isti dokument
+// (nema duplikata, ponovni unos ažurira).
+async function sha1Id(text) {
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text.trim().toLowerCase()))
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 20)
+}
+
+// Kreiraj novo pitanje (javni + tajni dio). Vraća id novog dokumenta.
+export async function createQuestion(pub, secret) {
+  const id = await sha1Id(pub.text)
+  await setDoc(doc(db, 'questions', id), { ...pub, active: pub.active !== false, updatedAt: new Date() })
+  await setDoc(doc(db, 'questionSecrets', id), secret)
+  return id
+}

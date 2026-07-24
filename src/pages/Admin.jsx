@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getAllQuestions, getQuestionSecret, saveQuestion } from '../services/admin'
+import { getAllQuestions, getQuestionSecret, saveQuestion, createQuestion } from '../services/admin'
+
+const BLANK = {
+  question: { id: null, text: '', options: ['', '', '', ''], category: '', difficulty: 2, points: 10, active: true },
+  secret: { correctIndex: 0, explanation: '' },
+  isNew: true,
+}
 
 // Admin panel (Etapa 8) — pregled i ispravka banke pitanja.
 // Pristup samo za admina (custom claim). Editor mijenja i tačan odgovor
@@ -45,8 +51,8 @@ export default function Admin() {
     setEditing({ question: q, secret })
   }
 
-  function onSaved(updated) {
-    setQuestions((list) => list.map((q) => (q.id === updated.id ? updated : q)))
+  function onSaved(updated, isNew) {
+    setQuestions((list) => (isNew ? [updated, ...list] : list.map((q) => (q.id === updated.id ? updated : q))))
     setEditing(null)
   }
 
@@ -64,12 +70,19 @@ export default function Admin() {
         Prijavljen kao <b>{profile?.displayName || 'admin'}</b> · {questions?.length ?? '…'} pitanja
       </p>
 
+      <button
+        onClick={() => setEditing(BLANK)}
+        className="mt-4 w-full rounded-2xl bg-teal-700 py-3 font-title font-extrabold text-white active:bg-teal-800"
+      >
+        + Dodaj pitanje
+      </button>
+
       <input
         type="text"
         placeholder="Pretraži po tekstu, kategoriji ili opciji…"
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        className="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none focus:border-teal-500"
+        className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none focus:border-teal-500"
       />
 
       {questions === null ? (
@@ -108,11 +121,14 @@ const LETTERS = ['A', 'B', 'C', 'D']
 
 function QuestionEditor({ entry, onCancel, onSaved }) {
   const q = entry.question
+  const isNew = !!entry.isNew
   const [text, setText] = useState(q.text || '')
   const [options, setOptions] = useState(() => [0, 1, 2, 3].map((i) => q.options?.[i] || ''))
   const [correctIndex, setCorrectIndex] = useState(entry.secret.correctIndex ?? 0)
   const [explanation, setExplanation] = useState(entry.secret.explanation || '')
   const [category, setCategory] = useState(q.category || '')
+  const [difficulty, setDifficulty] = useState(q.difficulty || 2)
+  const [points, setPoints] = useState(q.points || 10)
   const [active, setActive] = useState(q.active !== false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -126,17 +142,25 @@ function QuestionEditor({ entry, onCancel, onSaved }) {
     if (text.trim().length < 10) return setError('Tekst pitanja je prekratak.')
     if (options.some((o) => !o.trim())) return setError('Sve 4 opcije moraju biti popunjene.')
     if (!explanation.trim()) return setError('Objašnjenje ne smije biti prazno.')
+    if (!category.trim()) return setError('Kategorija ne smije biti prazna.')
     setSaving(true)
     try {
       const pub = {
         text: text.trim(),
         options: options.map((o) => o.trim()),
         category: category.trim().toLowerCase(),
+        difficulty: Number(difficulty) || 2,
+        points: Number(points) || 10,
         active,
       }
       const secret = { correctIndex, explanation: explanation.trim() }
-      await saveQuestion(q.id, pub, secret)
-      onSaved({ ...q, ...pub })
+      if (isNew) {
+        const id = await createQuestion(pub, secret)
+        onSaved({ id, ...pub }, true)
+      } else {
+        await saveQuestion(q.id, pub, secret)
+        onSaved({ ...q, ...pub }, false)
+      }
     } catch (e) {
       setError('Greška pri spremanju: ' + (e?.message || 'pokušaj ponovo'))
       setSaving(false)
@@ -147,9 +171,11 @@ function QuestionEditor({ entry, onCancel, onSaved }) {
     <div className="min-h-svh bg-slate-50 p-4">
       <div className="flex items-center justify-between">
         <button onClick={onCancel} className="text-sm font-bold text-slate-500">← Nazad</button>
-        <span className="text-xs text-slate-400">{q.id}</span>
+        <span className="text-xs text-slate-400">{q.id || 'novo'}</span>
       </div>
-      <h1 className="mt-2 font-title text-xl font-extrabold text-slate-900">Uredi pitanje</h1>
+      <h1 className="mt-2 font-title text-xl font-extrabold text-slate-900">
+        {isNew ? 'Novo pitanje' : 'Uredi pitanje'}
+      </h1>
 
       <label className="mt-4 block text-sm font-bold text-slate-600">Tekst pitanja</label>
       <textarea
@@ -196,12 +222,34 @@ function QuestionEditor({ entry, onCancel, onSaved }) {
         className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none focus:border-teal-500"
       />
 
+      <label className="mt-4 block text-sm font-bold text-slate-600">Kategorija</label>
+      <input
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        placeholder="npr. interakcije"
+        className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 outline-none focus:border-teal-500"
+      />
+
       <div className="mt-4 flex items-center gap-3">
         <div className="flex-1">
-          <label className="block text-sm font-bold text-slate-600">Kategorija</label>
+          <label className="block text-sm font-bold text-slate-600">Težina</label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(Number(e.target.value))}
+            className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 outline-none focus:border-teal-500"
+          >
+            <option value={1}>1 — lako</option>
+            <option value={2}>2 — srednje</option>
+            <option value={3}>3 — teško</option>
+          </select>
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-bold text-slate-600">Bodovi (XP)</label>
           <input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            type="number"
+            min={1}
+            value={points}
+            onChange={(e) => setPoints(e.target.value)}
             className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 outline-none focus:border-teal-500"
           />
         </div>
@@ -218,7 +266,7 @@ function QuestionEditor({ entry, onCancel, onSaved }) {
         disabled={saving}
         className="mt-5 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800 disabled:opacity-60"
       >
-        {saving ? 'Spremam…' : 'Spremi izmjene'}
+        {saving ? 'Spremam…' : isNew ? 'Kreiraj pitanje' : 'Spremi izmjene'}
       </button>
     </div>
   )

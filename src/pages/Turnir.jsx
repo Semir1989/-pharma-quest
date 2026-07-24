@@ -223,11 +223,20 @@ function medal(i) {
   return 'text-slate-400'
 }
 
-// "ned 26.07. 18:00" u lokalnom (BiH) vremenu.
+// "26.07. u 18:00" — evropski format, 24h, BiH vrijeme (bez oslanjanja na locale).
 function fmt(ms) {
   if (!ms) return ''
-  const opts = { timeZone: 'Europe/Sarajevo' }
-  const d = new Date(ms).toLocaleDateString('bs-BA', { ...opts, weekday: 'short', day: '2-digit', month: '2-digit' })
-  const t = new Date(ms).toLocaleTimeString('bs-BA', { ...opts, hour: '2-digit', minute: '2-digit' })
-  return `${d} ${t}`
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Sarajevo',
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+      .formatToParts(new Date(ms))
+      .map((x) => [x.type, x.value])
+  )
+  return `${p.day}.${p.month}. u ${p.hour}:${p.minute}`
 }

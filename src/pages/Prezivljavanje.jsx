@@ -239,11 +239,19 @@ export default function Prezivljavanje() {
   )
 }
 
-// "sub 25.07. 08:00–20:00" — prozor eventa u lokalnom (BiH) vremenu.
+// "25.07. 08:00–20:00" — evropski format, 24h, BiH vrijeme (bez oslanjanja na locale).
 function formatEventWindow(w) {
   if (!w?.openAt || !w?.closeAt) return ''
-  const opts = { timeZone: 'Europe/Sarajevo' }
-  const day = new Date(w.openAt).toLocaleDateString('bs-BA', { ...opts, weekday: 'short', day: '2-digit', month: '2-digit' })
-  const t = (ms) => new Date(ms).toLocaleTimeString('bs-BA', { ...opts, hour: '2-digit', minute: '2-digit' })
-  return `${day} ${t(w.openAt)}–${t(w.closeAt)}`
+  const part = (ms, opts) =>
+    Object.fromEntries(
+      new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Sarajevo', ...opts })
+        .formatToParts(new Date(ms))
+        .map((x) => [x.type, x.value])
+    )
+  const d = part(w.openAt, { day: '2-digit', month: '2-digit' })
+  const t = (ms) => {
+    const p = part(ms, { hour: '2-digit', minute: '2-digit', hour12: false })
+    return `${p.hour}:${p.minute}`
+  }
+  return `${d.day}.${d.month}. ${t(w.openAt)}–${t(w.closeAt)}`
 }
