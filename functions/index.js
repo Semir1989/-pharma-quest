@@ -26,6 +26,10 @@ const QUESTIONS_PER_QUIZ = 10
 const QUESTION_SECONDS = 30
 const GRACE_SECONDS = 6 // tolerancija za mrežno kašnjenje
 
+// Preživljavanje (Etapa 8): endless mod, +3 XP po tačnom, kraj na prvu grešku.
+const SURVIVAL_XP_PER_CORRECT = 3
+const SURVIVAL_SECONDS = 20 // kraći tajmer — napetost; istek = kraj run-a
+
 // ---------------------------------------------------------------------------
 // Pomoćne funkcije: periodi (kopija logike iz src/utils/periods.js)
 // ---------------------------------------------------------------------------
@@ -46,6 +50,16 @@ function weeklyKey(d = new Date()) {
 
 function monthlyKey(d = new Date()) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+}
+
+// Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM (reset srijedom).
+// UTC-bazirano da klijent (čita leaderboard) i server (piše) uvijek dobiju isti
+// ključ. Vraća datum posljednje srijede, npr. '2026-07-22'.
+function survivalWeekKey(d = new Date()) {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const diff = (date.getUTCDay() - 3 + 7) % 7 // srijeda = 3
+  date.setUTCDate(date.getUTCDate() - diff)
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
 }
 
 function periodKey(type) {
@@ -156,7 +170,7 @@ async function syncLeaderboard(uid, profile, totalXp, weeklyDelta, level) {
 }
 
 // Javna polja pitanja (tačan odgovor i objašnjenje NIKAD ne idu klijentu ovdje).
-function publicQuestion(id, data, index) {
+function publicQuestion(id, data, index, seconds = QUESTION_SECONDS) {
   return {
     index,
     id,
@@ -164,7 +178,7 @@ function publicQuestion(id, data, index) {
     options: data.options,
     category: data.category,
     points: data.points,
-    seconds: QUESTION_SECONDS,
+    seconds,
   }
 }
 
@@ -388,6 +402,139 @@ export const claimTask = onCall(async (request) => {
   const newBadges = await awardBadges(uid)
 
   return { reward: task.reward, newBadges }
+})
+
+// ---------------------------------------------------------------------------
+// PREŽIVLJAVANJE (Etapa 8) — endless mod, jedan pokušaj sedmično (reset srijedom)
+// ---------------------------------------------------------------------------
+
+// Nasumično aktivno pitanje koje NIJE u 'seen' listi (bez ponavljanja u run-u).
+async function pickSurvivalQuestion(seen) {
+  const snap = await db.collection('questions').where('active', '==', true).get()
+  const pool = snap.docs.filter((d) => !seen.includes(d.id))
+  if (pool.length === 0) return null
+  const d = pool[Math.floor(Math.random() * pool.length)]
+  return { id: d.id, ...d.data() }
+}
+
+// Upis trenutnog niza u survival leaderboard (RTDB) — živo penjanje liste.
+async function writeSurvivalLeaderboard(uid, week, streak) {
+  const us = await db.doc(`users/${uid}`).get()
+  const p = us.exists ? us.data() : {}
+  await rtdb.ref(`survival/${week}/${uid}`).set({
+    name: p.displayName || 'Farmaceut',
+    avatar: p.avatar || 'a1',
+    streak,
+  })
+}
+
+// startSurvival — pokreni novi run, nastavi aktivni, ili javi da je iskorišten.
+export const startSurvival = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const week = survivalWeekKey()
+  const runRef = db.doc(`survivalRuns/${uid}`)
+  const runSnap = await runRef.get()
+  const run = runSnap.exists ? runSnap.data() : null
+
+  // Pokušaj ove sedmice već potrošen (run završen) → zaključano do srijede.
+  if (run && run.week === week && !run.active) {
+    return { locked: true, streak: run.streak || 0, week }
+  }
+  // Aktivan run ove sedmice → nastavi s trenutnim pitanjem.
+  if (run && run.week === week && run.active && run.currentQid) {
+    const qSnap = await db.doc(`questions/${run.currentQid}`).get()
+    if (qSnap.exists) {
+      return {
+        locked: false,
+        streak: run.streak || 0,
+        week,
+        question: publicQuestion(run.currentQid, qSnap.data(), run.streak || 0, SURVIVAL_SECONDS),
+      }
+    }
+  }
+  // Novi run.
+  const q = await pickSurvivalQuestion([])
+  if (!q) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
+  await runRef.set({ week, streak: 0, active: true, currentQid: q.id, seen: [q.id], askedAt: Date.now() })
+  return { locked: false, streak: 0, week, question: publicQuestion(q.id, q, 0, SURVIVAL_SECONDS) }
+})
+
+// submitSurvivalAnswer — provjeri odgovor; tačno = +3 XP i sljedeće, greška = kraj.
+export const submitSurvivalAnswer = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const week = survivalWeekKey()
+  const { answerIndex } = request.data || {}
+  const answer =
+    Number.isInteger(answerIndex) && answerIndex >= 0 && answerIndex <= 3 ? answerIndex : null
+
+  const runRef = db.doc(`survivalRuns/${uid}`)
+  const runSnap = await runRef.get()
+  if (!runSnap.exists) throw new HttpsError('failed-precondition', 'Nema aktivnog run-a.')
+  const run = runSnap.data()
+  if (run.week !== week) throw new HttpsError('failed-precondition', 'Sedmica je istekla.')
+  if (!run.active) throw new HttpsError('failed-precondition', 'Run je već završen za ovu sedmicu.')
+
+  const elapsed = (Date.now() - (run.askedAt || Date.now())) / 1000
+  const timedOut = elapsed > SURVIVAL_SECONDS + GRACE_SECONDS
+  const secret = await getSecret(run.currentQid)
+  const correct = !timedOut && answer !== null && answer === secret.correctIndex
+
+  // Greška ili istek → kraj run-a za ovu sedmicu.
+  if (!correct) {
+    await runRef.update({ active: false, endedAt: FieldValue.serverTimestamp() })
+    await writeSurvivalLeaderboard(uid, week, run.streak || 0)
+    const newBadges = await awardBadges(uid)
+    return {
+      correct: false,
+      correctIndex: secret.correctIndex,
+      explanation: secret.explanation,
+      finished: true,
+      streak: run.streak || 0,
+      newBadges,
+    }
+  }
+
+  // Tačno → +3 XP i sljedeće pitanje.
+  const newStreak = (run.streak || 0) + 1
+  const userRef = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const us = await tx.get(userRef)
+    if (!us.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    tx.update(userRef, { xp: (us.data().xp || 0) + SURVIVAL_XP_PER_CORRECT })
+  })
+
+  const seen = run.seen || []
+  const next = await pickSurvivalQuestion(seen)
+  if (!next) {
+    // Banka iscrpljena — run se završava kao savršen (sva pitanja tačno).
+    await runRef.update({ active: false, streak: newStreak, endedAt: FieldValue.serverTimestamp() })
+    await writeSurvivalLeaderboard(uid, week, newStreak)
+    const newBadges = await awardBadges(uid)
+    return {
+      correct: true,
+      correctIndex: secret.correctIndex,
+      explanation: secret.explanation,
+      finished: true,
+      exhausted: true,
+      streak: newStreak,
+      newBadges,
+    }
+  }
+
+  await runRef.update({ streak: newStreak, currentQid: next.id, seen: [...seen, next.id], askedAt: Date.now() })
+  await writeSurvivalLeaderboard(uid, week, newStreak)
+  const newBadges = await awardBadges(uid)
+  return {
+    correct: true,
+    correctIndex: secret.correctIndex,
+    explanation: secret.explanation,
+    finished: false,
+    streak: newStreak,
+    question: publicQuestion(next.id, next, newStreak, SURVIVAL_SECONDS),
+    newBadges,
+  }
 })
 
 // ---------------------------------------------------------------------------

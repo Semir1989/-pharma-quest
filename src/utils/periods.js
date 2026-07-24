@@ -31,6 +31,24 @@ export function periodKey(type, d = new Date()) {
   return monthlyKey(d)
 }
 
+// Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM (reset srijedom).
+// UTC-bazirano, identično serveru (functions/index.js) da putanja leaderboarda
+// bude ista. Vraća datum posljednje srijede, npr. '2026-07-22'.
+export function survivalWeekKey(d = new Date()) {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const diff = (date.getUTCDay() - 3 + 7) % 7 // srijeda = 3
+  date.setUTCDate(date.getUTCDate() - diff)
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
+}
+
+// Sekunde do sljedeće srijede 00:00 UTC (odbrojavanje do resetа Preživljavanja).
+export function secondsUntilSurvivalReset(d = new Date()) {
+  const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const diff = (3 - next.getUTCDay() + 7) % 7 || 7 // dana do sljedeće srijede
+  next.setUTCDate(next.getUTCDate() + diff)
+  return Math.max(0, Math.floor((next - d) / 1000))
+}
+
 // Sekunde do ponoći (za odbrojavanje na dnevnoj kartici).
 export function secondsUntilMidnight(d = new Date()) {
   const midnight = new Date(d)

@@ -61,5 +61,11 @@ service cloud.firestore {
     match /quizSessions/{sessionId} {
       allow read, write: if false;
     }
+
+    // 'survivalRuns' — stanje run-a Preživljavanja (Etapa 8). Samo server;
+    // klijent dobija stanje/pitanja preko Cloud Functions (start/submit).
+    match /survivalRuns/{uid} {
+      allow read, write: if false;
+    }
   }
 }
