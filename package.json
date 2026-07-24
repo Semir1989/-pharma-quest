@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "uvoz-pitanja": "node scripts/import-questions.js",
     "postavi-levele": "node scripts/postavi-level-config.js",
-    "postavi-taskove": "node scripts/postavi-taskove.js"
+    "postavi-taskove": "node scripts/postavi-taskove.js",
+    "postavi-bedzeve": "node scripts/postavi-bedzeve.js"
   },
   "dependencies": {
     "firebase": "^12.16.0",

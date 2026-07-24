@@ -77,6 +77,54 @@ function levelFromXp(xp, cfg) {
 }
 
 // ---------------------------------------------------------------------------
+// Pomoćne funkcije: bedževi (achievements) — definicije u Firestore 'badges'
+// ---------------------------------------------------------------------------
+let badgeConfigCache = null
+
+async function getBadgeConfig() {
+  if (badgeConfigCache) return badgeConfigCache
+  const snap = await db.collection('badges').where('active', '==', true).get()
+  badgeConfigCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  return badgeConfigCache
+}
+
+// Kumulativne metrike profila na koje se vežu bedževi (vidi scripts/postavi-bedzeve.js).
+function profileMetrics(profile, cfg) {
+  const cats = profile.categoryStats || {}
+  const totalCorrect = Object.values(cats).reduce((s, c) => s + (c.correct || 0), 0)
+  const totalAnswered = Object.values(cats).reduce((s, c) => s + (c.total || 0), 0)
+  return {
+    xp: profile.xp || 0,
+    level: levelFromXp(profile.xp || 0, cfg),
+    quizCount: profile.quizCount || 0,
+    perfectQuizzes: profile.perfectQuizzes || 0,
+    totalCorrect,
+    totalAnswered,
+    streak: profile.streak || 0,
+  }
+}
+
+// Provjeri uslove svih bedževa i dodijeli nove. Čita svjež profil (poslije glavne
+// transakcije) da metrike budu ažurne. Klijent bedževe NIKAD ne upisuje sam.
+async function awardBadges(uid) {
+  const defs = await getBadgeConfig()
+  if (defs.length === 0) return
+  const userRef = db.doc(`users/${uid}`)
+  const snap = await userRef.get()
+  if (!snap.exists) return
+  const profile = snap.data()
+  const cfg = await getLevelConfig()
+  const m = profileMetrics(profile, cfg)
+  const earned = profile.badges || {}
+  const updates = {}
+  for (const b of defs) {
+    if (earned[b.id]) continue
+    if ((m[b.metric] || 0) >= b.goal) updates[`badges.${b.id}`] = FieldValue.serverTimestamp()
+  }
+  if (Object.keys(updates).length > 0) await userRef.update(updates)
+}
+
+// ---------------------------------------------------------------------------
 // Pomoćne funkcije: leaderboard (RTDB)
 // ---------------------------------------------------------------------------
 function leaderboardEntry(profile, level) {
@@ -263,6 +311,8 @@ export const submitAnswer = onCall(async (request) => {
     profileAfter = profile
     tx.update(userRef, {
       xp: totalXp,
+      quizCount: (profile.quizCount || 0) + 1,
+      perfectQuizzes: (profile.perfectQuizzes || 0) + (correctCount === answers.length ? 1 : 0),
       categoryStats: stats,
       accuracyByCategory,
       taskProgress,
@@ -272,6 +322,7 @@ export const submitAnswer = onCall(async (request) => {
 
   await sessionRef.update({ answers, finished: true, finishedAt: FieldValue.serverTimestamp() })
   await syncLeaderboard(uid, profileAfter, totalXp, earnedXp, levelFromXp(totalXp, cfg))
+  await awardBadges(uid)
 
   return {
     correct,
@@ -327,6 +378,7 @@ export const claimTask = onCall(async (request) => {
   })
 
   await syncLeaderboard(uid, profileAfter, totalXp, task.reward, levelFromXp(totalXp, cfg))
+  await awardBadges(uid)
 
   return { reward: task.reward }
 })

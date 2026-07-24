@@ -1,25 +1,28 @@
+import { useEffect, useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
+import { getBadges } from '../services/badges'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
-
-// Placeholder bedževi — pravi sistem bedževa dolazi kasnije (Modul 6/Faza 2).
-const BADGES = [
-  { emoji: '📖', name: 'Kviz majstor', locked: true },
-  { emoji: '💊', name: 'Farmaceutski znalac', locked: true },
-  { emoji: '🔥', name: 'Streak serija', locked: true },
-  { emoji: '🏆', name: 'Turnirski šampion', locked: true },
-]
 
 export default function Profil() {
   const { profile } = useAuth()
+  const [badges, setBadges] = useState([])
+
+  useEffect(() => {
+    getBadges()
+      .then(setBadges)
+      .catch(() => setBadges([]))
+  }, [])
 
   if (!profile) return null
 
   const level = levelFromXp(profile.xp)
   const rank = rankFromLevel(level)
   const accuracyEntries = Object.entries(profile.accuracyByCategory || {})
+  const earned = profile.badges || {}
+  const earnedCount = badges.filter((b) => earned[b.id]).length
 
   return (
     <div className="min-h-svh bg-slate-50">
@@ -55,25 +58,43 @@ export default function Profil() {
 
       {/* Bedževi */}
       <section className="mx-4 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-lg font-bold text-slate-800">Bedževi</h2>
-        <div className="grid grid-cols-4 gap-3">
-          {BADGES.map((b) => (
-            <div key={b.name} className="flex flex-col items-center text-center">
-              <div
-                className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${
-                  b.locked ? 'bg-slate-100 grayscale' : 'bg-amber-100'
-                }`}
-              >
-                {b.locked ? '🔒' : b.emoji}
-              </div>
-              <span className="mt-1 text-[11px] leading-tight text-slate-500">
-                {b.name}
-              </span>
-            </div>
-          ))}
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-800">Bedževi</h2>
+          {badges.length > 0 && (
+            <span className="text-sm font-semibold text-slate-400">
+              {earnedCount}/{badges.length}
+            </span>
+          )}
         </div>
+        {badges.length === 0 ? (
+          <p className="text-sm text-slate-400">Bedževi se učitavaju…</p>
+        ) : (
+          <div className="grid grid-cols-4 gap-3">
+            {badges.map((b) => {
+              const isEarned = !!earned[b.id]
+              return (
+                <div
+                  key={b.id}
+                  className="flex flex-col items-center text-center"
+                  title={b.description}
+                >
+                  <div
+                    className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${
+                      isEarned ? 'bg-amber-100' : 'bg-slate-100 grayscale'
+                    }`}
+                  >
+                    {isEarned ? b.emoji : '🔒'}
+                  </div>
+                  <span className="mt-1 text-[11px] leading-tight text-slate-500">
+                    {b.name}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
         <p className="mt-3 text-center text-xs text-slate-400">
-          Bedževe otključavaš igranjem — dolaze uskoro.
+          Bedževe otključavaš igranjem.
         </p>
       </section>
 
