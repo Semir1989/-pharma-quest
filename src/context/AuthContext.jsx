@@ -16,6 +16,12 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u)
       setLoading(false)
+      // Auth se promijenio → profil za novog korisnika je opet "u učitavanju".
+      // Postavljamo ovo odmah (isti render batch kao setUser) da ne postoji
+      // trenutak u kojem je user postavljen a profileLoading već false — inače
+      // bi ProtectedRoute pomislio "nema profila" i pogrešno redirektovao na
+      // /dovrsi-profil prije nego profil stigne.
+      setProfileLoading(true)
     })
     return unsubscribe
   }, [])

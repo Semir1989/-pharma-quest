@@ -22,5 +22,10 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/dovrsi-profil" replace />
   }
 
+  // Ima profil a nekako je na formi za dovršetak → nazad na Home.
+  if (profile && location.pathname === '/dovrsi-profil') {
+    return <Navigate to="/" replace />
+  }
+
   return children
 }
