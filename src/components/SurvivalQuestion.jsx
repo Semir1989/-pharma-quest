@@ -42,11 +42,11 @@ export default function SurvivalQuestion({ question, streak, onSubmit, onNext })
     <div className="flex min-h-svh flex-col p-5 pb-8">
       {/* Gornji red: trenutni niz + oznaka +3 XP */}
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-1.5 text-sm font-extrabold text-white">
-          💀 Niz: {streak}
+        <span className="rounded-xl bg-teal-700 px-3 py-1.5 text-sm font-extrabold text-white">
+          Niz: {streak}
         </span>
-        <span className="flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-bold text-amber-600">
-          +3 XP ⭐
+        <span className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-bold text-amber-600">
+          +3 XP
         </span>
       </div>
 
@@ -100,21 +100,16 @@ export default function SurvivalQuestion({ question, streak, onSubmit, onNext })
           <div className={`rounded-2xl p-4 ${correct ? 'bg-emerald-50' : 'bg-red-50'}`}>
             <p className={`font-bold ${correct ? 'text-emerald-700' : 'text-red-700'}`}>
               {correct
-                ? '✓ Tačno! +3 XP — nastavi niz'
+                ? 'Tačno! +3 XP — nastavi niz'
                 : selected === null
-                  ? '⏱ Isteklo vrijeme — kraj niza'
-                  : '✗ Netačno — kraj niza'}
+                  ? 'Isteklo vrijeme — kraj niza'
+                  : 'Netačno — kraj niza'}
             </p>
-            <p className="mt-2 flex gap-2 text-sm leading-relaxed text-slate-600">
-              <span>💡</span>
-              <span>{feedback.explanation}</span>
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{feedback.explanation}</p>
           </div>
           <button
             onClick={() => onNext(feedback)}
-            className={`mt-4 w-full rounded-2xl py-4 font-title text-lg font-extrabold text-white shadow-md ${
-              correct ? 'bg-teal-700 active:bg-teal-800' : 'bg-slate-800 active:bg-slate-900'
-            }`}
+            className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
           >
             {feedback.finished ? 'Vidi rezultat →' : 'Sljedeće pitanje →'}
           </button>

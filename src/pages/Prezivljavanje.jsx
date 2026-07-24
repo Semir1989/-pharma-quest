@@ -120,32 +120,34 @@ export default function Prezivljavanje() {
 
   return (
     <div className="p-4">
+      <button
+        onClick={() => navigate('/')}
+        className="mb-3 flex items-center gap-1 text-sm font-bold text-slate-500 active:text-slate-700"
+      >
+        ← Nazad
+      </button>
+
       {/* Zaglavlje */}
       <div
         className="rounded-3xl p-5 text-white shadow"
-        style={{ background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, #0f5750 0%, #0a3b36 100%)' }}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">💀</span>
-          <div>
-            <h1 className="font-title text-2xl font-extrabold">Preživljavanje</h1>
-            <p className="text-sm text-slate-300">Sedmični izazov — koliko dugo možeš?</p>
-          </div>
-        </div>
+        <h1 className="font-title text-2xl font-extrabold">Preživljavanje</h1>
+        <p className="text-sm text-teal-100">Sedmični izazov — koliko daleko možeš stići?</p>
 
         {phase === 'ended' && (
           <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
-            <p className="text-sm text-slate-300">Tvoj niz ove sedmice</p>
+            <p className="text-sm text-teal-100">Tvoj niz ove sedmice</p>
             <p className="font-title text-5xl font-extrabold text-amber-300">{bestStreak}</p>
-            <p className="mt-1 text-sm text-slate-300">+{bestStreak * 3} XP osvojeno · vrati se u srijedu</p>
+            <p className="mt-1 text-sm text-teal-100">+{bestStreak * 3} XP osvojeno · vrati se u srijedu</p>
           </div>
         )}
 
         {phase === 'locked' && (
           <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
-            <p className="text-sm text-slate-300">Pokušaj za ovu sedmicu iskorišten</p>
+            <p className="text-sm text-teal-100">Pokušaj za ovu sedmicu iskorišten</p>
             <p className="font-title text-4xl font-extrabold text-amber-300">Niz: {bestStreak}</p>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-teal-100">
               Novi pokušaj za {formatCountdown(secondsUntilSurvivalReset())}
             </p>
           </div>
@@ -153,7 +155,7 @@ export default function Prezivljavanje() {
 
         {phase === 'closed' && (
           <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-teal-100">
               {eventWindow?.openAt && Date.now() < eventWindow.openAt
                 ? 'Izazov još nije počeo'
                 : 'Izazov je za ovu sedmicu završen'}
@@ -174,10 +176,10 @@ export default function Prezivljavanje() {
       {/* Pravila + dugme (intro/error) */}
       {(phase === 'intro' || phase === 'loading' || phase === 'error') && (
         <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
-          <ul className="flex flex-col gap-2 text-sm text-slate-600">
-            <li>🎯 Odgovaraj tačno — svaki tačan odgovor je <b>+3 XP</b> i produžava niz.</li>
-            <li>💥 Prva greška (ili istek 20s) završava izazov za ovu sedmicu.</li>
-            <li>🔁 Jedan pokušaj sedmično — resetuje se srijedom.</li>
+          <ul className="flex flex-col gap-2 pl-5 text-sm text-slate-600 marker:text-teal-600 list-disc">
+            <li>Odgovaraj tačno — svaki tačan odgovor je <b>+3 XP</b> i produžava niz.</li>
+            <li>Prva greška (ili istek 20s) završava izazov za ovu sedmicu.</li>
+            <li>Jedan pokušaj sedmično — resetuje se srijedom.</li>
           </ul>
           {phase === 'error' && (
             <p className="mt-3 text-sm font-medium text-red-600">
@@ -187,9 +189,9 @@ export default function Prezivljavanje() {
           <button
             onClick={begin}
             disabled={phase === 'loading'}
-            className="mt-4 w-full rounded-2xl bg-slate-900 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-black disabled:opacity-60"
+            className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800 disabled:opacity-60"
           >
-            {phase === 'loading' ? 'Pokrećem…' : phase === 'error' ? 'Pokušaj ponovo' : '💀 Započni izazov'}
+            {phase === 'loading' ? 'Pokrećem…' : phase === 'error' ? 'Pokušaj ponovo' : 'Započni izazov'}
           </button>
         </div>
       )}
@@ -206,7 +208,7 @@ export default function Prezivljavanje() {
       {/* Leaderboard sedmice */}
       <section className="mt-5">
         <h2 className="mb-2 px-1 font-title text-lg font-extrabold text-slate-900">
-          🏆 Najduži nizovi ove sedmice
+          Najduži nizovi ove sedmice
         </h2>
         {rows.length === 0 ? (
           <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-400 shadow-sm">
@@ -224,7 +226,7 @@ export default function Prezivljavanje() {
                 <span className="w-6 text-center font-bold text-slate-400">{i + 1}</span>
                 <Avatar id={r.avatar} size={36} />
                 <span className="min-w-0 flex-1 truncate font-semibold text-slate-800">{r.name}</span>
-                <span className="font-title font-extrabold text-slate-900">💀 {r.streak}</span>
+                <span className="font-title font-extrabold text-teal-700">{r.streak}</span>
               </div>
             ))}
           </div>

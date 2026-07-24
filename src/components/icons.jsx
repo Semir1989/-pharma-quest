@@ -54,3 +54,57 @@ export function UserPlusIcon({ className = '' }) {
     </svg>
   )
 }
+
+// ---- Ikonice donje navigacije (usklađene s dizajnom počeni ekran.png) ----
+
+export function HomeIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M4 11.5 12 5l8 6.5" />
+      <path d="M6 10.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8.5" />
+      <path d="M10 20v-5h4v5" />
+    </svg>
+  )
+}
+
+export function QuizIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+      <path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2-2.4 3.6" />
+      <circle cx="12" cy="16.8" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function TrophyIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M8 4.5h8V8a4 4 0 0 1-8 0V4.5z" />
+      <path d="M8 5.5H5.5A2.5 2.5 0 0 0 8 8" />
+      <path d="M16 5.5h2.5A2.5 2.5 0 0 1 16 8" />
+      <path d="M12 12v3.5" />
+      <path d="M10 19.5c0-1.4.8-2 2-2s2 .6 2 2M9.5 19.5h5" />
+    </svg>
+  )
+}
+
+export function ClanIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <circle cx="9" cy="8.5" r="3" />
+      <path d="M3.5 19c0-3 2.4-5 5.5-5s5.5 2 5.5 5" />
+      <circle cx="16.7" cy="9.2" r="2.2" />
+      <path d="M16.7 13.8c2.5 0 3.8 1.7 3.8 4.2" />
+    </svg>
+  )
+}
+
+export function PersonIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 19.5c0-3.6 3-6 7-6s7 2.4 7 6" />
+    </svg>
+  )
+}

@@ -62,14 +62,11 @@ export default function Home() {
       <Link
         to="/prezivljavanje"
         className="mt-4 flex items-center justify-between rounded-2xl p-4 text-white shadow-sm active:opacity-95"
-        style={{ background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' }}
+        style={{ background: 'linear-gradient(180deg, #0f5750 0%, #0a3b36 100%)' }}
       >
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-xl">💀</span>
-          <div>
-            <h2 className="text-lg font-bold">Preživljavanje</h2>
-            <p className="text-xs text-slate-300">Sedmični izazov — niz do prve greške</p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold">Preživljavanje</h2>
+          <p className="text-xs text-teal-100">Sedmični izazov — niz do prve greške</p>
         </div>
         <span className="text-sm font-bold text-amber-300">Igraj →</span>
       </Link>
