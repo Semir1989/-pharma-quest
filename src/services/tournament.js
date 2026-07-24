@@ -11,6 +11,13 @@ export async function getTournamentConfig() {
   return snap.exists() ? snap.data() : null
 }
 
+// Rezultati/nagrade XP trke (poslije finalizacije) — { finalized, top: [...] }.
+export async function getXpRace(tid) {
+  if (!tid) return null
+  const snap = await getDoc(doc(db, 'xpRaces', tid))
+  return snap.exists() ? snap.data() : null
+}
+
 // --- Duel turnir (Faza 2, korak C) ---
 
 // Live praćenje turnir doc-a (status, currentRound, rounds, winnerUid...).

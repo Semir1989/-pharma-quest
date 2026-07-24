@@ -498,6 +498,28 @@ async function addWeekendXp(uid, delta) {
   }))
 }
 
+// Finalizacija XP trke na kraju prozora: nagrade top 3 (bonus XP), jednokratno.
+const XP_RACE_REWARDS = [500, 300, 150] // 1., 2., 3. mjesto
+async function finalizeXpRace(tid) {
+  const snap = await rtdb.ref(`tournament/${tid}`).orderByChild('xp').limitToLast(3).get()
+  const rows = []
+  snap.forEach((c) => rows.push({ uid: c.key, ...c.val() }))
+  rows.reverse() // limitToLast je rastuće — želimo najboljeg prvog
+  const top = []
+  for (let i = 0; i < rows.length; i++) {
+    const reward = XP_RACE_REWARDS[i] || 0
+    top.push({ uid: rows[i].uid, name: rows[i].name || 'Farmaceut', xp: rows[i].xp || 0, reward })
+    if (reward > 0) {
+      const uRef = db.doc(`users/${rows[i].uid}`)
+      await db.runTransaction(async (tx) => {
+        const s = await tx.get(uRef)
+        if (s.exists) tx.update(uRef, { xp: (s.data().xp || 0) + reward })
+      })
+    }
+  }
+  await db.doc(`xpRaces/${tid}`).set({ finalized: true, top, finalizedAt: FieldValue.serverTimestamp() })
+}
+
 // ---------------------------------------------------------------------------
 // 1v1 DUEL TURNIR (Faza 2, korak C) — bracket single-elimination, async dueli
 // Prijave [regOpenAt, regCloseAt] → bracket (nasumično) → runde s rokovima.
@@ -655,6 +677,14 @@ export const tournamentTick = onSchedule('every 30 minutes', async () => {
   if (!cfg || !cfg.enabled || !cfg.key) return
   const tid = cfg.key
   const now = Date.now()
+
+  // XP trka: finalizacija na kraju prozora (jednom, nezavisno od duela).
+  if (cfg.closeAt && now >= cfg.closeAt) {
+    const xr = await db.doc(`xpRaces/${tid}`).get()
+    if (!xr.exists || !xr.data().finalized) await finalizeXpRace(tid)
+  }
+
+  // Duel bracket.
   const tSnap = await db.doc(`tournaments/${tid}`).get()
   if (!tSnap.exists) {
     if (cfg.regCloseAt && now >= cfg.regCloseAt) await buildBracket(tid, cfg)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   getTournamentConfig,
+  getXpRace,
   subscribeTournamentLeaderboard,
   subscribeTournament,
   subscribeParticipants,
@@ -23,10 +24,16 @@ export default function Turnir() {
   const [matches, setMatches] = useState([])
   const [registering, setRegistering] = useState(false)
   const [regError, setRegError] = useState('')
+  const [xpRace, setXpRace] = useState(null)
 
   useEffect(() => {
     getTournamentConfig().then(setCfg).catch(() => setCfg(null))
   }, [])
+
+  useEffect(() => {
+    if (!cfg?.key) return
+    getXpRace(cfg.key).then(setXpRace).catch(() => setXpRace(null))
+  }, [cfg?.key])
 
   useEffect(() => {
     if (!cfg?.key) return
@@ -42,6 +49,7 @@ export default function Turnir() {
   const regState = !cfg ? 'off' : now < cfg.regOpenAt ? 'soon' : now > cfg.regCloseAt ? 'closed' : 'open'
   const amRegistered = !!(user && participants[user.uid])
   const participantCount = Object.keys(participants).length
+  const rewardMap = Object.fromEntries((xpRace?.top || []).map((t) => [t.uid, t.reward]))
 
   async function register() {
     setRegError('')
@@ -172,24 +180,33 @@ export default function Turnir() {
 
       {/* XP trka leaderboard */}
       <section className="mt-5">
-        <h2 className="mb-2 px-1 font-title text-lg font-extrabold text-slate-900">XP trka — poredak</h2>
+        <h2 className="mb-2 px-1 font-title text-lg font-extrabold text-slate-900">
+          XP trka — poredak
+          {xpRace?.finalized && <span className="ml-2 text-sm font-medium text-teal-600">· nagrade dodijeljene</span>}
+        </h2>
         {rows.length === 0 ? (
           <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-400 shadow-sm">
             {playState === 'live' ? 'Još niko nije osvojio XP — budi prvi!' : 'Nema rezultata.'}
           </p>
         ) : (
           <div className="flex flex-col gap-2">
-            {rows.map((r, i) => (
-              <div
-                key={r.uid}
-                className={`flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ${r.uid === user?.uid ? 'ring-2 ring-teal-500' : ''}`}
-              >
-                <span className={`w-6 text-center font-extrabold ${medal(i)}`}>{i + 1}</span>
-                <Avatar id={r.avatar} size={36} />
-                <span className="min-w-0 flex-1 truncate font-semibold text-slate-800">{r.name}</span>
-                <span className="font-title font-extrabold text-amber-600">{r.xp} XP</span>
-              </div>
-            ))}
+            {rows.map((r, i) => {
+              const reward = rewardMap[r.uid]
+              return (
+                <div
+                  key={r.uid}
+                  className={`flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ${r.uid === user?.uid ? 'ring-2 ring-teal-500' : ''}`}
+                >
+                  <span className={`w-6 text-center font-extrabold ${medal(i)}`}>{i + 1}</span>
+                  <Avatar id={r.avatar} size={36} />
+                  <span className="min-w-0 flex-1 truncate font-semibold text-slate-800">{r.name}</span>
+                  {reward > 0 && (
+                    <span className="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">+{reward}</span>
+                  )}
+                  <span className="font-title font-extrabold text-amber-600">{r.xp} XP</span>
+                </div>
+              )
+            })}
           </div>
         )}
       </section>

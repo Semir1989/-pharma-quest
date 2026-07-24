@@ -1,0 +1,128 @@
+[
+  {
+    "text": "Kako se prilagođava režim doziranja lijekova kod pacijenata s jetrenom insuficijencijom?",
+    "options": ["Bira se lijek s renalnom eliminacijom", "Prednost imaju lijekovi koji se metabolišu glukuronidacijom", "Izbjegavaju se hepatotoksični lijekovi", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod jetrene insuficijencije bira se lijek s renalnom eliminacijom, prednost imaju lijekovi koji se metabolišu glukuronidacijom (očuvan put), izbjegavaju se hepatotoksični lijekovi te se smanjuje doza i/ili produžava međudozni interval — sve navedeno je tačno."
+  },
+  {
+    "text": "Koji su parametri ključni u procjeni jetrene funkcije Child-Pugh modelom?",
+    "options": ["Albumin, bilirubin, protrombinsko vrijeme, ascites i encefalopatija", "AST, ALT, GGT, ALP i amilaza", "Kreatinin, natrij, urea, GFR i hepatitis markeri", "Hemoglobin, trombociti, leukociti, CRP i sedimentacija"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Child-Pugh skor čini pet parametara: albumin (sintetska funkcija), bilirubin (ekskretorna), protrombinsko vrijeme/INR (sinteza faktora koagulacije), ascites i encefalopatija. Klasificira jetrenu insuficijenciju u klase A, B ili C."
+  },
+  {
+    "text": "Koji je antibiotik naročito rizičan za primjenu kod pacijenata s jetrenom insuficijencijom?",
+    "options": ["Amoksicilin", "Eritromicin", "Cefazolin", "Gentamicin"],
+    "correctIndex": 1,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Eritromicin se intenzivno metaboliše u jetri i može izazvati hepatotoksičnost, posebno kod već postojeće jetrene insuficijencije. Ostali navedeni imaju dominantno renalnu eliminaciju i sigurniji su."
+  },
+  {
+    "text": "Koji su beta-blokator i statin najbolji izbor kod pacijenata s jetrenom insuficijencijom?",
+    "options": ["Metoprolol + atorvastatin", "Propranolol + simvastatin", "Atenolol + pravastatin", "Karvedilol + lovastatin"],
+    "correctIndex": 2,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Atenolol (hidrofilni beta-blokator) i pravastatin (hidrofilni statin) se dominantno eliminišu renalnim putem, pa manje zavise od jetrene funkcije i sigurniji su od lipofilnih varijanti kod jetrene insuficijencije."
+  },
+  {
+    "text": "Kada je potrebno prilagoditi dozu lijeka prema funkciji bubrega?",
+    "options": ["Ako se veća frakcija lijeka eliminiše renalnim putem u nepromijenjenom obliku ili kao aktivni/toksični metabolit", "Ako lijek ima uzak terapijski indeks", "Ako postoji značajno opadanje vezivanja lijeka za proteine plazme", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Prilagođavanje je potrebno kod lijekova s dominantno renalnom eliminacijom (aminoglikozidi, digoksin, litij), uskim terapijskim indeksom, ako je bubreg mjesto inaktivacije, i kod pada albumina (raste slobodna frakcija) — sve navedeno je tačno."
+  },
+  {
+    "text": "Koja je tvrdnja o doziranju kod bubrežne insuficijencije tačna?",
+    "options": ["Da bi se brzo postigla terapijska koncentracija, potrebno je administrirati udarnu dozu", "Poluvrijeme eliminacije renalno eliminisanih lijekova je kraće", "Lijekovima s velikim volumenom distribucije treba povećati udarnu dozu", "Hidrofilnim lijekovima treba smanjiti udarnu dozu"],
+    "correctIndex": 0,
+    "category": "farmakokinetika",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Za brzo postizanje terapijske koncentracije daje se udarna doza. Kod bubrežne insuficijencije poluvrijeme renalno eliminisanih lijekova je DUŽE; lijekovima s velikim (smanjenim) Vd treba SMANJITI udarnu dozu, a hidrofilnim (povećan Vd) POVEĆATI."
+  },
+  {
+    "text": "Koja je tvrdnja o glomerularnoj filtraciji (GFR) tačna?",
+    "options": ["Određuje se indirektno (npr. inulinom koji se filtrira, ne reapsorbuje niti sekretuje)", "Koriguje se na standardnu tjelesnu površinu od 1,73 m²", "Osjetljiviji je pokazatelj oštećenja bubrega od serumskog kreatinina", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "GFR se procjenjuje indirektno (npr. inulinom), koriguje na 1,73 m² tjelesne površine, osjetljiviji je od serumskog kreatinina (koji ostaje normalan dok GFR već pada) i koristi se za praćenje progresije i prilagođavanje terapije — sve navedeno je tačno."
+  },
+  {
+    "text": "Koji je sastojak najprikladniji u kremama za pelensku regiju kod beba?",
+    "options": ["Cink oksid", "Alkohol", "Salicilna kiselina", "Mentol"],
+    "correctIndex": 0,
+    "category": "pedijatrija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Cink oksid stvara zaštitni barijerni sloj, štiti kožu od vlage, urina i fecesa, ima blago antiseptičko djelovanje i siguran je za svakodnevnu upotrebu na osjetljivoj koži beba."
+  },
+  {
+    "text": "Koji je osnovni sastojak preparata za ublažavanje infantilnih kolika?",
+    "options": ["Laktuloza", "Simetikon", "Natrij alginat", "Metoklopramid"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Simetikon smanjuje površinski napon mjehurića gasa, omogućava njihovo spajanje i lakše izbacivanje, čime se smanjuju nadutost i grčevi. Ne apsorbuje se iz GIT-a, pa je siguran za bebe."
+  },
+  {
+    "text": "Zbog čega se med ne smije davati bebama mlađim od godinu dana?",
+    "options": ["Može izazvati alergijsku reakciju", "Težak je za varenje", "Postoji rizik od botulizma", "Sadrži previše šećera"],
+    "correctIndex": 2,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Med može sadržavati spore Clostridium botulinum; nezreo GIT bebe ne sprječava njihov rast, pa spore mogu proizvesti toksin i izazvati infantilni botulizam — ozbiljno i potencijalno opasno stanje."
+  },
+  {
+    "text": "Koji je znak dehidracije kod beba?",
+    "options": ["Suha usta i jezik", "Rijetko mokrenje (nedovoljan broj mokrih pelena)", "Letargija ili pospanost", "Sve navedeno je tačno"],
+    "correctIndex": 3,
+    "category": "pedijatrija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Dehidracija se kod bebe manifestuje suhoćom usta i jezika, rijetkim mokrenjem (suhe pelene duže vrijeme), letargijom/pospanošću te blijedom ili plavičastom kožom — sve navedeno je tačno."
+  },
+  {
+    "text": "Od kada se preporučuje suplementacija vitaminom D kod beba?",
+    "options": ["Od rođenja", "Od trećeg mjeseca života", "Od šestog mjeseca života", "Od prve godine života"],
+    "correctIndex": 0,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vitamin D se bebama daje od rođenja radi prevencije rahitisa i normalnog razvoja kostiju, posebno kod onih na isključivo majčinom mlijeku, koje prirodno sadrži nedovoljno vitamina D."
+  },
+  {
+    "text": "Koja je tvrdnja o DHA kod beba naučno utemeljena?",
+    "options": ["DHA poboljšava apsorpciju kalcija iz mlijeka", "DHA je ključna za sintezu mijelina u mozgu i razvoj vizualnog sistema", "DHA zamjenjuje potrebu za vitaminom D", "DHA direktno smanjuje učestalost infantilnih kolika"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "DHA (dugolančana omega-3 masna kiselina) je sastavni dio mijelinskih ovojnica (brže provođenje impulsa) i ključna za razvoj mrežnjače i vizualnog sistema — zato je važna za razvoj mozga i oka kod beba."
+  },
+  {
+    "text": "Šta na adaptiranom mlijeku znače skraćenice AC, AR, HA i LF?",
+    "options": ["AC – adaptirano kravlje, AR – adaptirano rižino, HA – visokokalorijska, LF – niskomasna", "AC – za alergičnu djecu, AR – protiv osipa, HA – hidratantna, LF – niskokalorijska", "AC – anti-kolika, AR – anti-refluks, HA – hipoalergena, LF – bez laktoze", "AC – dodatak vitamina C, AR – dodatak minerala, HA – heksamerna struktura, LF – produženo hranjenje"],
+    "correctIndex": 2,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "AC = anti-kolika, AR = anti-refluks (gušće formule protiv vraćanja hrane), HA = hipoalergena (hidrolizirani proteini), LF = bez laktoze (za bebe s problemom varenja laktoze)."
+  }
+]
