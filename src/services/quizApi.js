@@ -13,12 +13,12 @@ export async function startQuizSession() {
   return (await startQuizFn({})).data
 }
 
-// → { correct, correctIndex, explanation, finished, question? , summary? }
+// → { correct, correctIndex, explanation, finished, question?, summary?, newBadges? }
 export async function submitQuizAnswer(sessionId, answerIndex) {
   return (await submitAnswerFn({ sessionId, answerIndex })).data
 }
 
-// → { reward }
+// → { reward, newBadges }
 export async function claimTaskReward(taskId) {
   return (await claimTaskFn({ taskId })).data
 }

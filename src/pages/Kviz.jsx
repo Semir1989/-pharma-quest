@@ -18,6 +18,7 @@ export default function Kviz() {
   const [answers, setAnswers] = useState([]) // za pregled na rezultatima
   const [summary, setSummary] = useState(null) // { earnedXp, correctCount, total }
   const [levelUp, setLevelUp] = useState(null)
+  const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
   const xpAtStartRef = useRef(0)
 
   async function startQuiz() {
@@ -29,6 +30,7 @@ export default function Kviz() {
       setAnswers([])
       setSummary(null)
       setLevelUp(null)
+      setBadgeQueue([])
       xpAtStartRef.current = profile.xp || 0
       setPhase('playing')
     } catch {
@@ -63,6 +65,8 @@ export default function Kviz() {
           rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
         })
       }
+      // Novododijeljeni bedževi — animacija poslije level-upa (Etapa 8).
+      if (res.newBadges?.length) setBadgeQueue(res.newBadges)
     }
     return res
   }
@@ -94,6 +98,8 @@ export default function Kviz() {
         earnedXp={summary?.earnedXp || 0}
         levelUp={levelUp}
         onLevelUpSeen={() => setLevelUp(null)}
+        badge={badgeQueue[0] || null}
+        onBadgeSeen={() => setBadgeQueue((q) => q.slice(1))}
         onContinue={() => navigate('/')}
       />
     )

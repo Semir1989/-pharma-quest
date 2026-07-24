@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { getTasks, progressForType, taskValue, claimTask } from '../services/tasks'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 import LevelUpOverlay from '../components/LevelUpOverlay'
+import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import {
   secondsUntilMidnight,
   formatCountdown,
@@ -18,6 +19,7 @@ export default function Questovi() {
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
   const [levelUp, setLevelUp] = useState(null) // { level, rank, rankChanged } ili null
+  const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
 
   useEffect(() => {
     getTasks().then(setTasks).catch(() => setTasks({ daily: [], weekly: [], monthly: [] }))
@@ -30,7 +32,7 @@ export default function Questovi() {
     setClaiming(task.id)
     try {
       const xpBefore = profile.xp || 0
-      const reward = await claimTask(task)
+      const { reward, newBadges } = await claimTask(task)
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
       // Level-up animacija i ovdje, ne samo poslije kviza (Modul 5).
       const oldLevel = levelFromXp(xpBefore)
@@ -42,11 +44,14 @@ export default function Questovi() {
           rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
         })
       }
+      // Novododijeljeni bedževi — animacija poslije level-upa (Etapa 8).
+      if (newBadges?.length) setBadgeQueue(newBadges)
     } finally {
       setClaiming(null)
     }
   }
 
+  // Redoslijed: prvo level-up (ako ga je bilo), pa bedž(evi) jedan po jedan.
   if (levelUp) {
     return (
       <LevelUpOverlay
@@ -54,6 +59,15 @@ export default function Questovi() {
         rank={levelUp.rank}
         rankChanged={levelUp.rankChanged}
         onClose={() => setLevelUp(null)}
+      />
+    )
+  }
+
+  if (badgeQueue.length > 0) {
+    return (
+      <BadgeUnlockOverlay
+        badge={badgeQueue[0]}
+        onClose={() => setBadgeQueue((q) => q.slice(1))}
       />
     )
   }

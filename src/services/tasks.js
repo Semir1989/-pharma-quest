@@ -35,8 +35,9 @@ export function taskValue(progress, task) {
 }
 
 // Preuzimanje nagrade (Etapa 6): server provjerava uslov i dodjeljuje XP —
-// klijent više ništa ne upisuje sam. Vraća iznos nagrade (za level-up provjeru).
+// klijent više ništa ne upisuje sam. Vraća { reward, newBadges } — reward za
+// level-up provjeru, newBadges za animaciju otključavanja bedža (Etapa 8).
 export async function claimTask(task) {
-  const { reward } = await claimTaskReward(task.id)
-  return reward
+  const { reward, newBadges } = await claimTaskReward(task.id)
+  return { reward, newBadges: newBadges || [] }
 }

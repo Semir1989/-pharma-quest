@@ -106,22 +106,28 @@ function profileMetrics(profile, cfg) {
 
 // Provjeri uslove svih bedževa i dodijeli nove. Čita svjež profil (poslije glavne
 // transakcije) da metrike budu ažurne. Klijent bedževe NIKAD ne upisuje sam.
+// Vraća listu NOVODODIJELJENIH bedževa (za animaciju na klijentu): [{ id, emoji, name, description }].
 async function awardBadges(uid) {
   const defs = await getBadgeConfig()
-  if (defs.length === 0) return
+  if (defs.length === 0) return []
   const userRef = db.doc(`users/${uid}`)
   const snap = await userRef.get()
-  if (!snap.exists) return
+  if (!snap.exists) return []
   const profile = snap.data()
   const cfg = await getLevelConfig()
   const m = profileMetrics(profile, cfg)
   const earned = profile.badges || {}
   const updates = {}
+  const newlyEarned = []
   for (const b of defs) {
     if (earned[b.id]) continue
-    if ((m[b.metric] || 0) >= b.goal) updates[`badges.${b.id}`] = FieldValue.serverTimestamp()
+    if ((m[b.metric] || 0) >= b.goal) {
+      updates[`badges.${b.id}`] = FieldValue.serverTimestamp()
+      newlyEarned.push({ id: b.id, emoji: b.emoji, name: b.name, description: b.description || '' })
+    }
   }
   if (Object.keys(updates).length > 0) await userRef.update(updates)
+  return newlyEarned
 }
 
 // ---------------------------------------------------------------------------
@@ -322,7 +328,7 @@ export const submitAnswer = onCall(async (request) => {
 
   await sessionRef.update({ answers, finished: true, finishedAt: FieldValue.serverTimestamp() })
   await syncLeaderboard(uid, profileAfter, totalXp, earnedXp, levelFromXp(totalXp, cfg))
-  await awardBadges(uid)
+  const newBadges = await awardBadges(uid)
 
   return {
     correct,
@@ -330,6 +336,7 @@ export const submitAnswer = onCall(async (request) => {
     explanation: secret.explanation,
     finished: true,
     summary: { earnedXp, correctCount, total: answers.length },
+    newBadges,
   }
 })
 
@@ -378,9 +385,9 @@ export const claimTask = onCall(async (request) => {
   })
 
   await syncLeaderboard(uid, profileAfter, totalXp, task.reward, levelFromXp(totalXp, cfg))
-  await awardBadges(uid)
+  const newBadges = await awardBadges(uid)
 
-  return { reward: task.reward }
+  return { reward: task.reward, newBadges }
 })
 
 // ---------------------------------------------------------------------------

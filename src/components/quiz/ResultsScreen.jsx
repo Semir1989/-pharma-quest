@@ -1,13 +1,24 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import LevelUpOverlay from '../LevelUpOverlay'
+import BadgeUnlockOverlay from '../BadgeUnlockOverlay'
 
 // Ekran rezultata kviza: kružni skor, poruka, osvojeni XP,
 // lista pitanja s ✓/✗ i objašnjenjima (klik za otvaranje).
-// Ako je korisnik prešao level, prvo se prikazuje LevelUpOverlay (Modul 5).
+// Redoslijed animacija prije rezultata: prvo LevelUpOverlay (ako je bilo
+// level-upa), pa BadgeUnlockOverlay za svaki novi bedž (Etapa 8).
 // props: answers = [{ question, selected, correct }], earnedXp,
-//        levelUp ({ level, rank, rankChanged } ili null), onLevelUpSeen, onContinue
-export default function ResultsScreen({ answers, earnedXp, levelUp, onLevelUpSeen, onContinue }) {
+//        levelUp ({ level, rank, rankChanged } ili null), onLevelUpSeen,
+//        badge ({ emoji, name, description } ili null), onBadgeSeen, onContinue
+export default function ResultsScreen({
+  answers,
+  earnedXp,
+  levelUp,
+  onLevelUpSeen,
+  badge,
+  onBadgeSeen,
+  onContinue,
+}) {
   const [open, setOpen] = useState({}) // koja su pitanja raširena
   const score = answers.filter((a) => a.correct).length
   const total = answers.length
@@ -22,6 +33,10 @@ export default function ResultsScreen({ answers, earnedXp, levelUp, onLevelUpSee
         onClose={onLevelUpSeen}
       />
     )
+  }
+
+  if (badge) {
+    return <BadgeUnlockOverlay badge={badge} onClose={onBadgeSeen} />
   }
 
   const toggleAll = () => {
