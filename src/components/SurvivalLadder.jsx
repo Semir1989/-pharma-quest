@@ -1,70 +1,63 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import {
-  MILESTONE_STEP,
-  maxLevel,
-  milestoneReward,
-  nextChest,
-  xpProgress,
-} from '../utils/levels'
+import { CHEST_STEP, MAX_STEP, chestReward, nextChest } from '../utils/survivalLadder'
 
-// Ljestvica levela 1 → 100 (battle-pass stil, vertikalno).
-// Najviši level je gore, igrač se penje prema vrhu. Na svakom 10. levelu stoji
-// kovčeg s bonus XP-om; kovčeg SE NE ISPLAĆUJE ovdje — server ga je već
-// isplatio (functions/index.js, awardLevelMilestones). Otvaranje je čista
-// animacija koja igraču pokaže da je nagradu dobio, jer se ranije nigdje nije
-// vidjela. `opened` = users/{uid}.levelRewardOpened.
+// Ljestvica Preživljavanja (battle-pass stil, vertikalno) — dokle je igrač
+// stigao u nizu TE sedmice, korak 1 → 100. Najdalji korak je gore.
+// Na svakom 10. koraku stoji kovčeg s bonus XP-om; XP je server već isplatio
+// u trenutku kad je niz dostigao prag (functions/index.js,
+// survivalChestReward), pa je otvaranje čista animacija.
 //
-// props: level, xp, opened, onOpenChest(milestone)
-export default function LevelLadder({ level = 1, xp = 0, opened = 0, onOpenChest }) {
+// Ovo NIJE globalni level igrača — niz se resetuje srijedom.
+//
+// props: streak, opened, onOpenChest(step)
+export default function SurvivalLadder({ streak = 0, opened = 0, onOpenChest }) {
   const scrollRef = useRef(null)
   const currentRef = useRef(null)
-  const top = maxLevel()
-  const claimable = nextChest(level, opened) // jedini kovčeg koji je sada na redu
-  const progress = xpProgress(xp)
+  const claimable = nextChest(streak, opened) // jedini kovčeg koji je sada na redu
 
-  // Pri otvaranju ekrana skrolamo na igračev level (u sredinu okvira).
+  // Pri otvaranju ekrana skrolamo na igračev korak (u sredinu okvira).
   // Namjerno ne koristimo scrollIntoView — on bi pomjerio i cijelu stranicu.
   useEffect(() => {
     const box = scrollRef.current
     const row = currentRef.current
     if (!box || !row) return
     box.scrollTop = row.offsetTop - box.clientHeight / 2 + row.clientHeight / 2
-  }, [level])
+  }, [streak])
 
-  const levels = []
-  for (let l = top; l >= 1; l--) levels.push(l)
+  const steps = []
+  for (let s = MAX_STEP; s >= 1; s--) steps.push(s)
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
       <div className="flex items-baseline justify-between border-b border-slate-100 px-4 py-3">
         <h2 className="font-title text-lg font-extrabold text-slate-900">Tvoja ljestvica</h2>
         <span className="text-xs font-bold text-slate-400">
-          Level {level} / {top}
+          Niz {streak} / {MAX_STEP}
         </span>
       </div>
 
       <div ref={scrollRef} className="relative max-h-[26rem] overflow-y-auto px-4 py-2">
-        {levels.map((l) => {
-          const isCurrent = l === level
+        {steps.map((s) => {
+          // Na nizu 0 (još nije igrao) marker stoji na prvom koraku.
+          const isCurrent = s === Math.max(streak, 1)
           const shared = {
-            level: l,
-            reached: l <= level,
+            step: s,
+            reached: s <= streak,
             isCurrent,
-            progress: isCurrent ? progress : null,
             rowRef: isCurrent ? currentRef : null,
           }
 
-          return l % MILESTONE_STEP === 0 ? (
+          return s % CHEST_STEP === 0 ? (
             <ChestRow
-              key={l}
+              key={s}
               {...shared}
-              isOpened={l <= opened}
-              isClaimable={l === claimable}
-              onOpen={() => onOpenChest?.(l)}
+              isOpened={s <= opened}
+              isClaimable={s === claimable}
+              onOpen={() => onOpenChest?.(s)}
             />
           ) : (
-            <StepRow key={l} {...shared} />
+            <StepRow key={s} {...shared} />
           )
         })}
       </div>
@@ -72,8 +65,8 @@ export default function LevelLadder({ level = 1, xp = 0, opened = 0, onOpenChest
   )
 }
 
-// Obični level — sitna tačka na stazi.
-function StepRow({ level, reached, isCurrent, progress, rowRef }) {
+// Obični korak niza — sitna tačka na stazi.
+function StepRow({ step, reached, isCurrent, rowRef }) {
   return (
     <div ref={rowRef} className="relative flex items-center gap-3 py-1">
       <Track reached={reached} />
@@ -89,10 +82,10 @@ function StepRow({ level, reached, isCurrent, progress, rowRef }) {
         />
       </Node>
       {isCurrent ? (
-        <CurrentLabel level={level} progress={progress} />
+        <CurrentLabel step={step} reached={reached} />
       ) : (
         <span className={`text-sm ${reached ? 'text-slate-500' : 'text-slate-300'}`}>
-          Level {level}
+          {step}. tačan odgovor
         </span>
       )}
     </div>
@@ -100,8 +93,8 @@ function StepRow({ level, reached, isCurrent, progress, rowRef }) {
 }
 
 // Prag — kovčeg s bonus XP-om.
-function ChestRow({ level, reached, isCurrent, progress, isOpened, isClaimable, rowRef, onOpen }) {
-  const reward = milestoneReward(level)
+function ChestRow({ step, reached, isCurrent, isOpened, isClaimable, rowRef, onOpen }) {
+  const reward = chestReward(step)
 
   return (
     <div ref={rowRef} className="relative flex items-center gap-3 py-1.5">
@@ -113,8 +106,8 @@ function ChestRow({ level, reached, isCurrent, progress, isOpened, isClaimable, 
           disabled={!isClaimable}
           aria-label={
             isClaimable
-              ? `Otvori kovčeg za level ${level}`
-              : `Kovčeg za level ${level} — ${isOpened ? 'otvoren' : 'zaključan'}`
+              ? `Otvori kovčeg za niz ${step}`
+              : `Kovčeg za niz ${step} — ${isOpened ? 'otvoren' : 'zaključan'}`
           }
           className={`flex h-9 w-9 items-center justify-center rounded-xl text-lg shadow-sm ${
             isClaimable
@@ -132,14 +125,14 @@ function ChestRow({ level, reached, isCurrent, progress, isOpened, isClaimable, 
 
       <div className="min-w-0 flex-1">
         {isCurrent ? (
-          <CurrentLabel level={level} progress={progress} />
+          <CurrentLabel step={step} reached={reached} />
         ) : (
           <p
             className={`font-title text-sm font-extrabold ${
               isClaimable ? 'text-amber-600' : reached ? 'text-slate-700' : 'text-slate-400'
             }`}
           >
-            Level {level}
+            Niz {step}
           </p>
         )}
         <p className="text-xs text-slate-400">
@@ -156,18 +149,27 @@ function ChestRow({ level, reached, isCurrent, progress, isOpened, isClaimable, 
   )
 }
 
-// Oznaka "ti si ovdje" + koliko XP-a fali do sljedećeg levela.
-function CurrentLabel({ level, progress }) {
+// Oznaka "ti si ovdje" + koliko još fali do sljedećeg kovčega.
+function CurrentLabel({ step, reached }) {
+  const target = Math.min(Math.ceil((step + (reached ? 1 : 0)) / CHEST_STEP) * CHEST_STEP, MAX_STEP)
+  const left = target - (reached ? step : 0)
+
   return (
     <div className="min-w-0">
       <p className="font-title text-sm font-extrabold text-teal-800">
-        Level {level} <span className="text-teal-600">◀ TI SI OVDJE</span>
+        {reached ? `Niz ${step}` : 'Kreni od početka'}{' '}
+        <span className="text-teal-600">◀ TI SI OVDJE</span>
       </p>
-      {progress && (
-        <p className="text-xs text-slate-400">
-          još {Math.max(0, progress.needed - progress.current)} XP do levela {level + 1}
-        </p>
-      )}
+      <p className="text-xs text-slate-400">
+        {left > 0 ? (
+          <>
+            još {left} {left === 1 ? 'tačan odgovor' : 'tačnih odgovora'} do kovčega (+
+            {chestReward(target)} XP)
+          </>
+        ) : (
+          'prošao/la si cijelu ljestvicu!'
+        )}
+      </p>
     </div>
   )
 }

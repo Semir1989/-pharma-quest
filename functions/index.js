@@ -40,6 +40,19 @@ const DAILY_QUIZ_XP_CAP = 300
 const SURVIVAL_XP_PER_CORRECT = 3
 const SURVIVAL_SECONDS = 20 // kraći tajmer — napetost; istek = kraj run-a
 
+// Kovčezi na ljestvici niza: svaki 10. tačan odgovor zaredom nosi bonus
+// (niz 10 → +100 XP, 20 → +200 … 100 → +1000). Nizovi se resetuju srijedom,
+// pa se i nagrade mogu osvojiti iznova svake sedmice. Ne miješati s
+// awardLevelMilestones — to je bonus za GLOBALNI level, sasvim druga stvar.
+const SURVIVAL_CHEST_STEP = 10
+const SURVIVAL_MAX_STEP = 100
+
+function survivalChestReward(streak) {
+  if (streak % SURVIVAL_CHEST_STEP !== 0) return 0
+  if (streak > SURVIVAL_MAX_STEP) return 0
+  return (streak / SURVIVAL_CHEST_STEP) * 100
+}
+
 // ---------------------------------------------------------------------------
 // Pomoćne funkcije: periodi (kopija logike iz src/utils/periods.js)
 // Ključevi se računaju po BiH vremenu (Europe/Sarajevo) — Cloud Functions rade
@@ -1338,11 +1351,14 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   // Tačno → +3 XP, run se PAUZIRA i igrač bira: izađi ili nastavi.
   // Sljedeće pitanje se namjerno ne šalje ovdje (bira ga startSurvival).
   const newStreak = (run.streak || 0) + 1
+  // Kovčeg na svakom 10. koraku niza — XP legne ODMAH, u istoj transakciji;
+  // pritisak na kovčeg na ljestvici je samo animacija koja igraču to pokaže.
+  const chestReward = survivalChestReward(newStreak)
   const userRef = db.doc(`users/${uid}`)
   await db.runTransaction(async (tx) => {
     const us = await tx.get(userRef)
     if (!us.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
-    tx.update(userRef, { xp: (us.data().xp || 0) + SURVIVAL_XP_PER_CORRECT })
+    tx.update(userRef, { xp: (us.data().xp || 0) + SURVIVAL_XP_PER_CORRECT + chestReward })
   })
   const levelBonus = await awardLevelMilestones(uid)
   await addWeekendXp(uid, SURVIVAL_XP_PER_CORRECT)
@@ -1368,6 +1384,7 @@ export const submitSurvivalAnswer = onCall(async (request) => {
     exhausted: remaining <= 0, // nema više pitanja — run se zatvara na povratku
     streak: newStreak,
     xpPerCorrect: SURVIVAL_XP_PER_CORRECT,
+    chestReward, // > 0 kad je ovim odgovorom otključan kovčeg na ljestvici
     levelBonus,
     newBadges,
   }

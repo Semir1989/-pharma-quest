@@ -42,48 +42,6 @@ export function xpProgress(xp = 0) {
   }
 }
 
-export function maxLevel() {
-  return config.maxLevel
-}
-
-// ---------------------------------------------------------------------------
-// Pragovi (kovčezi) — svaki 10. level nosi bonus XP
-// ---------------------------------------------------------------------------
-// PAŽNJA: formula mora ostati identična serverskoj (functions/index.js,
-// awardLevelMilestones). Server je taj koji XP zaista isplaćuje — ovdje samo
-// računamo isti iznos da bismo ga prikazali na ljestvici i u animaciji.
-
-export const MILESTONE_STEP = 10
-
-// Level 10 → 100 XP, level 20 → 200 XP, … level 100 → 1000 XP.
-export function milestoneReward(level) {
-  return (level / MILESTONE_STEP) * 100
-}
-
-// Svi pragovi do maksimalnog levela: [10, 20, 30 … 100].
-export function milestoneLevels() {
-  const out = []
-  for (let l = MILESTONE_STEP; l <= config.maxLevel; l += MILESTONE_STEP) out.push(l)
-  return out
-}
-
-// Koliko kovčega igrač ima zarađenih a još neotvorenih.
-// `opened` = users/{uid}.levelRewardOpened (zadnji prag koji je igrač OTVORIO;
-// nije isto što i levelRewardMilestone, koji pamti zadnji ISPLAĆENI prag).
-export function unopenedChests(level = 1, opened = 0) {
-  const earned = Math.floor(Math.min(level, config.maxLevel) / MILESTONE_STEP)
-  const seen = Math.floor(Math.min(Math.max(opened, 0), config.maxLevel) / MILESTONE_STEP)
-  return Math.max(0, earned - seen)
-}
-
-// Prvi kovčeg koji igrač smije otvoriti — 0 ako nema nijednog.
-// Otvara se uvijek redom, od najnižeg praga naviše, da `levelRewardOpened`
-// (jedan jedini broj) ostane konzistentan.
-export function nextChest(level = 1, opened = 0) {
-  const next = (Math.floor(Math.max(opened, 0) / MILESTONE_STEP) + 1) * MILESTONE_STEP
-  return next <= Math.min(level, config.maxLevel) ? next : 0
-}
-
 // Rang (titula) na osnovu levela — prikazuje se na profilu.
 export function rankFromLevel(level = 1) {
   if (level >= 40) return 'Legenda'

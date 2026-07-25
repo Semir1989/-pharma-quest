@@ -50,17 +50,12 @@ export default function LevelUpOverlay({ level, rank, rankChanged, bonusXp = 0, 
 
       {bonusXp > 0 && (
         <motion.div
-          className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/15 px-5 py-2.5 text-center"
+          className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/15 px-5 py-2.5 font-title text-lg font-extrabold text-amber-200"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.85 }}
         >
-          <p className="font-title text-lg font-extrabold text-amber-200">
-            🎁 Otključan kovčeg: +{bonusXp} XP
-          </p>
-          <p className="mt-0.5 text-xs text-amber-100/80">
-            Otvori ga na ljestvici u Preživljavanju
-          </p>
+          🎁 Bonus +{bonusXp} XP!
         </motion.div>
       )}
 

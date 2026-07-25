@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Confetti from './Confetti'
-import { MILESTONE_STEP, maxLevel, milestoneReward } from '../utils/levels'
 
-// Animacija otvaranja kovčega (nagrada za svaki 10. level).
-// XP je server već isplatio (functions/index.js, awardLevelMilestones) — ovo je
-// prikaz nagrade, ne isplata. Zato tekst govori "osvojio si", ne "dobijaš".
+// Animacija otvaranja kovčega na ljestvici Preživljavanja.
+// XP je server već isplatio u trenutku kad je niz dostigao prag
+// (functions/index.js, survivalChestReward) — ovo je prikaz nagrade, ne
+// isplata. Zato tekst govori "osvojio si", ne "dobijaš".
 //
-// props: level (prag, npr. 10), reward (bonus XP), onClose
+// props: step (prag niza, npr. 10), reward (bonus XP), nextStep, nextReward,
+//        onClose. nextStep = 0 kad je ovo posljednji kovčeg na ljestvici.
 const SHAKE_MS = 1100
 
-export default function ChestOpenOverlay({ level, reward, onClose }) {
+export default function ChestOpenOverlay({ step, reward, nextStep = 0, nextReward = 0, onClose }) {
   const [open, setOpen] = useState(false)
 
-  // Kovčeg se prvo trese, pa "pukne". Preskakanje na dodir da igrač ne čeka.
+  // Kovčeg se prvo trese, pa "pukne". Dodir preskače čekanje.
   useEffect(() => {
     const t = setTimeout(() => setOpen(true), SHAKE_MS)
     return () => clearTimeout(t)
@@ -34,7 +35,7 @@ export default function ChestOpenOverlay({ level, reward, onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        Nagrada za level {level}
+        Niz od {step} tačnih
       </motion.p>
 
       {/* Zlatni bljesak u trenutku otvaranja */}
@@ -80,9 +81,9 @@ export default function ChestOpenOverlay({ level, reward, onClose }) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            Ovaj bonus ti je već upisan na račun.{' '}
-            {level + MILESTONE_STEP <= maxLevel()
-              ? `Svaki 10. level nosi novi kovčeg — sljedeći je na levelu ${level + MILESTONE_STEP} (+${milestoneReward(level + MILESTONE_STEP)} XP).`
+            Bonus ti je već upisan na račun.{' '}
+            {nextStep
+              ? `Svaki 10. tačan odgovor zaredom nosi kovčeg — sljedeći je na nizu ${nextStep} (+${nextReward} XP).`
               : 'Otvorio/la si posljednji kovčeg na ljestvici — svaka čast!'}
           </motion.p>
           <motion.button

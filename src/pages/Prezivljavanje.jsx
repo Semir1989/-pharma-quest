@@ -2,16 +2,27 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { startSurvival, submitSurvivalAnswer } from '../services/quizApi'
-import { subscribeSurvivalLeaderboard } from '../services/survival'
-import { secondsUntilSurvivalReset, formatCountdown } from '../utils/periods'
+import { subscribeSurvivalLeaderboard, subscribeMyStreak } from '../services/survival'
+import {
+  secondsUntilSurvivalReset,
+  formatCountdown,
+  survivalWeekKey,
+} from '../utils/periods'
 import { track } from '../services/analytics'
-import { markChestOpened } from '../services/userProfile'
-import { levelFromXp, milestoneReward, rankFromLevel, unopenedChests } from '../utils/levels'
+import { markSurvivalChestOpened } from '../services/userProfile'
+import { levelFromXp, rankFromLevel } from '../utils/levels'
+import {
+  CHEST_STEP,
+  MAX_STEP,
+  chestReward,
+  openedThisWeek,
+  unopenedChests,
+} from '../utils/survivalLadder'
 import SurvivalQuestion from '../components/SurvivalQuestion'
 import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import ChestOpenOverlay from '../components/ChestOpenOverlay'
-import LevelLadder from '../components/LevelLadder'
+import SurvivalLadder from '../components/SurvivalLadder'
 import Avatar from '../components/Avatar'
 
 // Preživljavanje (Etapa 8): endless mod, jedna sedmična "sudbina".
@@ -33,12 +44,17 @@ export default function Prezivljavanje() {
   const [levelUp, setLevelUp] = useState(null)
   const [badgeQueue, setBadgeQueue] = useState([])
   const [chest, setChest] = useState(null) // prag čiji se kovčeg upravo otvara
+  const [ladderStreak, setLadderStreak] = useState(0) // niz te sedmice (RTDB)
   const xpAtStartRef = useRef(0)
   const badgesRef = useRef([]) // skupljeni novi bedževi tokom run-a
   const bonusRef = useRef(0) // skupljeni level-bonus XP tokom run-a
 
   // Live leaderboard tekuće sedmice.
   useEffect(() => subscribeSurvivalLeaderboard(setRows), [])
+
+  // Vlastiti niz iz RTDB — ljestvica mora biti tačna i prije ulaska u izazov
+  // (server ga upisuje poslije svakog odgovora), ne samo dok traje run.
+  useEffect(() => subscribeMyStreak(user?.uid, setLadderStreak), [user?.uid])
 
   // Ista funkcija pokreće novi run, nastavlja pauzirani i donosi sljedeće
   // pitanje — server pitanje bira tek u ovom trenutku, nikad unaprijed.
@@ -125,18 +141,20 @@ export default function Prezivljavanje() {
     setPhase('paused')
   }
 
-  // Ljestvica levela (1 → 100) — igračev globalni napredak, ne survival niz.
-  const level = levelFromXp(profile?.xp || 0)
-  const opened = profile?.levelRewardOpened || 0
-  const pendingChests = unopenedChests(level, opened)
+  // Ljestvica niza (1 → 100). Dok traje run `streak` je svježiji od RTDB-a,
+  // pa uzimamo veći od ta dva.
+  const week = survivalWeekKey()
+  const ladder = Math.max(ladderStreak, streak, bestStreak)
+  const opened = openedThisWeek(profile?.survivalChest, week)
+  const pendingChests = unopenedChests(ladder, opened)
 
-  // Otvaranje kovčega je samo animacija — XP je server već isplatio. Oznaku
-  // upisujemo odmah (ne po zatvaranju overlaya) da se ne izgubi ako igrač
-  // zatvori aplikaciju usred animacije.
-  function handleOpenChest(milestone) {
-    setChest(milestone)
-    track('level_chest_open', { milestone })
-    if (user?.uid) markChestOpened(user.uid, milestone).catch(() => {})
+  // Otvaranje kovčega je samo animacija — XP je server isplatio čim je niz
+  // dostigao prag. Oznaku upisujemo odmah (ne po zatvaranju overlaya) da se ne
+  // izgubi ako igrač zatvori aplikaciju usred animacije.
+  function handleOpenChest(step) {
+    setChest(step)
+    track('survival_chest_open', { step })
+    if (user?.uid) markSurvivalChestOpened(user.uid, week, step).catch(() => {})
   }
 
   // Animacije imaju prednost nad sadržajem (redoslijed: level → bedž → ekran).
@@ -161,10 +179,13 @@ export default function Prezivljavanje() {
   }
 
   if (chest) {
+    const next = chest + CHEST_STEP
     return (
       <ChestOpenOverlay
-        level={chest}
-        reward={milestoneReward(chest)}
+        step={chest}
+        reward={chestReward(chest)}
+        nextStep={next <= MAX_STEP ? next : 0}
+        nextReward={next <= MAX_STEP ? chestReward(next) : 0}
         onClose={() => setChest(null)}
       />
     )
@@ -263,6 +284,10 @@ export default function Prezivljavanje() {
               Poslije svakog tačnog odgovora možeš <b>izaći i vratiti se kasnije</b> — niz ti
               se čuva.
             </li>
+            <li>
+              Svaki <b>10. tačan zaredom</b> otključava kovčeg: niz 10 je{' '}
+              <b>+100 XP</b>, niz 20 <b>+200 XP</b>, niz 30 <b>+300 XP</b>…
+            </li>
             <li>Izazov prekida samo netačan odgovor ili istek 20s.</li>
             <li>Sve traje do srijede, kad kreće nova sedmica.</li>
           </ul>
@@ -296,8 +321,8 @@ export default function Prezivljavanje() {
         </button>
       )}
 
-      {/* Ljestvica levela — vidi se u svim fazama osim dok traje pitanje.
-          Ovdje igrač konačno vidi bonus koji je za svaki 10. level dobio. */}
+      {/* Ljestvica niza — vidi se u svim fazama osim dok traje pitanje, pa i
+          poslije izlaska i poslije ispadanja. */}
       <section className="mt-5">
         {pendingChests > 0 && (
           <div className="mb-2 flex items-center gap-2 rounded-2xl bg-amber-500 px-4 py-3 text-white shadow">
@@ -312,12 +337,7 @@ export default function Prezivljavanje() {
             </p>
           </div>
         )}
-        <LevelLadder
-          level={level}
-          xp={profile?.xp || 0}
-          opened={opened}
-          onOpenChest={handleOpenChest}
-        />
+        <SurvivalLadder streak={ladder} opened={opened} onOpenChest={handleOpenChest} />
       </section>
 
       {/* Leaderboard sedmice */}
