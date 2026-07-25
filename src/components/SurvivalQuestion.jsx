@@ -57,7 +57,7 @@ export default function SurvivalQuestion({ question, streak, onSubmit, onNext, o
       </div>
 
       <div className="mt-6 rounded-2xl bg-white px-5 py-8 text-center shadow-sm">
-        <h2 className="font-title text-xl font-extrabold leading-snug text-slate-900">
+        <h2 className="whitespace-pre-line font-title text-xl font-extrabold leading-snug text-slate-900">
           {question.text}
         </h2>
       </div>

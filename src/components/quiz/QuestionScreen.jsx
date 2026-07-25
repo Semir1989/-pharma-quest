@@ -67,7 +67,8 @@ export default function QuestionScreen({ question, total, onSubmit, onNext }) {
 
       {/* Kartica pitanja */}
       <div className="mt-6 rounded-2xl bg-white px-5 py-8 text-center shadow-sm">
-        <h2 className="font-title text-xl font-extrabold leading-snug text-slate-900">
+        {/* whitespace-pre-line: pitanja s numerisanim tvrdnjama (1./2./3.) čuvaju prelome reda */}
+        <h2 className="whitespace-pre-line font-title text-xl font-extrabold leading-snug text-slate-900">
           {question.text}
         </h2>
       </div>
