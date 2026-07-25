@@ -30,30 +30,73 @@ const QUESTION_SECONDS = 30
 // mreži ta razlika zna poništiti tačan odgovor, pa dajemo velikodušan grace.
 const GRACE_SECONDS = 15
 
+// Dnevni limit kvizova: najviše 3 kviza i najviše 300 XP iz kvizova po danu
+// (BiH dan). Limit se odnosi SAMO na kviz — nagrade za questove, Preživljavanje
+// i turnir dolaze povrh toga.
+const DAILY_QUIZ_LIMIT = 3
+const DAILY_QUIZ_XP_CAP = 300
+
 // Preživljavanje (Etapa 8): endless mod, +3 XP po tačnom, kraj na prvu grešku.
 const SURVIVAL_XP_PER_CORRECT = 3
 const SURVIVAL_SECONDS = 20 // kraći tajmer — napetost; istek = kraj run-a
 
 // ---------------------------------------------------------------------------
 // Pomoćne funkcije: periodi (kopija logike iz src/utils/periods.js)
+// Ključevi se računaju po BiH vremenu (Europe/Sarajevo) — Cloud Functions rade
+// u UTC-u, pa bi bez ovoga dnevni reset na serveru bio 2h poslije onog na ekranu.
 // ---------------------------------------------------------------------------
+const BIH_TZ = 'Europe/Sarajevo'
 const pad = (n) => String(n).padStart(2, '0')
 
+function bihParts(d = new Date()) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: BIH_TZ,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+      .formatToParts(d)
+      .map((x) => [x.type, x.value])
+  )
+  return { y: +p.year, m: +p.month, d: +p.day, hh: +p.hour % 24, mm: +p.minute, ss: +p.second }
+}
+
+function bihOffset(d) {
+  const p = bihParts(d)
+  return Date.UTC(p.y, p.m - 1, p.d, p.hh, p.mm, p.ss) - Math.floor(d.getTime() / 1000) * 1000
+}
+
 function dailyKey(d = new Date()) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const { y, m, d: day } = bihParts(d)
+  return `${y}-${pad(m)}-${pad(day)}`
 }
 
 function weeklyKey(d = new Date()) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  const day = date.getUTCDay() || 7
-  date.setUTCDate(date.getUTCDate() + 4 - day)
+  const { y, m, d: day } = bihParts(d)
+  const date = new Date(Date.UTC(y, m - 1, day))
+  const dow = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dow)
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
   const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7)
   return `${date.getUTCFullYear()}-W${pad(week)}`
 }
 
 function monthlyKey(d = new Date()) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  const { y, m } = bihParts(d)
+  return `${y}-${pad(m)}`
+}
+
+// Trenutak sljedeće ponoći po BiH vremenu (ms) — klijent iz ovoga crta odbrojavanje.
+function nextDailyResetAt(d = new Date()) {
+  const { y, m, d: day } = bihParts(d)
+  const midnightCivil = Date.UTC(y, m - 1, day + 1)
+  const guess = midnightCivil - bihOffset(d)
+  return midnightCivil - bihOffset(new Date(guess))
 }
 
 // Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM (reset srijedom).
@@ -90,6 +133,234 @@ function periodKey(type) {
   if (type === 'weekly') return weeklyKey()
   return monthlyKey()
 }
+
+// ---------------------------------------------------------------------------
+// Brojači questova — jedno mjesto za sve metrike, za sva tri perioda
+// ---------------------------------------------------------------------------
+// Metrike koje questovi mogu koristiti (vidi scripts/postavi-taskove.js):
+//   quizzes         odigrani kvizovi
+//   correct         tačni odgovori u kvizovima (byCategory: po kategoriji)
+//   xp              XP osvojen kvizovima (već ograničen dnevnim capom)
+//   days            broj različitih dana u periodu s odigranim kvizom
+//   perfect         kvizovi bez ijedne greške
+//   survivalCorrect tačni odgovori u Preživljavanju
+//   survivalBest    najduži niz u Preživljavanju u periodu (maksimum, ne zbir)
+//   duels           odigrani duel mečevi
+//   tournamentXp    XP osvojen tokom prozora vikend turnira
+function emptyProgress(period) {
+  return {
+    period,
+    quizzes: 0,
+    correct: 0,
+    xp: 0,
+    days: 0,
+    lastDay: null,
+    perfect: 0,
+    survivalCorrect: 0,
+    survivalBest: 0,
+    duels: 0,
+    tournamentXp: 0,
+    byCategory: {},
+    claimed: {},
+    picked: null,
+  }
+}
+
+// Novi taskProgress objekt s primijenjenim uvećanjima ("lijeni reset" po ključu
+// perioda). delta.day (BiH dan) uvećava 'days' samo ako je dan nov za taj period.
+function bumpProgress(profile, delta) {
+  const out = {}
+  for (const type of ['daily', 'weekly', 'monthly']) {
+    const key = periodKey(type)
+    const stored = profile.taskProgress?.[type]
+    const fresh = !stored || stored.period !== key
+    const p = fresh ? emptyProgress(key) : { ...emptyProgress(key), ...stored, period: key }
+
+    const byCategory = { ...(p.byCategory || {}) }
+    for (const [cat, n] of Object.entries(delta.byCategory || {})) {
+      byCategory[cat] = (byCategory[cat] || 0) + n
+    }
+    const newDay = delta.day && delta.day !== p.lastDay
+
+    out[type] = {
+      ...p,
+      quizzes: (p.quizzes || 0) + (delta.quizzes || 0),
+      correct: (p.correct || 0) + (delta.correct || 0),
+      xp: (p.xp || 0) + (delta.xp || 0),
+      perfect: (p.perfect || 0) + (delta.perfect || 0),
+      survivalCorrect: (p.survivalCorrect || 0) + (delta.survivalCorrect || 0),
+      survivalBest: Math.max(p.survivalBest || 0, delta.survivalBest || 0),
+      duels: (p.duels || 0) + (delta.duels || 0),
+      tournamentXp: (p.tournamentXp || 0) + (delta.tournamentXp || 0),
+      days: (p.days || 0) + (newDay ? 1 : 0),
+      lastDay: newDay ? delta.day : p.lastDay,
+      byCategory,
+    }
+  }
+  return out
+}
+
+// Zasebna transakcija kad uvećanje ne ide uz neki drugi upis (survival, duel).
+async function applyProgress(uid, delta) {
+  const userRef = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef)
+    if (!snap.exists) return
+    tx.update(userRef, { taskProgress: bumpProgress(snap.data(), delta) })
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Rotacija dnevnih questova — svaki igrač dobije 3 zadatka iz bazena
+// ---------------------------------------------------------------------------
+// Izbor je determinističan po (uid, dan) i ZAMRZNE se u users/{uid}
+// .taskProgress.daily.picked, pa se ne mijenja tokom dana. Ako je za igrača
+// aktivan neki event (Preživljavanje / turnir), tačno jedan od tri zadatka je
+// vezan za taj event. Igrač koji je ispao iz Preživljavanja NE dobija survival
+// zadatak — a ako ispadne usred dana, zadatak mu se zamijeni običnim.
+const DAILY_TASK_COUNT = 3
+
+let tasksCache = null
+let tasksCacheAt = 0
+async function getActiveTasks() {
+  if (tasksCache && Date.now() - tasksCacheAt < CONTENT_TTL) return tasksCache
+  const snap = await db.collection('tasks').where('active', '==', true).get()
+  tasksCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  tasksCacheAt = Date.now()
+  return tasksCache
+}
+
+function seedFrom(str) {
+  let h = 2166136261
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+function mulberry32(a) {
+  return function () {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function seededPick(list, n, seed) {
+  const rnd = mulberry32(seed)
+  const a = [...list]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a.slice(0, n)
+}
+
+// Koji su eventi ovog trenutka "živi" za konkretnog igrača.
+async function activeEventsFor(uid) {
+  const events = []
+  // Preživljavanje: prozor otvoren I igrač nije ispao u tekućoj sedmici.
+  if (!(await survivalWindowClosed())) {
+    const runSnap = await db.doc(`survivalRuns/${uid}`).get()
+    const run = runSnap.exists ? runSnap.data() : null
+    const eliminated = run && run.week === survivalWeekKey() && run.active === false
+    if (!eliminated) events.push('survival')
+  }
+  // Turnir: unutar prozora eventa.
+  const t = await getTournamentConfig()
+  const now = Date.now()
+  if (t?.enabled && t.key && !(t.openAt && now < t.openAt) && !(t.closeAt && now > t.closeAt)) {
+    events.push('tournament')
+  }
+  return events
+}
+
+// Status eventa se ogleda i na profilu (users/{uid}.eventStatus) — klijent je
+// već pretplaćen na profil, pa zna da li je igrač još u igri bez ijednog
+// dodatnog čitanja. survivalRuns klijent po pravilima ne smije čitati.
+async function setEventStatus(uid, patch) {
+  const updates = {}
+  for (const [k, v] of Object.entries(patch)) updates[`eventStatus.${k}`] = v
+  await db.doc(`users/${uid}`).update(updates).catch(() => {})
+}
+
+function pickDailyTaskIds(pool, uid, day, events) {
+  const daily = pool.filter((t) => t.type === 'daily')
+  const base = daily.filter((t) => !t.event)
+  const eventTasks = daily.filter((t) => t.event && events.includes(t.event))
+  const seed = seedFrom(`${uid}|${day}`)
+  const chosen = eventTasks.length > 0 ? seededPick(eventTasks, 1, seed ^ 0x9e3779b9) : []
+  chosen.push(...seededPick(base, DAILY_TASK_COUNT - chosen.length, seed))
+  return chosen.sort((a, b) => (a.order || 0) - (b.order || 0)).map((t) => t.id)
+}
+
+// Vrati (i po potrebi zamrzni) današnji izbor dnevnih questova za igrača.
+async function ensureDailyPicks(uid) {
+  const day = dailyKey()
+  const userRef = db.doc(`users/${uid}`)
+  const snap = await userRef.get()
+  if (!snap.exists) return []
+  const existing = snap.data().taskProgress?.daily
+  if (existing?.period === day && Array.isArray(existing.picked) && existing.picked.length > 0) {
+    return existing.picked
+  }
+  // Izbor se pravi izvan transakcije (čita config i survivalRuns), pa se
+  // transakcijom samo upisuje — i to tek ako ga u međuvremenu niko nije upisao.
+  const [pool, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
+  const picked = pickDailyTaskIds(pool, uid, day, events)
+  await setEventStatus(uid, {
+    survival: events.includes('survival'),
+    tournament: events.includes('tournament'),
+  })
+  let final = picked
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(userRef)
+    if (!s.exists) return
+    const p = s.data()
+    const cur = p.taskProgress?.daily
+    if (cur?.period === day && Array.isArray(cur.picked) && cur.picked.length > 0) {
+      final = cur.picked
+      return
+    }
+    const base = cur?.period === day ? { ...emptyProgress(day), ...cur } : emptyProgress(day)
+    tx.update(userRef, { 'taskProgress.daily': { ...base, period: day, picked } })
+  })
+  return final
+}
+
+// Igrač je ispao iz eventa usred dana → nezavršeni event-quest zamijeni običnim,
+// da mu do ponoći ne stoji zadatak koji više ne može ispuniti.
+async function dropEventPicks(uid, event) {
+  const pool = await getActiveTasks()
+  const byId = new Map(pool.map((t) => [t.id, t]))
+  const day = dailyKey()
+  const userRef = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef)
+    if (!snap.exists) return
+    const d = snap.data().taskProgress?.daily
+    if (!d || d.period !== day || !Array.isArray(d.picked)) return
+    const stale = d.picked.filter((id) => byId.get(id)?.event === event && !d.claimed?.[id])
+    if (stale.length === 0) return
+    const free = pool.filter((t) => t.type === 'daily' && !t.event && !d.picked.includes(t.id))
+    const replacements = seededPick(free, stale.length, seedFrom(`${uid}|${day}|${event}`))
+    const picked = [
+      ...d.picked.filter((id) => !stale.includes(id)),
+      ...replacements.map((t) => t.id),
+    ]
+    tx.update(userRef, { 'taskProgress.daily.picked': picked })
+  })
+}
+
+// Klijent zove pri otvaranju Questova/Home-a ako današnji izbor još ne postoji.
+export const ensureDailyQuests = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const picked = await ensureDailyPicks(uid)
+  return { picked, day: dailyKey(), resetsAt: nextDailyResetAt() }
+})
 
 // ---------------------------------------------------------------------------
 // Pomoćne funkcije: leveli (kriva iz config/levels, keširana)
@@ -284,10 +555,56 @@ async function getSecret(questionId) {
 
 // ---------------------------------------------------------------------------
 // startQuiz — server bira nasumičnih 10 pitanja i otvara sesiju
+// Dnevni limit: 3 kviza po BiH danu. Stanje je u users/{uid}.quizLimit
+// { day, started, xp, sessionId }. Broje se ZAPOČETI kvizovi — inače bi se
+// odustajanjem moglo "rerollati" do lakših pitanja. Zato nedovršena sesija
+// istog dana ne troši novi pokušaj nego se nastavlja.
 // ---------------------------------------------------------------------------
+function quizLimitState(profile, day = dailyKey()) {
+  const l = profile?.quizLimit
+  return l && l.day === day
+    ? { day, started: l.started || 0, xp: l.xp || 0, sessionId: l.sessionId || null }
+    : { day, started: 0, xp: 0, sessionId: null }
+}
+
 export const startQuiz = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se za igranje kviza.')
+
+  const day = dailyKey()
+  const userRef = db.doc(`users/${uid}`)
+  const userSnap = await userRef.get()
+  if (!userSnap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+  const limit = quizLimitState(userSnap.data(), day)
+  const limitInfo = {
+    used: limit.started,
+    limit: DAILY_QUIZ_LIMIT,
+    xpToday: limit.xp,
+    xpCap: DAILY_QUIZ_XP_CAP,
+    resetsAt: nextDailyResetAt(),
+  }
+
+  // Nedovršena sesija od danas → nastavi je (osvježen tajmer, isti pokušaj).
+  if (limit.sessionId) {
+    const sSnap = await db.doc(`quizSessions/${limit.sessionId}`).get()
+    if (sSnap.exists && !sSnap.data().finished) {
+      const s = sSnap.data()
+      const meta = s.questions[s.current]
+      const qData = meta ? await getQuestionById(meta.id) : null
+      if (qData) {
+        await sSnap.ref.update({ askedAt: Date.now() })
+        return {
+          sessionId: limit.sessionId,
+          total: s.questions.length,
+          resumed: true,
+          ...limitInfo,
+          question: publicQuestion(meta.id, qData, s.current),
+        }
+      }
+    }
+  }
+
+  if (limit.started >= DAILY_QUIZ_LIMIT) return { limited: true, ...limitInfo }
 
   const pool = await getActiveQuestions()
   if (pool.length === 0) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
@@ -309,11 +626,27 @@ export const startQuiz = onCall(async (request) => {
     askedAt: Date.now(),
     startedAt: FieldValue.serverTimestamp(),
   }
-  const ref = await db.collection('quizSessions').add(session)
+  // Trošenje pokušaja ide transakcijom — dva paralelna starta ne smiju proći.
+  // Sesija se upisuje tek kad je pokušaj rezervisan, da race ne ostavi siroče.
+  const ref = db.collection('quizSessions').doc()
+  let started = limit.started + 1
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(userRef)
+    if (!s.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const cur = quizLimitState(s.data(), day)
+    if (cur.started >= DAILY_QUIZ_LIMIT) {
+      throw new HttpsError('resource-exhausted', 'Dnevni limit kvizova je iskorišten.')
+    }
+    started = cur.started + 1
+    tx.update(userRef, { quizLimit: { ...cur, started, sessionId: ref.id } })
+  })
+  await ref.set(session)
 
   return {
     sessionId: ref.id,
     total: chosen.length,
+    ...limitInfo,
+    used: started,
     question: publicQuestion(chosen[0].id, chosen[0], 0),
   }
 })
@@ -374,7 +707,11 @@ export const submitAnswer = onCall(async (request) => {
 
   const userRef = db.doc(`users/${uid}`)
   const cfg = await getLevelConfig()
+  const day = dailyKey()
+  const perfect = correctCount === answers.length
   let profileAfter, totalXp
+  let awardedXp = 0 // XP poslije dnevnog capa — sve dalje računa s ovim
+  let xpToday = 0
 
   await db.runTransaction(async (tx) => {
     const userSnap = await tx.get(userRef)
@@ -392,37 +729,28 @@ export const submitAnswer = onCall(async (request) => {
       Object.entries(stats).map(([cat, s]) => [cat, Math.round((s.correct / s.total) * 100)])
     )
 
-    // Brojači taskova ("lijeni reset" po ključu perioda).
-    const taskProgress = {}
-    for (const type of ['daily', 'weekly', 'monthly']) {
-      const stored = profile.taskProgress?.[type]
-      const fresh = !stored || stored.period !== periodKey(type)
-      const p = fresh
-        ? { period: periodKey(type), quizzes: 0, correct: 0, xp: 0, byCategory: {}, claimed: {} }
-        : { byCategory: {}, claimed: {}, ...stored }
-      const byCategory = { ...p.byCategory }
-      for (const [cat, n] of Object.entries(correctByCategory)) {
-        byCategory[cat] = (byCategory[cat] || 0) + n
-      }
-      taskProgress[type] = {
-        period: p.period,
-        quizzes: (p.quizzes || 0) + 1,
-        correct: (p.correct || 0) + correctCount,
-        xp: (p.xp || 0) + earnedXp,
-        byCategory,
-        claimed: p.claimed,
-      }
-    }
+    // Dnevni cap: iz kvizova se ne može osvojiti više od 300 XP dnevno.
+    const limit = quizLimitState(profile, day)
+    awardedXp = Math.min(earnedXp, Math.max(0, DAILY_QUIZ_XP_CAP - limit.xp))
+    xpToday = limit.xp + awardedXp
 
-    totalXp = (profile.xp || 0) + earnedXp
+    totalXp = (profile.xp || 0) + awardedXp
     profileAfter = profile
     tx.update(userRef, {
       xp: totalXp,
       quizCount: (profile.quizCount || 0) + 1,
-      perfectQuizzes: (profile.perfectQuizzes || 0) + (correctCount === answers.length ? 1 : 0),
+      perfectQuizzes: (profile.perfectQuizzes || 0) + (perfect ? 1 : 0),
       categoryStats: stats,
       accuracyByCategory,
-      taskProgress,
+      taskProgress: bumpProgress(profile, {
+        quizzes: 1,
+        correct: correctCount,
+        xp: awardedXp,
+        perfect: perfect ? 1 : 0,
+        byCategory: correctByCategory,
+        day,
+      }),
+      quizLimit: { ...limit, xp: xpToday, sessionId: null },
       lastQuizAt: FieldValue.serverTimestamp(),
     })
   })
@@ -430,9 +758,9 @@ export const submitAnswer = onCall(async (request) => {
   await sessionRef.update({ answers, finished: true, finishedAt: FieldValue.serverTimestamp() })
   const levelBonus = await awardLevelMilestones(uid) // { bonusXp, milestones, totalXp }
   const finalXp = levelBonus.totalXp || totalXp
-  await syncLeaderboard(uid, profileAfter, finalXp, earnedXp, levelFromXp(finalXp, cfg))
+  await syncLeaderboard(uid, profileAfter, finalXp, awardedXp, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
-  await addWeekendXp(uid, earnedXp)
+  await addWeekendXp(uid, awardedXp)
   await bumpStreak(uid)
 
   return {
@@ -440,7 +768,18 @@ export const submitAnswer = onCall(async (request) => {
     correctIndex: secret.correctIndex,
     explanation: secret.explanation,
     finished: true,
-    summary: { earnedXp, correctCount, total: answers.length },
+    summary: {
+      earnedXp: awardedXp,
+      rawXp: earnedXp, // koliko bi bilo bez capa (za poruku na rezultatima)
+      capped: awardedXp < earnedXp,
+      correctCount,
+      total: answers.length,
+    },
+    quizzesToday: quizLimitState(profileAfter, day).started,
+    quizLimit: DAILY_QUIZ_LIMIT,
+    xpToday,
+    xpCap: DAILY_QUIZ_XP_CAP,
+    resetsAt: nextDailyResetAt(),
     newLevel: levelFromXp(finalXp, cfg),
     levelBonus,
     newBadges,
@@ -463,6 +802,9 @@ export const claimTask = onCall(async (request) => {
   }
   const task = taskSnap.data()
 
+  // Dnevni questovi se rotiraju — nagradu nosi samo zadatak iz današnjeg izbora.
+  if (task.type === 'daily') await ensureDailyPicks(uid)
+
   const userRef = db.doc(`users/${uid}`)
   const cfg = await getLevelConfig()
   let profileAfter, totalXp
@@ -475,6 +817,9 @@ export const claimTask = onCall(async (request) => {
     const stored = profile.taskProgress?.[task.type]
     if (!stored || stored.period !== periodKey(task.type)) {
       throw new HttpsError('failed-precondition', 'Task nije ispunjen u ovom periodu.')
+    }
+    if (task.type === 'daily' && !(stored.picked || []).includes(taskId)) {
+      throw new HttpsError('failed-precondition', 'Ovaj quest danas nije među tvojim zadacima.')
     }
     const value =
       task.metric === 'correct' && task.category
@@ -529,6 +874,8 @@ async function addWeekendXp(uid, delta) {
     avatar: p.avatar || 'a1',
     xp: (cur?.xp || 0) + delta,
   }))
+  // Questovi vezani za turnir (metric 'tournamentXp') prate isti prozor.
+  await applyProgress(uid, { tournamentXp: delta })
 }
 
 // Finalizacija XP trke na kraju prozora: nagrade top 3 (bonus XP), jednokratno.
@@ -809,6 +1156,7 @@ export const submitDuelAnswer = onCall(async (request) => {
     if (m.p1 === uid) tx.update(mRef, { p1Score: score, p1Played: true })
     else if (m.p2 === uid) tx.update(mRef, { p2Score: score, p2Played: true })
   })
+  await applyProgress(uid, { duels: 1 }) // questovi tipa "odigraj duel"
   await bumpStreak(uid)
   return { correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: true, myScore: score, total: session.questionIds.length }
 })
@@ -859,7 +1207,10 @@ async function writeSurvivalLeaderboard(uid, week, streak) {
   })
 }
 
-// startSurvival — pokreni novi run, nastavi aktivni, ili javi da je iskorišten.
+// startSurvival — pokreni novi run, nastavi pauzirani/aktivni, ili javi da je
+// pokušaj potrošen. Ovo je jedina tačka koja servira pitanje: poslije tačnog
+// odgovora run ostaje u stanju 'awaitingNext' (bez pitanja u ruci), pa igrač
+// smije izaći bez rizika da mu neko pitanje "visi" dok je vani.
 export const startSurvival = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
@@ -871,26 +1222,65 @@ export const startSurvival = onCall(async (request) => {
   const runSnap = await runRef.get()
   const run = runSnap.exists ? runSnap.data() : null
 
-  // Pokušaj ove sedmice već potrošen (run završen) → zaključano do srijede.
+  // Run je prekinut greškom → zaključano do srijede (izlazak NE zaključava).
   if (run && run.week === week && !run.active) {
     return { locked: true, streak: run.streak || 0, week }
   }
-  // Aktivan run ove sedmice → nastavi s trenutnim pitanjem.
-  if (run && run.week === week && run.active && run.currentQid) {
-    const qData = await getQuestionById(run.currentQid)
-    if (qData) {
+
+  if (run && run.week === week && run.active) {
+    // Pauziran poslije tačnog odgovora → sljedeće pitanje se bira TEK SADA,
+    // da ga igrač ne može vidjeti pa izaći i potražiti odgovor.
+    if (run.awaitingNext || !run.currentQid) {
+      const seen = run.seen || []
+      const next = await pickSurvivalQuestion(seen)
+      if (!next) {
+        // Banka iscrpljena — run se zatvara kao savršen.
+        await runRef.update({ active: false, awaitingNext: false, endedAt: FieldValue.serverTimestamp() })
+        await writeSurvivalLeaderboard(uid, week, run.streak || 0)
+        return { locked: true, exhausted: true, streak: run.streak || 0, week }
+      }
+      await runRef.update({
+        currentQid: next.id,
+        seen: [...seen, next.id],
+        askedAt: Date.now(),
+        awaitingNext: false,
+      })
       return {
         locked: false,
+        resumed: (run.streak || 0) > 0,
+        streak: run.streak || 0,
+        week,
+        question: publicQuestion(next.id, next, run.streak || 0, SURVIVAL_SECONDS),
+      }
+    }
+    // Pitanje je već bilo poslano (prekinuta konekcija usred pitanja) → isto
+    // pitanje sa svježim tajmerom, da mrežni ispad ne pojede sedmični pokušaj.
+    const qData = await getQuestionById(run.currentQid)
+    if (qData) {
+      await runRef.update({ askedAt: Date.now() })
+      return {
+        locked: false,
+        resumed: (run.streak || 0) > 0,
         streak: run.streak || 0,
         week,
         question: publicQuestion(run.currentQid, qData, run.streak || 0, SURVIVAL_SECONDS),
       }
     }
   }
+
   // Novi run.
   const q = await pickSurvivalQuestion([])
   if (!q) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
-  await runRef.set({ week, streak: 0, active: true, currentQid: q.id, seen: [q.id], askedAt: Date.now() })
+  await runRef.set({
+    week,
+    streak: 0,
+    active: true,
+    awaitingNext: false,
+    currentQid: q.id,
+    seen: [q.id],
+    askedAt: Date.now(),
+  })
+  await setEventStatus(uid, { survival: true })
   await bumpStreak(uid)
   return { locked: false, streak: 0, week, question: publicQuestion(q.id, q, 0, SURVIVAL_SECONDS) }
 })
@@ -910,28 +1300,37 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   const run = runSnap.data()
   if (run.week !== week) throw new HttpsError('failed-precondition', 'Sedmica je istekla.')
   if (!run.active) throw new HttpsError('failed-precondition', 'Run je već završen za ovu sedmicu.')
+  if (run.awaitingNext || !run.currentQid) {
+    throw new HttpsError('failed-precondition', 'Nema pitanja u toku — zatraži sljedeće.')
+  }
 
   const elapsed = (Date.now() - (run.askedAt || Date.now())) / 1000
   const timedOut = elapsed > SURVIVAL_SECONDS + GRACE_SECONDS
   const secret = await getSecret(run.currentQid)
   const correct = !timedOut && answer !== null && answer === secret.correctIndex
 
-  // Greška ili istek → kraj run-a za ovu sedmicu.
+  // Greška ili istek → kraj run-a za ovu sedmicu (jedino ovo zaključava event).
   if (!correct) {
-    await runRef.update({ active: false, endedAt: FieldValue.serverTimestamp() })
+    await runRef.update({ active: false, awaitingNext: false, endedAt: FieldValue.serverTimestamp() })
     await writeSurvivalLeaderboard(uid, week, run.streak || 0)
+    // Igrač je ispao → survival zadatak mu više ne stoji u dnevnim questovima
+    // i do srijede mu se više ne može ni ponuditi.
+    await dropEventPicks(uid, 'survival')
+    await setEventStatus(uid, { survival: false })
     const newBadges = await awardBadges(uid)
     return {
       correct: false,
       correctIndex: secret.correctIndex,
       explanation: secret.explanation,
       finished: true,
+      eliminated: true,
       streak: run.streak || 0,
       newBadges,
     }
   }
 
-  // Tačno → +3 XP i sljedeće pitanje.
+  // Tačno → +3 XP, run se PAUZIRA i igrač bira: izađi ili nastavi.
+  // Sljedeće pitanje se namjerno ne šalje ovdje (bira ga startSurvival).
   const newStreak = (run.streak || 0) + 1
   const userRef = db.doc(`users/${uid}`)
   await db.runTransaction(async (tx) => {
@@ -941,36 +1340,28 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   })
   const levelBonus = await awardLevelMilestones(uid)
   await addWeekendXp(uid, SURVIVAL_XP_PER_CORRECT)
+  await applyProgress(uid, { survivalCorrect: 1, survivalBest: newStreak })
 
-  const seen = run.seen || []
-  const next = await pickSurvivalQuestion(seen)
-  if (!next) {
-    // Banka iscrpljena — run se završava kao savršen (sva pitanja tačno).
-    await runRef.update({ active: false, streak: newStreak, endedAt: FieldValue.serverTimestamp() })
-    await writeSurvivalLeaderboard(uid, week, newStreak)
-    const newBadges = await awardBadges(uid)
-    return {
-      correct: true,
-      correctIndex: secret.correctIndex,
-      explanation: secret.explanation,
-      finished: true,
-      exhausted: true,
-      streak: newStreak,
-      levelBonus,
-      newBadges,
-    }
-  }
-
-  await runRef.update({ streak: newStreak, currentQid: next.id, seen: [...seen, next.id], askedAt: Date.now() })
+  await runRef.update({
+    streak: newStreak,
+    currentQid: null,
+    awaitingNext: true,
+    askedAt: null,
+    pausedAt: FieldValue.serverTimestamp(),
+  })
   await writeSurvivalLeaderboard(uid, week, newStreak)
   const newBadges = await awardBadges(uid)
+
+  const remaining = (await getActiveQuestions()).length - (run.seen || []).length
   return {
     correct: true,
     correctIndex: secret.correctIndex,
     explanation: secret.explanation,
     finished: false,
+    canExit: true, // klijent nudi "Izađi" ili "Nastavi"
+    exhausted: remaining <= 0, // nema više pitanja — run se zatvara na povratku
     streak: newStreak,
-    question: publicQuestion(next.id, next, newStreak, SURVIVAL_SECONDS),
+    xpPerCorrect: SURVIVAL_XP_PER_CORRECT,
     levelBonus,
     newBadges,
   }

@@ -1,34 +1,83 @@
 // Pomoćne funkcije za periode taskova (Modul 6).
 // Ključ perioda se čuva uz napredak — kad se ključ promijeni (novi dan/
-// sedmica/mjesec), napredak se tretira kao 0 ("lijeni reset" na klijentu).
-// Pravi serverski reset dolazi u Etapi 6 (Cloud Functions).
+// sedmica/mjesec), napredak se tretira kao 0 ("lijeni reset"). Konačnu riječ
+// ima server (Cloud Functions), klijent istu logiku koristi samo za prikaz.
+//
+// SVI ključevi se računaju po BiH vremenu (Europe/Sarajevo). Bez toga bi se
+// dnevni reset razilazio: Cloud Functions rade u UTC-u, a telefon u CEST-u
+// (+2h), pa bi limit od 3 kviza pucao dva sata poslije ponoći na ekranu.
+// functions/index.js ima identičnu kopiju ovih funkcija.
 
+const BIH_TZ = 'Europe/Sarajevo'
 const pad = (n) => String(n).padStart(2, '0')
 
-// '2026-07-22' (lokalno vrijeme)
-export function dailyKey(d = new Date()) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+// Civilni datum i vrijeme u BiH za dati trenutak.
+function bihParts(d = new Date()) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: BIH_TZ,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+      .formatToParts(d)
+      .map((x) => [x.type, x.value])
+  )
+  // Neke ICU verzije vraćaju '24' za ponoć.
+  return { y: +p.year, m: +p.month, d: +p.day, hh: +p.hour % 24, mm: +p.minute, ss: +p.second }
 }
 
-// '2026-W30' (ISO sedmica, ponedjeljak je prvi dan)
+// Pomak BiH zone u odnosu na UTC u datom trenutku (ms) — hvata i ljetno vrijeme.
+function bihOffset(d) {
+  const p = bihParts(d)
+  return Date.UTC(p.y, p.m - 1, p.d, p.hh, p.mm, p.ss) - Math.floor(d.getTime() / 1000) * 1000
+}
+
+// '2026-07-22' (BiH dan)
+export function dailyKey(d = new Date()) {
+  const { y, m, d: day } = bihParts(d)
+  return `${y}-${pad(m)}-${pad(day)}`
+}
+
+// '2026-W30' (ISO sedmica po BiH danu, ponedjeljak je prvi dan)
 export function weeklyKey(d = new Date()) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  const day = date.getUTCDay() || 7
-  date.setUTCDate(date.getUTCDate() + 4 - day) // četvrtak određuje ISO godinu
+  const { y, m, d: day } = bihParts(d)
+  const date = new Date(Date.UTC(y, m - 1, day))
+  const dow = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dow) // četvrtak određuje ISO godinu
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
   const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7)
   return `${date.getUTCFullYear()}-W${pad(week)}`
 }
 
-// '2026-07'
+// '2026-07' (BiH mjesec)
 export function monthlyKey(d = new Date()) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  const { y, m } = bihParts(d)
+  return `${y}-${pad(m)}`
 }
 
 export function periodKey(type, d = new Date()) {
   if (type === 'daily') return dailyKey(d)
   if (type === 'weekly') return weeklyKey(d)
   return monthlyKey(d)
+}
+
+// Trenutak sljedeće ponoći po BiH vremenu (ms epoch). Dva prolaza zbog prelaska
+// na ljetno/zimsko vrijeme — drugi prolaz koristi offset koji vrijedi u samoj ponoći.
+export function nextDailyResetAt(d = new Date()) {
+  const { y, m, d: day } = bihParts(d)
+  const midnightCivil = Date.UTC(y, m - 1, day + 1)
+  const guess = midnightCivil - bihOffset(d)
+  return midnightCivil - bihOffset(new Date(guess))
+}
+
+// Sekunde do dnevnog reseta (ponoć po BiH vremenu) — odbrojavanje na karticama.
+export function secondsUntilDailyReset(d = new Date()) {
+  return Math.max(0, Math.floor((nextDailyResetAt(d) - d.getTime()) / 1000))
 }
 
 // Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM (reset srijedom).
@@ -49,13 +98,6 @@ export function secondsUntilSurvivalReset(d = new Date()) {
   return Math.max(0, Math.floor((next - d) / 1000))
 }
 
-// Sekunde do ponoći (za odbrojavanje na dnevnoj kartici).
-export function secondsUntilMidnight(d = new Date()) {
-  const midnight = new Date(d)
-  midnight.setHours(24, 0, 0, 0)
-  return Math.max(0, Math.floor((midnight - d) / 1000))
-}
-
 // 'HH:MM:SS' format za tajmer.
 export function formatCountdown(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600)
@@ -64,13 +106,15 @@ export function formatCountdown(totalSeconds) {
   return `${pad(h)}:${pad(m)}:${pad(s)}`
 }
 
-// Broj dana do kraja sedmice / mjeseca (za "Obnavlja se za X dana").
+// Broj dana do kraja sedmice / mjeseca (za "Obnavlja se za X dana"), po BiH danu.
 export function daysUntilWeekEnd(d = new Date()) {
-  const day = d.getDay() || 7 // ponedjeljak=1 ... nedjelja=7
-  return 8 - day
+  const { y, m, d: day } = bihParts(d)
+  const dow = new Date(Date.UTC(y, m - 1, day)).getUTCDay() || 7 // pon=1 ... ned=7
+  return 8 - dow
 }
 
 export function daysUntilMonthEnd(d = new Date()) {
-  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
-  return lastDay - d.getDate() + 1
+  const { y, m, d: day } = bihParts(d)
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return lastDay - day + 1
 }

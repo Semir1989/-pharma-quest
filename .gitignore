@@ -18,6 +18,9 @@ dist-ssr
 # Firebase admin ključ — NIKAD na GitHub
 scripts/serviceAccountKey.json
 
+# Firebase lokalni keš deploya
+.firebase/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -11,16 +11,20 @@ import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import Avatar from '../components/Avatar'
 
-// Preživljavanje (Etapa 8): endless mod, jedan pokušaj sedmično (reset srijedom).
-// Za svaki tačan +3 XP; kraj na prvu grešku ili istek tajmera.
+// Preživljavanje (Etapa 8): endless mod, jedna sedmična "sudbina".
+// Za svaki tačan +3 XP. Poslije svakog tačnog odgovora igrač bira: izaći
+// (niz se čuva, vraća se kad hoće) ili nastaviti. Izazov prekida SAMO netačan
+// odgovor ili istek tajmera — tada je zaključan do srijede.
 export default function Prezivljavanje() {
   const { profile, user } = useAuth()
   const navigate = useNavigate()
 
-  const [phase, setPhase] = useState('intro') // intro | loading | locked | closed | playing | ended | error
+  // intro | loading | locked | closed | playing | paused | ended | error
+  const [phase, setPhase] = useState('intro')
   const [question, setQuestion] = useState(null)
   const [streak, setStreak] = useState(0)
-  const [bestStreak, setBestStreak] = useState(0) // za locked/ended prikaz
+  const [bestStreak, setBestStreak] = useState(0) // za locked/paused/ended prikaz
+  const [exhausted, setExhausted] = useState(false) // banka pitanja iscrpljena
   const [eventWindow, setEventWindow] = useState(null) // { openAt, closeAt } kad je zatvoreno
   const [rows, setRows] = useState([])
   const [levelUp, setLevelUp] = useState(null)
@@ -32,11 +36,19 @@ export default function Prezivljavanje() {
   // Live leaderboard tekuće sedmice.
   useEffect(() => subscribeSurvivalLeaderboard(setRows), [])
 
+  // Ista funkcija pokreće novi run, nastavlja pauzirani i donosi sljedeće
+  // pitanje — server pitanje bira tek u ovom trenutku, nikad unaprijed.
   async function begin() {
+    // Refove resetujemo SAMO na svjež ulazak. Ista funkcija donosi i sljedeće
+    // pitanje usred run-a, pa bi bezuslovni reset pobrisao bedževe i bonus XP
+    // skupljene do tada.
+    const svjezUlazak = phase === 'intro' || phase === 'error'
     setPhase('loading')
-    badgesRef.current = []
-    bonusRef.current = 0
-    xpAtStartRef.current = profile?.xp || 0
+    if (svjezUlazak) {
+      badgesRef.current = []
+      bonusRef.current = 0
+      xpAtStartRef.current = profile?.xp || 0
+    }
     try {
       const res = await startSurvival()
       if (res.closed) {
@@ -46,13 +58,14 @@ export default function Prezivljavanje() {
       }
       if (res.locked) {
         setBestStreak(res.streak || 0)
+        setExhausted(!!res.exhausted)
         setPhase('locked')
         return
       }
       setStreak(res.streak || 0)
       setQuestion(res.question)
       setPhase('playing')
-      track('survival_start')
+      track(res.resumed ? 'survival_resume' : 'survival_start', { streak: res.streak || 0 })
     } catch {
       setPhase('error')
     }
@@ -66,26 +79,46 @@ export default function Prezivljavanje() {
     return res
   }
 
+  // Prikaži level-up/bedževe skupljene tokom run-a (na izlasku ili ispadanju).
+  function flushOverlays() {
+    const oldLevel = levelFromXp(xpAtStartRef.current)
+    const newLevel = levelFromXp(profile?.xp || 0)
+    if (newLevel > oldLevel) {
+      track('level_up', { level: newLevel })
+      setLevelUp({
+        level: newLevel,
+        rank: rankFromLevel(newLevel),
+        rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
+        bonusXp: bonusRef.current,
+      })
+    }
+    if (badgesRef.current.length) setBadgeQueue(badgesRef.current)
+    // Ispražnjeno da se pri sljedećem izlasku iste animacije ne ponove.
+    badgesRef.current = []
+    bonusRef.current = 0
+    xpAtStartRef.current = profile?.xp || 0
+  }
+
   function handleNext(feedback) {
     if (feedback.finished) {
+      // Netačan odgovor ili istek → izazov zaključan do srijede.
       setBestStreak(feedback.streak)
-      // Kraj run-a → prvo level-up (ako ga je bilo), pa bedževi, pa ekran kraja.
-      const oldLevel = levelFromXp(xpAtStartRef.current)
-      const newLevel = levelFromXp(profile?.xp || 0)
-      if (newLevel > oldLevel) {
-        track('level_up', { level: newLevel })
-        setLevelUp({
-          level: newLevel,
-          rank: rankFromLevel(newLevel),
-          rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
-          bonusXp: bonusRef.current,
-        })
-      }
-      if (badgesRef.current.length) setBadgeQueue(badgesRef.current)
+      setExhausted(!!feedback.exhausted)
+      flushOverlays()
       setPhase('ended')
-    } else {
-      setQuestion(feedback.question)
+      return
     }
+    // Tačan odgovor → sljedeće pitanje traži server (nije poslano unaprijed).
+    setQuestion(null)
+    begin()
+  }
+
+  // Dobrovoljni izlazak poslije tačnog odgovora — niz i pokušaj ostaju živi.
+  function handleExit() {
+    setBestStreak(streak)
+    track('survival_exit', { streak })
+    flushOverlays()
+    setPhase('paused')
   }
 
   // Animacije imaju prednost nad sadržajem (redoslijed: level → bedž → ekran).
@@ -117,6 +150,7 @@ export default function Prezivljavanje() {
         streak={streak}
         onSubmit={handleSubmit}
         onNext={handleNext}
+        onExit={handleExit}
       />
     )
   }
@@ -138,9 +172,21 @@ export default function Prezivljavanje() {
         <h1 className="font-title text-2xl font-extrabold">Preživljavanje</h1>
         <p className="text-sm text-teal-100">Sedmični izazov — koliko daleko možeš stići?</p>
 
+        {phase === 'paused' && (
+          <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
+            <p className="text-sm text-teal-100">Izazov je pauziran — niz ti je sačuvan</p>
+            <p className="font-title text-5xl font-extrabold text-amber-300">{bestStreak}</p>
+            <p className="mt-1 text-sm text-teal-100">
+              +{bestStreak * 3} XP do sada · vrati se kad god hoćeš
+            </p>
+          </div>
+        )}
+
         {phase === 'ended' && (
           <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
-            <p className="text-sm text-teal-100">Tvoj niz ove sedmice</p>
+            <p className="text-sm text-teal-100">
+              {exhausted ? 'Prošao/la si cijelu banku pitanja!' : 'Tvoj niz ove sedmice'}
+            </p>
             <p className="font-title text-5xl font-extrabold text-amber-300">{bestStreak}</p>
             <p className="mt-1 text-sm text-teal-100">+{bestStreak * 3} XP osvojeno · vrati se u srijedu</p>
           </div>
@@ -148,7 +194,11 @@ export default function Prezivljavanje() {
 
         {phase === 'locked' && (
           <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
-            <p className="text-sm text-teal-100">Pokušaj za ovu sedmicu iskorišten</p>
+            <p className="text-sm text-teal-100">
+              {exhausted
+                ? 'Prošao/la si cijelu banku pitanja!'
+                : 'Izazov za ovu sedmicu je završen'}
+            </p>
             <p className="font-title text-4xl font-extrabold text-amber-300">Niz: {bestStreak}</p>
             <p className="mt-1 text-sm text-teal-100">
               Novi pokušaj za {formatCountdown(secondsUntilSurvivalReset())}
@@ -176,13 +226,17 @@ export default function Prezivljavanje() {
         )}
       </div>
 
-      {/* Pravila + dugme (intro/error) */}
-      {(phase === 'intro' || phase === 'loading' || phase === 'error') && (
+      {/* Pravila + dugme (intro/error/pauza) */}
+      {(phase === 'intro' || phase === 'loading' || phase === 'error' || phase === 'paused') && (
         <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
           <ul className="flex flex-col gap-2 pl-5 text-sm text-slate-600 marker:text-teal-600 list-disc">
             <li>Odgovaraj tačno — svaki tačan odgovor je <b>+3 XP</b> i produžava niz.</li>
-            <li>Prva greška (ili istek 20s) završava izazov za ovu sedmicu.</li>
-            <li>Jedan pokušaj sedmično — resetuje se srijedom.</li>
+            <li>
+              Poslije svakog tačnog odgovora možeš <b>izaći i vratiti se kasnije</b> — niz ti
+              se čuva.
+            </li>
+            <li>Izazov prekida samo netačan odgovor ili istek 20s.</li>
+            <li>Sve traje do srijede, kad kreće nova sedmica.</li>
           </ul>
           {phase === 'error' && (
             <p className="mt-3 text-sm font-medium text-red-600">
@@ -194,17 +248,23 @@ export default function Prezivljavanje() {
             disabled={phase === 'loading'}
             className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800 disabled:opacity-60"
           >
-            {phase === 'loading' ? 'Pokrećem…' : phase === 'error' ? 'Pokušaj ponovo' : 'Započni izazov'}
+            {phase === 'loading'
+              ? 'Pokrećem…'
+              : phase === 'error'
+                ? 'Pokušaj ponovo'
+                : phase === 'paused'
+                  ? `Nastavi izazov (niz: ${bestStreak})`
+                  : 'Uđi u izazov'}
           </button>
         </div>
       )}
 
-      {phase === 'ended' && (
+      {(phase === 'ended' || phase === 'paused') && (
         <button
           onClick={() => navigate('/')}
-          className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
+          className="mt-4 w-full rounded-2xl border-2 border-teal-700 py-3.5 font-title font-extrabold text-teal-700 active:bg-teal-50"
         >
-          Nastavi →
+          Nazad na početnu →
         </button>
       )}
 

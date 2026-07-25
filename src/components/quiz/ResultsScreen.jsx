@@ -8,11 +8,15 @@ import BadgeUnlockOverlay from '../BadgeUnlockOverlay'
 // Redoslijed animacija prije rezultata: prvo LevelUpOverlay (ako je bilo
 // level-upa), pa BadgeUnlockOverlay za svaki novi bedž (Etapa 8).
 // props: answers = [{ question, selected, correct }], earnedXp,
+//        capped ({ rawXp, cap } kad je dnevni strop odsjekao dio XP-a),
+//        quizzesToday ('2/3' ili null),
 //        levelUp ({ level, rank, rankChanged } ili null), onLevelUpSeen,
 //        badge ({ emoji, name, description } ili null), onBadgeSeen, onContinue
 export default function ResultsScreen({
   answers,
   earnedXp,
+  capped,
+  quizzesToday,
   levelUp,
   onLevelUpSeen,
   badge,
@@ -59,10 +63,19 @@ export default function ResultsScreen({
       </h1>
       <p className="mt-1 text-center text-slate-500">{subMessage(score, total)}</p>
 
-      <div className="mt-4 flex justify-center">
+      <div className="mt-4 flex flex-col items-center gap-2">
         <span className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-2.5 font-bold text-amber-600">
           ⭐ +{earnedXp} XP osvojeno
         </span>
+        {capped && (
+          <p className="max-w-xs text-center text-sm text-slate-500">
+            Osvojio/la si {capped.rawXp} XP, ali dnevni strop iz kvizova je{' '}
+            {capped.cap} XP — upisano je +{earnedXp} XP.
+          </p>
+        )}
+        {quizzesToday && (
+          <p className="text-sm text-slate-500">Kvizovi danas: {quizzesToday}</p>
+        )}
       </div>
 
       {/* Pregled pitanja */}

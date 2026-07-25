@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getTasks, progressForType, taskValue, claimTask } from '../services/tasks'
+import { getTasks, progressForType, taskValue, claimTask, dailyTasksFor } from '../services/tasks'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 import { track } from '../services/analytics'
 import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import {
-  secondsUntilMidnight,
+  secondsUntilDailyReset,
   formatCountdown,
   daysUntilWeekEnd,
   daysUntilMonthEnd,
@@ -15,9 +15,12 @@ import CircleProgress from '../components/CircleProgress'
 
 // Questovi ekran (Modul 6): dnevni / sedmični / mjesečni taskovi
 // s kružnim progresom i "Preuzmi" dugmetom za nagrade.
+// Dnevni se rotiraju — svaki dan tri zadatka iz bazena, a kad je event živ
+// jedan od njih je vezan za taj event (izbor pravi i zamrzne server).
 export default function Questovi() {
   const { profile } = useAuth()
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
+  const [dailyPicks, setDailyPicks] = useState(null) // 3 današnja dnevna questa
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
   const [levelUp, setLevelUp] = useState(null) // { level, rank, rankChanged } ili null
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
@@ -25,6 +28,18 @@ export default function Questovi() {
   useEffect(() => {
     getTasks().then(setTasks).catch(() => setTasks({ daily: [], weekly: [], monthly: [] }))
   }, [])
+
+  // Današnji izbor: iz profila ako postoji, inače ga server napravi i zamrzne.
+  const pickedKey = (profile?.taskProgress?.daily?.picked || []).join(',')
+  useEffect(() => {
+    if (!tasks || !profile) return
+    let alive = true
+    dailyTasksFor(tasks.daily, profile).then((list) => alive && setDailyPicks(list))
+    return () => {
+      alive = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, pickedKey])
 
   if (!profile) return null
 
@@ -91,7 +106,7 @@ export default function Questovi() {
         <p className="mt-8 text-center text-slate-400">Učitavam taskove…</p>
       ) : (
         <div className="mt-4 flex flex-col gap-4">
-          <DailySection tasks={tasks.daily} profile={profile} claiming={claiming} onClaim={handleClaim} />
+          <DailySection tasks={dailyPicks} profile={profile} claiming={claiming} onClaim={handleClaim} />
           <PeriodSection
             title="Sedmični"
             icon="📅"
@@ -124,10 +139,10 @@ export default function Questovi() {
 
 // Dnevna sekcija — tamna kartica s odbrojavanjem do ponoći.
 function DailySection({ tasks, profile, claiming, onClaim }) {
-  const [seconds, setSeconds] = useState(secondsUntilMidnight())
+  const [seconds, setSeconds] = useState(secondsUntilDailyReset())
 
   useEffect(() => {
-    const t = setInterval(() => setSeconds(secondsUntilMidnight()), 1000)
+    const t = setInterval(() => setSeconds(secondsUntilDailyReset()), 1000)
     return () => clearInterval(t)
   }, [])
 
@@ -152,24 +167,34 @@ function DailySection({ tasks, profile, claiming, onClaim }) {
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
-        {tasks.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            progress={progress}
-            color="#0f766e"
-            claiming={claiming}
-            onClaim={onClaim}
-          />
-        ))}
+        {tasks === null ? (
+          <p className="py-4 text-center text-sm text-teal-100/70">Biram današnje zadatke…</p>
+        ) : (
+          tasks.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              progress={progress}
+              color="#0f766e"
+              claiming={claiming}
+              onClaim={onClaim}
+            />
+          ))
+        )}
       </div>
     </section>
   )
 }
 
 // Sedmična / mjesečna sekcija — svijetla kartica.
+// Event zadatak koji igraču više nije dostupan (npr. ispao iz Preživljavanja)
+// ostaje vidljiv samo ako je na njemu već nešto zaradio — da može preuzeti
+// nagradu — ali s jasnom oznakom da mu je event zatvoren.
 function PeriodSection({ title, icon, renewText, type, color, bgClass, tasks, profile, claiming, onClaim }) {
   const progress = progressForType(profile, type)
+  const visible = tasks.filter(
+    (t) => !t.event || eventLive(profile, t.event) || taskValue(progress, t) > 0
+  )
 
   return (
     <section className={`rounded-3xl ${bgClass} p-4`}>
@@ -182,7 +207,7 @@ function PeriodSection({ title, icon, renewText, type, color, bgClass, tasks, pr
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
-        {tasks.map((task) => (
+        {visible.map((task) => (
           <TaskRow
             key={task.id}
             task={task}
@@ -190,6 +215,7 @@ function PeriodSection({ title, icon, renewText, type, color, bgClass, tasks, pr
             color={color}
             claiming={claiming}
             onClaim={onClaim}
+            eventClosed={!!task.event && !eventLive(profile, task.event)}
           />
         ))}
       </div>
@@ -197,8 +223,16 @@ function PeriodSection({ title, icon, renewText, type, color, bgClass, tasks, pr
   )
 }
 
+// Status eventa upisuje server u profil (users/{uid}.eventStatus) pri ulasku
+// u event i pri ispadanju — klijent survivalRuns po pravilima ne smije čitati.
+function eventLive(profile, event) {
+  return profile?.eventStatus?.[event] === true
+}
+
+const EVENT_LABEL = { survival: '🔥 Preživljavanje', tournament: '🏆 Turnir' }
+
 // Jedan red taska: kružić, naziv, XP oznaka ili Preuzmi/Preuzeto.
-function TaskRow({ task, progress, color, claiming, onClaim }) {
+function TaskRow({ task, progress, color, claiming, onClaim, eventClosed }) {
   const value = taskValue(progress, task)
   const done = value >= task.goal
   const claimed = !!progress.claimed[task.id]
@@ -207,9 +241,17 @@ function TaskRow({ task, progress, color, claiming, onClaim }) {
     <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
       <CircleProgress value={value} goal={task.goal} color={color} done={done} />
       <div className="min-w-0 flex-1">
+        {task.event && (
+          <span className="text-[11px] font-bold uppercase tracking-wide text-amber-600">
+            {EVENT_LABEL[task.event] || task.event}
+          </span>
+        )}
         <p className="font-semibold leading-snug text-slate-800">{task.title}</p>
         {done && !claimed && <p className="text-sm font-bold text-green-600">Završeno!</p>}
         {claimed && <p className="text-sm text-slate-400">Nagrada preuzeta ✓</p>}
+        {eventClosed && !done && (
+          <p className="text-sm text-slate-400">Event zatvoren — nastavak u srijedu</p>
+        )}
       </div>
       {done && !claimed ? (
         <button

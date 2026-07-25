@@ -16,10 +16,20 @@ if (!existsSync(KEY_PATH)) {
   process.exit(1)
 }
 
-// Prozor: subota 25.07.2026, 08:00–20:00 po BiH vremenu (CEST = UTC+2).
-// Date.UTC očekuje UTC, pa oduzimamo 2h (08:00 CEST = 06:00 UTC).
-const openAt = Date.UTC(2026, 6, 25, 6, 0, 0) // 08:00 CEST
-const closeAt = Date.UTC(2026, 6, 25, 18, 0, 0) // 20:00 CEST
+// Prozor pokriva CIJELU sedmicu Preživljavanja: od srijede 00:00 UTC do
+// sljedeće srijede 00:00 UTC. To je nužno otkad igrač smije izaći poslije
+// tačnog odgovora i vratiti se kasnije — run mora ostati dostupan kroz dane,
+// a ne samo u jednom popodnevu. Sedmicu zatvara greška, ne sat.
+// Uz '--sljedeca' postavlja narednu sedmicu (npr. najava unaprijed).
+function survivalWeekStart(d = new Date()) {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() - 3 + 7) % 7)) // srijeda = 3
+  return date.getTime()
+}
+
+const WEEK_MS = 7 * 86400000
+const openAt = survivalWeekStart() + (process.argv.includes('--sljedeca') ? WEEK_MS : 0)
+const closeAt = openAt + WEEK_MS
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })
 const db = getFirestore()
@@ -28,11 +38,18 @@ await db.doc('config/survival').set({
   enabled: true,
   openAt,
   closeAt,
-  label: 'Vikend beta izazov',
+  label: 'Sedmični izazov preživljavanja',
   updatedAt: new Date(),
 })
 
-console.log('✓ config/survival postavljen:')
-console.log(`  otvoreno:  ${new Date(openAt).toISOString()}  (08:00 BiH)`)
-console.log(`  zatvoreno: ${new Date(closeAt).toISOString()}  (20:00 BiH)`)
+const bih = (ms) =>
+  new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Sarajevo',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(ms))
+
+console.log('✓ config/survival postavljen (cijela sedmica, reset srijedom):')
+console.log(`  otvoreno:  ${bih(openAt)} (BiH)`)
+console.log(`  zatvoreno: ${bih(closeAt)} (BiH)`)
 process.exit(0)

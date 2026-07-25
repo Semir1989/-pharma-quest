@@ -6,7 +6,10 @@ import CircleProgress from '../components/CircleProgress'
 import InstallBanner from '../components/InstallBanner'
 import { TrophyIcon } from '../components/icons'
 import { levelFromXp, xpProgress } from '../utils/levels'
-import { getTasks, progressForType, taskValue } from '../services/tasks'
+import { getTasks, progressForType, taskValue, dailyTasksFor } from '../services/tasks'
+import { dailyKey } from '../utils/periods'
+
+const DAILY_QUIZ_LIMIT = 3
 
 function greeting() {
   const h = new Date().getHours()
@@ -53,6 +56,9 @@ export default function Home() {
         </span>
       </div>
 
+      {/* Dnevni limit kvizova (3/dan, max 300 XP) */}
+      <QuizCounter profile={profile} />
+
       {/* Instaliraj aplikaciju (Modul 8 — PWA) */}
       <InstallBanner />
 
@@ -84,7 +90,9 @@ export default function Home() {
       >
         <div>
           <h2 className="text-lg font-bold">Preživljavanje</h2>
-          <p className="text-xs text-teal-100">Sedmični izazov — niz do prve greške</p>
+          <p className="text-xs text-teal-100">
+            Sedmični izazov — izađi kad hoćeš, greška te izbacuje
+          </p>
         </div>
         <span className="text-sm font-bold text-amber-300">Igraj →</span>
       </Link>
@@ -107,13 +115,50 @@ export default function Home() {
   )
 }
 
+// Koliko je kvizova ostalo danas. Stanje piše server u users/{uid}.quizLimit,
+// a profil je live-pretplaćen, pa je brojač uvijek svjež bez dodatnog poziva.
+function QuizCounter({ profile }) {
+  const l = profile?.quizLimit?.day === dailyKey() ? profile.quizLimit : null
+  const used = Math.min(l?.started || 0, DAILY_QUIZ_LIMIT)
+  const left = DAILY_QUIZ_LIMIT - used
+
+  return (
+    <Link
+      to="/kviz"
+      className="mt-3 flex items-center justify-between rounded-2xl bg-white px-4 py-2.5 shadow-sm active:bg-slate-50"
+    >
+      <span className="text-sm font-semibold text-slate-600">
+        {left > 0 ? `Dnevni kvizovi: ${left} ${left === 1 ? 'preostao' : 'preostala'}` : 'Dnevni kvizovi odigrani ✓'}
+      </span>
+      <span className="flex gap-1.5">
+        {Array.from({ length: DAILY_QUIZ_LIMIT }, (_, i) => (
+          <span
+            key={i}
+            className={`h-2.5 w-6 rounded-full ${i < used ? 'bg-amber-400' : 'bg-slate-200'}`}
+          />
+        ))}
+      </span>
+    </Link>
+  )
+}
+
 // Kartica dnevnih taskova s kružnim progresom — klik vodi na Questove.
+// Prikazuje ista tri zadatka koja je server izabrao za današnji dan.
 function DailyTasksCard({ profile }) {
   const [daily, setDaily] = useState(null)
 
+  const pickedKey = (profile?.taskProgress?.daily?.picked || []).join(',')
   useEffect(() => {
-    getTasks().then((t) => setDaily(t.daily)).catch(() => setDaily([]))
-  }, [])
+    let alive = true
+    getTasks()
+      .then((t) => dailyTasksFor(t.daily, profile))
+      .then((list) => alive && setDaily(list))
+      .catch(() => alive && setDaily([]))
+    return () => {
+      alive = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickedKey])
 
   if (!daily || daily.length === 0) return null
 

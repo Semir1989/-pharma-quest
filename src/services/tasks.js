@@ -1,11 +1,15 @@
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { periodKey } from '../utils/periods'
-import { claimTaskReward } from './quizApi'
+import { claimTaskReward, ensureDailyQuests } from './quizApi'
 
 // Servis za task sistem (Modul 6).
 // Definicije taskova žive u Firestore 'tasks' kolekciji (admin skripta),
 // a napredak korisnika u users/{uid}.taskProgress po periodu (daily/weekly/monthly).
+//
+// Dnevni questovi se ROTIRAJU: svaki igrač dobija 3 zadatka iz bazena, izbor je
+// determinističan po (uid, dan) i zamrznut na serveru u taskProgress.daily.picked.
+// Klijent taj izbor samo čita iz profila — ako ga još nema, traži ga od servera.
 
 // Sve aktivne taskove grupisane po tipu: { daily: [...], weekly: [...], monthly: [...] }
 // Keširano po sesiji (taskovi se rijetko mijenjaju) — štedi Firestore reads jer
@@ -32,7 +36,20 @@ async function fetchTasks() {
   return grouped
 }
 
-const EMPTY = { quizzes: 0, correct: 0, xp: 0, byCategory: {}, claimed: {} }
+const EMPTY = {
+  quizzes: 0,
+  correct: 0,
+  xp: 0,
+  days: 0,
+  perfect: 0,
+  survivalCorrect: 0,
+  survivalBest: 0,
+  duels: 0,
+  tournamentXp: 0,
+  byCategory: {},
+  claimed: {},
+  picked: null,
+}
 
 // Napredak za dati tip perioda — ako je period istekao, vraća prazan ("lijeni reset").
 export function progressForType(profile, type) {
@@ -45,6 +62,27 @@ export function progressForType(profile, type) {
 export function taskValue(progress, task) {
   if (task.metric === 'correct' && task.category) return progress.byCategory[task.category] || 0
   return progress[task.metric] || 0
+}
+
+// Današnja tri dnevna questa za ovog igrača (iz zamrznutog izbora na serveru).
+// Ako izbor još ne postoji (prvi ulazak u danu), traži ga od Cloud Functiona —
+// server tada uzme u obzir koji su eventi za igrača živi. Vraća null dok traje
+// učitavanje, da UI ne trepne pogrešnom listom.
+export async function dailyTasksFor(allDaily, profile) {
+  const progress = progressForType(profile, 'daily')
+  let picked = progress.picked
+  if (!Array.isArray(picked) || picked.length === 0) {
+    try {
+      picked = (await ensureDailyQuests()).picked
+    } catch {
+      return [] // bez servera nema izbora — radije ništa nego pogrešna lista
+    }
+  }
+  const byId = new Map(allDaily.map((t) => [t.id, t]))
+  return picked
+    .map((id) => byId.get(id))
+    .filter(Boolean)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
 // Preuzimanje nagrade (Etapa 6): server provjerava uslov i dodjeljuje XP —

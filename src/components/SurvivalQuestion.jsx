@@ -5,9 +5,11 @@ const LETTERS = ['A', 'B', 'C', 'D']
 
 // Jedno pitanje u Preživljavanju (Etapa 8). Kao kviz pitanje, ali umjesto
 // progresa "x/10" prikazuje trenutni niz, a istek tajmera = kraj run-a.
+// Poslije TAČNOG odgovora igrač bira: izaći (niz se čuva, vraća se kad hoće)
+// ili nastaviti. Netačan odgovor završava izazov do srijede.
 // props: question ({ text, options, seconds }), streak (trenutni niz),
-//        onSubmit(index|null) => Promise<feedback>, onNext(feedback)
-export default function SurvivalQuestion({ question, streak, onSubmit, onNext }) {
+//        onSubmit(index|null) => Promise<feedback>, onNext(feedback), onExit()
+export default function SurvivalQuestion({ question, streak, onSubmit, onNext, onExit }) {
   const [seconds, setSeconds] = useState(question.seconds || 20)
   const [selected, setSelected] = useState(undefined)
   const [feedback, setFeedback] = useState(null)
@@ -107,12 +109,35 @@ export default function SurvivalQuestion({ question, streak, onSubmit, onNext })
             </p>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{feedback.explanation}</p>
           </div>
-          <button
-            onClick={() => onNext(feedback)}
-            className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
-          >
-            {feedback.finished ? 'Vidi rezultat →' : 'Sljedeće pitanje →'}
-          </button>
+
+          {feedback.canExit ? (
+            // Tačan odgovor: izazov je "zamrznut" — nema pitanja u ruci dok
+            // igrač ne odabere Nastavi, pa izlazak ničim ne rizikuje niz.
+            <>
+              <button
+                onClick={() => onNext(feedback)}
+                className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
+              >
+                Nastavi dalje →
+              </button>
+              <button
+                onClick={onExit}
+                className="mt-3 w-full rounded-2xl border-2 border-teal-700 py-3.5 font-title font-extrabold text-teal-700 active:bg-teal-50"
+              >
+                Izađi i sačuvaj niz ({feedback.streak})
+              </button>
+              <p className="mt-3 text-center text-sm text-slate-500">
+                Niz ti se čuva — vrati se kad god hoćeš do srijede.
+              </p>
+            </>
+          ) : (
+            <button
+              onClick={() => onNext(feedback)}
+              className="mt-4 w-full rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
+            >
+              {feedback.finished ? 'Vidi rezultat →' : 'Sljedeće pitanje →'}
+            </button>
+          )}
         </div>
       )}
     </div>
