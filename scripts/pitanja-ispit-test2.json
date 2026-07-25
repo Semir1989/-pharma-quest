@@ -1,0 +1,884 @@
+[
+  {
+    "text": "Zbrinjavanje nestabilne angine pektoris uključuje sve navedeno OSIM:",
+    "options": ["Acetilsalicilne kiseline", "Testa fizičkog opterećenja", "Klopidogrela", "Izosorbid dinitrata"],
+    "correctIndex": 1,
+    "category": "kardiologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod nestabilne angine pacijenta treba hospitalizovati i optimizovati terapiju (antiagregacijski lijekovi, nitrati, beta-blokatori). Naporne fizičke aktivnosti, uključujući test opterećenja, u akutnoj fazi su kontraindicirane jer mogu izazvati infarkt."
+  },
+  {
+    "text": "Koja tvrdnja o digoksinu je tačna?",
+    "options": ["Eliminiše se putem jetre", "Smanjuje snagu kontrakcije miokarda", "Može uzrokovati atrijalnu tahikardiju kod predoziranja", "Ima kratko poluvrijeme eliminacije"],
+    "correctIndex": 2,
+    "category": "kardiologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Digoksin je pozitivni inotrop (povećava snagu kontrakcije), eliminiše se pretežno putem bubrega i ima dugo poluvrijeme eliminacije. Aritmije poput atrijalne tahikardije s AV blokom klasičan su znak toksičnosti."
+  },
+  {
+    "text": "Koji od navedenih uzrokuje bronhodilataciju?",
+    "options": ["Histamin", "Prostaglandin E2", "Kinini", "Adrenalin (epinefrin)"],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Adrenalin je simpatomimetik koji preko beta-2 receptora širi bronhije. Histamin, kinini i prostaglandini su medijatori upale koji uzrokuju bronhokonstrikciju."
+  },
+  {
+    "text": "Izvori informacija koji trebaju biti dostupni u apoteci uključuju sve navedeno OSIM:",
+    "options": ["Detaljnog anatomskog atlasa", "Nacionalnog formulara lijekova", "Sveobuhvatnog referentnog vodiča o lijekovima", "Zakonske regulative apotekarske djelatnosti"],
+    "correctIndex": 0,
+    "category": "regulativa",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Anatomski atlas nije referentni izvor za svakodnevni rad apoteke. Formular lijekova, referentni vodič o lijekovima i važeća zakonska regulativa spadaju u obaveznu stručnu literaturu."
+  },
+  {
+    "text": "Koji je odgovarajući terapijski ekvivalent kombinaciji loratadin + pseudoefedrin?",
+    "options": ["Triprolidin + pseudoefedrin", "Levocetirizin (samostalno)", "Cetirizin + pseudoefedrin", "Loratadin (samostalno)"],
+    "correctIndex": 2,
+    "category": "antihistaminici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Cetirizin + pseudoefedrin sadrži, kao i original, nesedirajući antihistaminik i nazalni dekongestiv. Triprolidin je sedirajući antihistaminik, a levocetirizin i loratadin samostalno nemaju dekongestivnu komponentu."
+  },
+  {
+    "text": "Pacijent inficiran sa Enterobius vermicularis (dječija glista) najvjerovatnije ima:",
+    "options": ["Duodenalno krvarenje", "Noćni perianalni svrab", "Povećano izlučivanje urina", "Proljev"],
+    "correctIndex": 1,
+    "category": "infektologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Ženke gliste noću migriraju i polažu jaja u perianalnom području; ljepljiva sekrecija uz jaja izaziva karakterističan noćni svrab, koji je često jedini simptom."
+  },
+  {
+    "text": "Koji bezreceptni preparat je pogodan za simptomatsko ublažavanje prehlade?",
+    "options": ["Kapi ksilometazolina za nos", "Tablete hidroksizina", "Sirup s triprolidinom, pseudoefedrinom i dekstrometorfanom", "Prašak s paracetamolom, askorbinskom kiselinom i fenilefrinom"],
+    "correctIndex": 3,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Klasičan preparat protiv prehlade pokriva više simptoma odjednom — analgetik/antipiretik, dekongestiv i vitamin C. Ksilometazolin rješava samo začepljenost nosa, hidroksizin je za svrab i anksioznost, a kombinacija s dekstrometorfanom je namijenjena suhom kašlju."
+  },
+  {
+    "text": "Koji od navedenih lijekova djeluje inhibicijom enzima?",
+    "options": ["Acetazolamid", "Salbutamol", "Tolbutamid", "Hlorpromazin"],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Acetazolamid je inhibitor karboanhidraze. Salbutamol je agonist beta-2 receptora, hlorpromazin antagonist dopaminskih receptora, a tolbutamid stimuliše lučenje inzulina zatvaranjem kalijumskih kanala."
+  },
+  {
+    "text": "Klinički značajna interakcija može nastati ako se sildenafil primjenjuje istovremeno s:",
+    "options": ["Ranitidinom", "Cimetidinom", "Izosorbid dinitratom", "Amoksicilinom/klavulanskom kiselinom"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sildenafil se ne smije kombinovati s nitratima — oba lijeka djeluju preko puta NO/cGMP, pa zajedno mogu izazvati izražen i produžen pad krvnog pritiska."
+  },
+  {
+    "text": "Famciklovir se može koristiti u liječenju:",
+    "options": ["Influence", "Vodenih boginja (varičele)", "Bradavica", "Rubeole"],
+    "correctIndex": 1,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Famciklovir, predlijek penciklovira, indiciran je kod infekcija virusom varičela zoster i herpes simpleks. Influenca i rubeola su druge virusne infekcije, a bradavice uzrokuje humani papiloma virus."
+  },
+  {
+    "text": "Ergotamin se koristi kao antimigrenski lijek jer:",
+    "options": ["Je beta-adrenergički agonist", "Inhibira agregaciju trombocita", "Uzrokuje povišenje praga bola", "Uzrokuje vazokonstrikciju"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ergotamin je alkaloid ergota s izraženim vazokonstriktornim djelovanjem na proširene kranijalne krvne sudove. Zbog rizika od ergotizma i ozbiljnih interakcija danas ga potiskuju triptani."
+  },
+  {
+    "text": "Za intravensku primjenu hidrokortizona koristi se sljedeća formulacija:",
+    "options": ["Hidrokortizon natrijum-sukcinat", "Hidrokortizon baza", "Hidrokortizon acetat", "Hidrokortizon propionat"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Za intravensku primjenu potrebna je vodotopiva sol — natrijum-sukcinat. Acetat je slabo topiv i koristi se za intraartikularnu primjenu, a propionat i baza za topikalne oblike."
+  },
+  {
+    "text": "Mjesto djelovanja furosemida je:",
+    "options": ["Distalni tubul", "Proksimalni tubul", "Ushodni krak Henleove petlje", "Sabirni kanalić"],
+    "correctIndex": 2,
+    "category": "diuretici",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Furosemid je diuretik Henleove petlje — blokira Na-K-2Cl kotransporter u debelom ushodnom kraku. Tiazidi djeluju u distalnom tubulu, a spironolakton u sabirnom kanaliću."
+  },
+  {
+    "text": "Svi navedeni kožni poremećaji se pogoršavaju izlaganjem suncu OSIM:",
+    "options": ["Seboroičnog dermatitisa", "Furunkula (čireva)", "Hloazme", "Akni vulgaris"],
+    "correctIndex": 1,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Furunkul je duboka bakterijska infekcija folikula i nije povezan sa izlaganjem suncu. Hloazma je izrazito fotosenzitivna, a kod akni i seboroičnog dermatitisa sunce kratkoročno može djelovati povoljno, ali dugoročno pogoršava stanje."
+  },
+  {
+    "text": "Svi navedeni lijekovi su dostupni u više jačina OSIM:",
+    "options": ["Metronidazola (tablete)", "Amlodipina (tablete)", "Risperidona (tablete)", "Fiksne kombinacije ergotamin/ciklizin/kofein"],
+    "correctIndex": 3,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Fiksna kombinovana antimigrenska tableta dolazi u jednoj jačini jer je odnos sastojaka unaprijed određen. Metronidazol, amlodipin i risperidon dostupni su u više jačina radi titracije doze."
+  },
+  {
+    "text": "Triamcinolon se razlikuje od hidrokortizona po tome što:",
+    "options": ["Ima duže trajanje djelovanja", "Je manje potentan antiinflamatorni lijek", "Dostupan je isključivo u oralnom obliku", "Ima izraženiju mineralokortikoidnu aktivnost"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Triamcinolon je potentniji kortikosteroid s dužim trajanjem djelovanja i zanemarivom mineralokortikoidnom aktivnošću, zbog čega manje zadržava natrijum i vodu od hidrokortizona."
+  },
+  {
+    "text": "Koji je najprikladniji tretman za mikotičnu vaginalnu superinfekciju?",
+    "options": ["Ispiranje povidon-jodom", "Estriol krema", "Mikonazol pesarija", "Terbinafin tablete"],
+    "correctIndex": 2,
+    "category": "ginekologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vaginalna kandidijaza se liječi lokalnim imidazolskim antimikoticima (mikonazol, klotrimazol) u obliku pesarija ili kreme. Estriol se koristi kod vaginalne atrofije, terbinafin ne djeluje dobro na Candidu, a povidon-jod je manje efikasan i iritira sluznicu."
+  },
+  {
+    "text": "Koji od navedenih lijekova NIJE indiciran za cijeljenje gastrointestinalnog ulkusa?",
+    "options": ["Omeprazol", "Loperamid", "Rabeprazol", "Mizoprostol"],
+    "correctIndex": 1,
+    "category": "gastroenterologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Loperamid je antidijaroik koji djeluje na motilitet crijeva i nema uticaja na cijeljenje ulkusa. Inhibitori protonske pumpe i mizoprostol (analog prostaglandina) koriste se u liječenju i prevenciji ulkusa."
+  },
+  {
+    "text": "Koja tvrdnja o seboroičnom dermatitisu odojčadi (\"cradle cap\") je tačna?",
+    "options": ["Javlja se kod djece starije od 1 godine", "Prvo se liječi kortikosteroidnom aplikacijom na tjeme", "Je doživotno stanje", "Predstavlja oblik seboroičnog dermatitisa"],
+    "correctIndex": 3,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Radi se o obliku seboroičnog dermatitisa koji se javlja kod odojčadi u prvim mjesecima života i spontano prolazi. Prvi izbor je ulje ili emolijens za omekšavanje krusti, a ne kortikosteroid."
+  },
+  {
+    "text": "Mikonazol pripada kojoj skupini antimikotika?",
+    "options": ["Polienskim antimikoticima", "Alilaminima", "Imidazolskim (azolnim) antimikoticima", "Ehinokandinima"],
+    "correctIndex": 2,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mikonazol je imidazol — inhibira lanosterol 14-alfa-demetilazu i time sintezu ergosterola u membrani gljivice. Polieni su nistatin i amfotericin B, alilamin je terbinafin, a ehinokandin kaspofungin."
+  },
+  {
+    "text": "Zašto se nazalne kapi ili sprej s ksilometazolinom ne smiju koristiti duže od 5 do 7 dana?",
+    "options": ["Zbog rizika od sistemske hipotenzije", "Zbog rizika od rebound kongestije (rhinitis medicamentosa)", "Zbog rizika od gljivične infekcije nosne sluznice", "Zbog razvoja bakterijske rezistencije"],
+    "correctIndex": 1,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Produžena primjena nazalnih dekongestiva dovodi do rhinitis medicamentosa — sluznica po prestanku djelovanja lijeka otiče jače nego prije, pa pacijent ulazi u začarani krug sve češće primjene."
+  },
+  {
+    "text": "Zašto se nazalni budezonid mora primjenjivati redovno, a ne samo po potrebi?",
+    "options": ["Jer se puni protivupalni učinak razvija tek nakon nekoliko dana do dvije sedmice redovne primjene", "Jer izaziva ovisnost ako se koristi povremeno", "Jer djeluje samo ako se primijeni neposredno prije izlaganja alergenu", "Jer povremena primjena povećava rizik od krvarenja iz nosa"],
+    "correctIndex": 0,
+    "category": "alergologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Nazalni kortikosteroidi djeluju smanjenjem upale sluznice, a taj se učinak gradi postepeno. Pacijent koji očekuje trenutno olakšanje kao od dekongestiva često odustane prerano — zato ga treba unaprijed upozoriti da učinak dolazi nakon nekoliko dana."
+  },
+  {
+    "text": "Koji lijek treba koristiti s oprezom kod pacijenata s hipertrofijom prostate?",
+    "options": ["Diklofenak", "Indapamid", "Fluvastatin", "Hioscin butilbromid"],
+    "correctIndex": 3,
+    "category": "urologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Hioscin butilbromid je antimuskarinik koji opušta detruzor i pojačava tonus sfinktera, pa kod uvećane prostate može izazvati akutnu retenciju urina."
+  },
+  {
+    "text": "Koji lijek treba koristiti s oprezom kod pacijenata s astmom?",
+    "options": ["Hioscin butilbromid", "Ketotifen", "Diklofenak", "Indapamid"],
+    "correctIndex": 2,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "NSAIL poput diklofenaka mogu kod osjetljivih astmatičara izazvati bronhospazam skretanjem metabolizma arahidonske kiseline prema leukotrienima. Ketotifen se, naprotiv, koristi u profilaksi astme."
+  },
+  {
+    "text": "Koji lijek treba koristiti s oprezom kod pacijenata s gihtom?",
+    "options": ["Indapamid", "Hioscin butilbromid", "Diklofenak", "Fluvastatin"],
+    "correctIndex": 0,
+    "category": "diuretici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Indapamid je tiazidu sličan diuretik koji smanjuje izlučivanje mokraćne kiseline i može precipitirati napad gihta."
+  },
+  {
+    "text": "Koja teška, po život opasna nuspojava se povezuje s acetazolamidom?",
+    "options": ["Pseudomembranozni kolitis", "Agranulocitoza", "Respiratorna depresija", "Nefrotoksičnost"],
+    "correctIndex": 1,
+    "category": "nuspojave",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Acetazolamid je derivat sulfonamida i rijetko može izazvati diskrazije krvi — agranulocitozu, trombocitopeniju i aplastičnu anemiju. Upala grla, groznica ili neobjašnjive modrice kod pacijenta na acetazolamidu zahtijevaju hitnu krvnu sliku."
+  },
+  {
+    "text": "Koja teška nuspojava se povezuje s amoksicilinom?",
+    "options": ["Agranulocitoza", "Kardiovaskularni kolaps", "Respiratorna depresija", "Pseudomembranozni kolitis"],
+    "correctIndex": 3,
+    "category": "nuspojave",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Antibiotici širokog spektra remete crijevnu floru i omogućavaju prekomjeran rast Clostridioides difficile, što vodi pseudomembranoznom kolitisu. Uporan proljev tokom ili nakon antibiotske terapije treba shvatiti ozbiljno."
+  },
+  {
+    "text": "Koja teška nuspojava se povezuje s atrakurijem?",
+    "options": ["Agranulocitoza", "Pseudomembranozni kolitis", "Respiratorna depresija", "Nefrotoksičnost"],
+    "correctIndex": 2,
+    "category": "anestezija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Atrakurij je nedepolarizirajući mišićni relaksant koji blokira neuromuskularnu spojnicu, uključujući disajnu muskulaturu. Smije se primjenjivati samo uz osiguranu mehaničku ventilaciju."
+  },
+  {
+    "text": "Klinička upotreba kojeg citostatika je ograničena zbog kardiotoksičnosti?",
+    "options": ["Doksorubicina", "Metotreksata", "Mitomicina", "Ciklofosfamida"],
+    "correctIndex": 0,
+    "category": "onkologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Doksorubicin (antraciklin) stvara slobodne radikale koji oštećuju kardiomiocite, pa postoji maksimalna kumulativna doza tokom života pacijenta i obavezno praćenje ejekcione frakcije."
+  },
+  {
+    "text": "Koji citostatik se može koristiti kod teške, rezistentne psorijaze?",
+    "options": ["Doksorubicin", "Mitomicin", "Tamoksifen", "Metotreksat"],
+    "correctIndex": 3,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metotreksat se u niskim, sedmičnim dozama koristi kod teške psorijaze i reumatoidnog artritisa, jer usporava proliferaciju keratinocita i djeluje imunomodulatorno."
+  },
+  {
+    "text": "Mehanizam djelovanja kojeg citostatika uključuje alkilaciju?",
+    "options": ["Doksorubicina", "Ciklofosfamida", "Metotreksata", "Tamoksifena"],
+    "correctIndex": 1,
+    "category": "onkologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ciklofosfamid je alkilirajući agens — njegovi aktivni metaboliti vezuju alkilne grupe na DNK i sprječavaju njeno umnožavanje. Metotreksat je antimetabolit, a tamoksifen hormonski modulator."
+  },
+  {
+    "text": "Koji sastojak ima adstringentna svojstva i koristi se kod umornih, nadraženih očiju?",
+    "options": ["Benzidamin", "Dokusat natrijum", "Vještičji lješnjak (hamamelis)", "Buprenorfin"],
+    "correctIndex": 2,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Hamamelis sadrži tanine s adstringentnim (stežućim) djelovanjem, pa se koristi u kapima za umorne oči i u preparatima za hemoroide. Benzidamin je za usta i grlo, dokusat za ušni vosak."
+  },
+  {
+    "text": "U kojem se preparatu koristi kombinacija buprenorfina i naloksona?",
+    "options": ["U sublingvalnim tabletama za supstitucionu terapiju opioidne ovisnosti", "U kombinaciji paracetamol/acetilsalicilna kiselina/kofein", "U preparatu za uklanjanje ušnog voska", "U oralnom gelu s benzidaminom"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Buprenorfin je parcijalni agonist opioidnih receptora. Nalokson je dodan da bi se spriječila zloupotreba injiciranjem — sublingvalno se slabo apsorbuje, ali ubrizgan izaziva apstinencijsku krizu."
+  },
+  {
+    "text": "Koji sastojak, blagi stimulans, pojačava djelovanje analgetika u kombinovanim preparatima?",
+    "options": ["Doksilamin", "Kofein", "Kodein", "Fenilefrin"],
+    "correctIndex": 1,
+    "category": "analgetici",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Kofein se dodaje kao adjuvans — ubrzava apsorpciju i pojačava analgetski učinak paracetamola i acetilsalicilne kiseline. Kodein je opioidni analgetik, a ne stimulans."
+  },
+  {
+    "text": "Koji lijek se koristi u liječenju akutnog napada migrene kao agonist 5-HT1 receptora?",
+    "options": ["Ondansetron", "Tramadol", "Ciklizin", "Sumatriptan"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sumatriptan je selektivni agonist 5-HT1B/1D receptora — sužava proširene kranijalne krvne sudove i inhibira oslobađanje neuropeptida u trigeminalnom sistemu."
+  },
+  {
+    "text": "Koji od navedenih lijekova je opioidni analgetik?",
+    "options": ["Tramadol", "Sumatriptan", "Ondansetron", "Pizotifen"],
+    "correctIndex": 0,
+    "category": "analgetici",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Tramadol je slab agonist mi-opioidnih receptora s dodatnim inhibitornim djelovanjem na ponovni unos serotonina i noradrenalina — odatle i rizik od serotoninskog sindroma uz antidepresive."
+  },
+  {
+    "text": "Koji lijek ne treba koristiti kod ishemijske bolesti srca zbog rizika od vazokonstrikcije?",
+    "options": ["Ondansetron", "Tramadol", "Sumatriptan", "Pizotifen"],
+    "correctIndex": 2,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sumatriptan preko 5-HT1B receptora sužava i koronarne arterije, pa je kontraindiciran kod ishemijske bolesti srca, ranijeg infarkta i nekontrolisane hipertenzije."
+  },
+  {
+    "text": "Koji lijek je specifični antagonist 5-HT3 receptora koji se koristi kod mučnine i povraćanja?",
+    "options": ["Sumatriptan", "Ciklizin", "Tramadol", "Ondansetron"],
+    "correctIndex": 3,
+    "category": "gastroenterologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Ondansetron blokira 5-HT3 receptore u hemoreceptorskoj okidačkoj zoni i u crijevima. Posebno je efikasan kod mučnine izazvane citostaticima i zračenjem, a čest neželjeni efekat je zatvor."
+  },
+  {
+    "text": "U kojoj koncentraciji je dostupna aciklovir krema za herpes simpleks?",
+    "options": ["0,05%", "5%", "2%", "20%"],
+    "correctIndex": 1,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Aciklovir krema je 5%. Nanosi se pet puta dnevno tokom pet dana, i to što ranije — najbolje već pri prvom osjećaju peckanja, prije nego se pojave mjehurići."
+  },
+  {
+    "text": "U kojoj koncentraciji je dostupna mupirocin mast?",
+    "options": ["2%", "0,05%", "5%", "20%"],
+    "correctIndex": 0,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Mupirocin mast je 2% — koristi se kod impetiga i drugih površinskih bakterijskih infekcija kože, te za eradikaciju MRSA iz nosnih hodnika."
+  },
+  {
+    "text": "U kojoj koncentraciji je dostupna azelainska kiselina za liječenje akni?",
+    "options": ["0,05%", "5%", "20%", "2%"],
+    "correctIndex": 2,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Za akne se koristi 20% krema azelainske kiseline (kod rozacee 15% gel). Djeluje antibakterijski na Cutibacterium acnes i komedolitički, a ne izaziva fotosenzitivnost."
+  },
+  {
+    "text": "U kojoj koncentraciji je dostupna flutikazonska krema?",
+    "options": ["2%", "0,05%", "5%", "20%"],
+    "correctIndex": 1,
+    "category": "dermatologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Flutikazon propionat krema je 0,05%. Riječ je o potentnom topikalnom kortikosteroidu koji se nanosi u tankom sloju jednom dnevno i ne koristi se dugotrajno na licu i u pregibima."
+  },
+  {
+    "text": "Koji lijek je NSAIL, selektivni inhibitor ciklooksigenaze-2?",
+    "options": ["Mebeverin", "Mebendazol", "Melatonin", "Meloksikam"],
+    "correctIndex": 3,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Meloksikam preferencijalno inhibira COX-2, pa je rjeđe povezan s gastrointestinalnim nuspojavama od neselektivnih NSAIL. Kao i svi koksibi, nosi povećan kardiovaskularni rizik."
+  },
+  {
+    "text": "Koji lijek je antihelmintik za infekciju dječijom glistom (Enterobius vermicularis)?",
+    "options": ["Mebeverin", "Meloksikam", "Mebendazol", "Meprobamat"],
+    "correctIndex": 2,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mebendazol u jednoj dozi je efikasan, uz ponovljenu dozu nakon 2 do 3 sedmice radi uništavanja novoizleglih parazita. Istovremeno treba tretirati sve ukućane i provesti higijenske mjere."
+  },
+  {
+    "text": "Koji lijek je antispazmodik koji direktno opušta glatku muskulaturu crijeva i koristi se kod sindroma iritabilnog crijeva?",
+    "options": ["Mebeverin", "Mebendazol", "Meloksikam", "Melatonin"],
+    "correctIndex": 0,
+    "category": "gastroenterologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mebeverin je direktni relaksant glatke muskulature crijeva, pa nema antiholinergičkih nuspojava kao antimuskarinski spazmolitici. Uzima se 20 minuta prije obroka."
+  },
+  {
+    "text": "Koji lijek je egzogeni hormon koji se koristi za kratkotrajno liječenje nesanice?",
+    "options": ["Mebeverin", "Melatonin", "Meloksikam", "Meprobamat"],
+    "correctIndex": 1,
+    "category": "insomnija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Melatonin je hormon epifize koji regulira ciklus spavanja i budnosti. Preparati s produženim oslobađanjem koriste se kratkotrajno, prvenstveno kod osoba starijih od 55 godina."
+  },
+  {
+    "text": "Prilikom izdavanja alfuzosina pacijenta treba savjetovati:\n1. Da prvu dozu uzme navečer, prije spavanja\n2. Da bude oprezan pri vožnji\n3. Da izbjegava alkoholna pića",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "urologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Alfa-blokatori mogu izazvati izraženu hipotenziju nakon prve doze, pa se ona uzima navečer prije spavanja, uz oprez pri vožnji zbog vrtoglavice i pospanosti. Posebna zabrana alkohola nije standardna preporuka za alfuzosin."
+  },
+  {
+    "text": "Nuspojave venlafaksina uključuju:\n1. Proljev\n2. Glavobolju\n3. Zamagljen vid",
+    "options": ["1, 2 i 3", "2 i 3", "1 i 2", "Samo 1"],
+    "correctIndex": 2,
+    "category": "psihijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Venlafaksin (inhibitor ponovnog unosa serotonina i noradrenalina) često izaziva mučninu, proljev, glavobolju, nesanicu i porast krvnog pritiska. Zamagljen vid je karakterističan za lijekove s antiholinergičkim djelovanjem, poput tricikličkih antidepresiva."
+  },
+  {
+    "text": "Oprez je potreban pri primjeni sljedećih lijekova kod bubrežne insuficijencije:\n1. Aciklovira\n2. Amoksicilina\n3. NSAIL",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 1,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Aciklovir i amoksicilin se izlučuju bubrezima pa zahtijevaju prilagođavanje doze, a NSAIL smanjuju bubrežni protok krvi inhibicijom prostaglandina i mogu pogoršati postojeću insuficijenciju."
+  },
+  {
+    "text": "Prilikom izdavanja fenitoina pacijenta treba savjetovati:\n1. Da lijek uzima redovno, po uputstvu\n2. Da odmah prijavi modrice ili neobjašnjivo krvarenje\n3. Da su vizuelni simptomi uobičajena i bezopasna pojava",
+    "options": ["1, 2 i 3", "2 i 3", "Samo 1", "1 i 2"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Fenitoin ima uzak terapijski indeks i nelinearnu kinetiku, pa je redovno uzimanje presudno. Modrice i krvarenje mogu ukazivati na diskraziju krvi. Dvoslike i nistagmus nisu bezopasni — to su rani znaci toksičnosti i zahtijevaju provjeru koncentracije lijeka."
+  },
+  {
+    "text": "Simptomi endometrioze uključuju:\n1. Neplodnost\n2. Vaginalni iscjedak\n3. Karličnu bol nekoliko dana nakon završetka menstruacije",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 1", "2 i 3"],
+    "correctIndex": 2,
+    "category": "ginekologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Neplodnost je česta posljedica endometrioze. Karlična bol se javlja prije i tokom menstruacije, a ne nekoliko dana nakon njenog završetka, dok vaginalni iscjedak nije tipičan simptom."
+  },
+  {
+    "text": "Koje se vakcine počinju davati prije 6. mjeseca života?\n1. Vakcina protiv poliomijelitisa\n2. Vakcina protiv pertusisa\n3. BCG vakcina",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "vakcinacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vakcine protiv poliomijelitisa i pertusisa počinju od 2. mjeseca života. BCG se rutinski daje samo u područjima s visokom incidencom tuberkuloze, pa je u kalendarima s niskom incidencom nema u prvih 6 mjeseci."
+  },
+  {
+    "text": "Gastroezofagealni refluks kod odojčadi:\n1. Obično zahtijeva hiruršku intervenciju\n2. Izuzetno je rijedak\n3. Može se ublažiti zgušnjavanjem obroka",
+    "options": ["1 i 2", "Samo 3", "1, 2 i 3", "2 i 3"],
+    "correctIndex": 1,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Refluks je vrlo čest kod odojčadi i najčešće se povlači sam do prve godine. Rješava se jednostavnim mjerama — manji i češći obroci, zgušnjavanje hrane, uspravan položaj nakon jela. Hirurgija dolazi u obzir tek izuzetno."
+  },
+  {
+    "text": "Klinički znaci dehidracije kod djece uključuju:\n1. Tahikardiju\n2. Gubitak elastičnosti kože\n3. Suh jezik",
+    "options": ["1 i 2", "2 i 3", "Samo 1", "1, 2 i 3"],
+    "correctIndex": 3,
+    "category": "pedijatrija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sve tri tvrdnje su tačne. Kod djece se dehidracija razvija brže nego kod odraslih zbog većeg odnosa površine tijela i mase, pa su rana oralna rehidracija i upućivanje ljekaru kod znakova umjerene do teške dehidracije ključni."
+  },
+  {
+    "text": "Kliničke karakteristike zaušnjaka (mumps) uključuju:\n1. Otok parotidnih žlijezda\n2. Groznicu\n3. Bronhitis",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zaušnjaci se manifestuju bolnim otokom parotidnih žlijezda i groznicom. Bronhitis nije karakteristika bolesti; moguće komplikacije su orhitis, meningitis i pankreatitis."
+  },
+  {
+    "text": "Koji simptomi su karakteristični za alergijski rinitis?\n1. Otežano disanje\n2. Suzenje očiju\n3. Produženi napadi kihanja",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 3", "2 i 3"],
+    "correctIndex": 3,
+    "category": "alergologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Suzenje i svrab očiju te napadi kihanja s vodenastim iscjetkom tipični su za alergijski rinitis. Otežano disanje nije simptom rinitisa — ako je prisutno, treba posumnjati na pridruženu astmu i uputiti pacijenta ljekaru."
+  },
+  {
+    "text": "Simptomi katarakte uključuju:\n1. Bol u oku\n2. Suzenje očiju\n3. Postepeno smanjenje oštrine vida",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 3", "2 i 3"],
+    "correctIndex": 2,
+    "category": "oftalmologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Katarakta se manifestuje postepenim, bezbolnim gubitkom oštrine vida, zamućenjem i bliještanjem na jakom svjetlu. Bol i crvenilo nisu tipični i ukazuju na drugo stanje, npr. akutni glaukom."
+  },
+  {
+    "text": "Kalcipotriol:\n1. Može uzrokovati promjenu boje kože\n2. Je derivat vitamina D\n3. Koristi se kod psorijaze",
+    "options": ["1, 2 i 3", "2 i 3", "1 i 2", "Samo 3"],
+    "correctIndex": 1,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kalcipotriol je analog vitamina D koji usporava proliferaciju keratinocita i koristi se kod psorijaze plakova. Ne mijenja boju kože i ne prlja odjeću — to su osobine ditranola i preparata s katranom."
+  },
+  {
+    "text": "Ciklosporin:\n1. Je nefrotoksičan\n2. Povezan je s gastrointestinalnim smetnjama\n3. Dostupan je isključivo parenteralno",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ciklosporin je nefrotoksičan i zahtijeva praćenje bubrežne funkcije i koncentracije u krvi, a često izaziva i gastrointestinalne smetnje, hipertenziju i hipertrofiju gingive. Dostupan je i oralno, kao kapsule i oralni rastvor."
+  },
+  {
+    "text": "Ciprofloksacin treba koristiti s oprezom kod:\n1. Epilepsije\n2. Djece\n3. Trudnoće",
+    "options": ["1 i 2", "2 i 3", "Samo 1", "1, 2 i 3"],
+    "correctIndex": 3,
+    "category": "antibiotici",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kinoloni snižavaju prag za konvulzije, mogu oštetiti hrskavicu u razvoju pa se kod djece daju samo kad nema alternative, a u trudnoći se izbjegavaju iz istog razloga."
+  },
+  {
+    "text": "Koje tablete treba progutati cijele, bez žvakanja?\n1. Kombinacija diklofenak/mizoprostol\n2. Diklofenak s produženim oslobađanjem\n3. Bisakodil",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 1,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sve tri se gutaju cijele. Kombinacija diklofenak/mizoprostol i retard oblik imaju ovojnicu koja kontroliše mjesto i brzinu oslobađanja, a bisakodil je gastrorezistentan — žvakanjem bi izazvao iritaciju želuca i grčeve."
+  },
+  {
+    "text": "Ranitidin:\n1. Značajno interaguje s varfarinom\n2. Maksimalna doza održavanja kod refluksnog ezofagitisa je 150 mg navečer\n3. Smanjuje lučenje želučane kiseline",
+    "options": ["2 i 3", "1, 2 i 3", "1 i 2", "Samo 3"],
+    "correctIndex": 0,
+    "category": "gastroenterologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ranitidin blokira H2-receptore parijetalnih ćelija i smanjuje lučenje kiseline; doza održavanja kod refluksnog ezofagitisa je 150 mg navečer. Za razliku od cimetidina, ranitidin ne inhibira značajno jetrene enzime pa nema klinički bitne interakcije s varfarinom."
+  },
+  {
+    "text": "Koji od navedenih lijekova mogu uzrokovati mučninu i povraćanje?\n1. Prednizolon\n2. Omeprazol\n3. Paklitaksel",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 3", "2 i 3"],
+    "correctIndex": 3,
+    "category": "nuspojave",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Paklitaksel je izrazito emetogen citostatik, a omeprazol rjeđe izaziva mučninu kao nuspojavu. Prednizolon se, naprotiv, koristi kao dodatak antiemetskim shemama kod hemioterapije."
+  },
+  {
+    "text": "Nuspojave levodope uključuju:\n1. Nesanicu\n2. Promjenu boje urina\n3. Glavobolju",
+    "options": ["1 i 2", "2 i 3", "1, 2 i 3", "Samo 1"],
+    "correctIndex": 2,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sve tri tvrdnje su tačne. Metaboliti levodope oksidiraju na zraku pa urin i znoj mogu potamniti — bezopasna pojava o kojoj pacijenta treba unaprijed obavijestiti da se ne uplaši."
+  },
+  {
+    "text": "Primjena heparina kod tromboembolijske bolesti u trudnoći:\n1. Podržana je jer heparin ne prolazi placentu\n2. Prekida se na početku porođaja\n3. Nosi rizik od osteoporoze kod majke",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 1,
+    "category": "trudnoca-dojenje",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Sve tri tvrdnje su tačne. Heparin je antikoagulans izbora u trudnoći jer ne prolazi placentu (za razliku od varfarina, koji je teratogen); prekida se na početku porođaja zbog rizika od krvarenja, a dugotrajna primjena smanjuje koštanu gustinu majke."
+  },
+  {
+    "text": "Pacijent dolazi u apoteku sa stalnom glavoboljom koja je izraženija ujutro:\n1. Treba ga pitati o anamnezi hipertenzije\n2. Treba ga uputiti ljekaru ako je glavobolja praćena groznicom i ukočenošću vrata\n3. Ovakav obrazac glavobolje karakterističan je isključivo za tumor mozga",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Jutarnja glavobolja može biti znak neregulisane hipertenzije, apneje u snu ili prekomjerne upotrebe analgetika, pa treba uzeti anamnezu. Groznica s ukočenim vratom je alarmantan znak i traži hitno upućivanje. Sam obrazac glavobolje nije dokaz tumora mozga."
+  },
+  {
+    "text": "Parodontitis:\n1. Zahvata peritoneum\n2. Zahtijeva upućivanje ljekaru ili stomatologu\n3. Je upalno stanje",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 3", "2 i 3"],
+    "correctIndex": 3,
+    "category": "otc",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Parodontitis je upala potpornog tkiva zuba — desni, cementa, ligamenta i alveolarne kosti — i zahtijeva stomatološku obradu. Peritoneum je serozna opna trbušne šupljine i s parodontitisom nema veze."
+  },
+  {
+    "text": "Cistitis:\n1. Primjena alkalizirajućih preparata nosi klinički značajan rizik hiperkalijemije kod zdravih odraslih\n2. Escherichia coli je najčešći uzročnik\n3. Pojava kod djece zahtijeva upućivanje ljekaru",
+    "options": ["1, 2 i 3", "2 i 3", "1 i 2", "Samo 3"],
+    "correctIndex": 1,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Escherichia coli uzrokuje većinu nekomplikovanih cistitisa, a cistitis kod djece uvijek traži ljekarsku obradu zbog mogućih anatomskih anomalija. Alkalizirajuće soli kod zdravih odraslih ne nose značajan rizik hiperkalijemije — oprez je potreban tek kod bubrežne insuficijencije i uz ACE inhibitore."
+  },
+  {
+    "text": "Tamoksifen:\n1. Je agonist estrogenskih receptora u tkivu dojke\n2. Nuspojave uključuju alopeciju i fibrome materice\n3. Koristi se kao adjuvantna hormonska terapija kod karcinoma dojke",
+    "options": ["1, 2 i 3", "1 i 2", "2 i 3", "Samo 1"],
+    "correctIndex": 2,
+    "category": "onkologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tamoksifen je u tkivu dojke antagonist estrogenskih receptora, na čemu se zasniva njegovo antitumorsko djelovanje. U endometrijumu djeluje agonistički, pa su fibromi i rizik od karcinoma endometrija poznate nuspojave."
+  },
+  {
+    "text": "Žvakaća guma s nikotinom u odvikavanju od pušenja:\n1. Pruža rezidualnu (kontinuiranu) koncentraciju nikotina\n2. Jedna guma se žvače najmanje 1 sat\n3. Može uzrokovati aftozne ulceracije kao nuspojavu",
+    "options": ["Samo 3", "1 i 2", "1, 2 i 3", "2 i 3"],
+    "correctIndex": 0,
+    "category": "otc",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kontinuiranu koncentraciju nikotina daje transdermalni flaster, a guma je namijenjena naglim željama za cigaretom i žvače se oko 30 minuta, po tehnici „žvakni pa parkiraj\". Aftozne promjene, štucanje i iritacija grla su poznate nuspojave."
+  },
+  {
+    "text": "Zolpidem:\n1. Je benzodiazepin\n2. Ima dugo trajanje djelovanja\n3. Zahtijeva oprez kod oštećenja jetre",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 3", "2 i 3"],
+    "correctIndex": 2,
+    "category": "insomnija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zolpidem nije benzodiazepin — imidazopiridin je koji djeluje na isto mjesto na GABA-A receptoru. Ima kratko trajanje djelovanja, pa je pogodan kod problema s uspavljivanjem. Metaboliše se u jetri, pa kod oštećenja jetre treba smanjiti dozu."
+  },
+  {
+    "text": "Orciprenalin:\n1. Dostupan je isključivo kao dozirani inhalator\n2. Je potpuno selektivan beta-2 agonist\n3. Može se propisati djetetu od 4 godine",
+    "options": ["1 i 2", "Samo 3", "1, 2 i 3", "2 i 3"],
+    "correctIndex": 1,
+    "category": "astma",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Orciprenalin je samo djelimično selektivan beta-2 agonist, pa preko beta-1 receptora izaziva tahikardiju. Dostupan je i kao tablete i sirup, ne samo kao inhalator, a može se primijeniti kod djece."
+  },
+  {
+    "text": "Gliklazid:\n1. Uz istovremenu primjenu flukonazola dolazi do niže plazmatske koncentracije gliklazida\n2. Je sulfonilureja\n3. Ima kraće poluvrijeme eliminacije od glibenklamida",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 2", "2 i 3"],
+    "correctIndex": 3,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Gliklazid je sulfonilureja s kraćim poluvremenom od glibenklamida, pa nosi manji rizik od produžene hipoglikemije — zato se preferira kod starijih. Flukonazol inhibira CYP2C9 i POVEĆAVA, a ne smanjuje koncentraciju gliklazida."
+  },
+  {
+    "text": "Tifusna groznica:\n1. Uzrokovana je kokom\n2. Ima inkubaciju od 4 sedmice\n3. Može biti praćena ružičastim pjegama na trbuhu",
+    "options": ["1, 2 i 3", "1 i 2", "Samo 3", "2 i 3"],
+    "correctIndex": 2,
+    "category": "infektologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Uzročnik je bacil Salmonella typhi (ne kok), a inkubacija traje 5 do 23 dana. Ružičaste pjege („rose spots\") na trbuhu su klasičan, iako nestalan klinički znak."
+  },
+  {
+    "text": "Primjeri antipsihotika uključuju:\n1. Hlorpromazin\n2. Haloperidol\n3. Karbamazepin",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "psihijatrija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Hlorpromazin (fenotiazin) i haloperidol (butirofenon) su klasični antipsihotici. Karbamazepin je antiepileptik koji se koristi i kao stabilizator raspoloženja, ali nije antipsihotik."
+  },
+  {
+    "text": "Profilaksa kojih se infekcija provodi programom vakcinacije?\n1. Hepatitisa B\n2. Malarije\n3. Hepatitisa C",
+    "options": ["1 i 2", "Samo 1", "1, 2 i 3", "2 i 3"],
+    "correctIndex": 1,
+    "category": "vakcinacija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Vakcina protiv hepatitisa B dio je redovnog kalendara imunizacije. Protiv hepatitisa C vakcina ne postoji, a malarija se sprječava hemoprofilaksom i zaštitom od uboda komaraca."
+  },
+  {
+    "text": "Efikasno u liječenju gljivičnih infekcija nokta je:\n1. Griseofulvin\n2. Terbinafin\n3. Nistatin",
+    "options": ["1, 2 i 3", "2 i 3", "Samo 2", "1 i 2"],
+    "correctIndex": 3,
+    "category": "dermatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Terbinafin je danas terapija izbora kod onihomikoze, a griseofulvin stariji oralni antimikotik koji se nakuplja u keratinu. Nistatin djeluje samo na Candidu i ne apsorbuje se iz probavnog trakta, pa je za nokte neupotrebljiv."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Statini se mogu preporučiti 60-godišnjem asimptomatskom muškarcu s prekomjernom težinom, pozitivnom porodičnom anamnezom koronarne bolesti, koji je pušač.\nTvrdnja 2: Takav pacijent ima 10-godišnji kardiovaskularni rizik od 10% ili više.",
+    "options": ["Samo tvrdnja 1 je tačna", "Samo tvrdnja 2 je tačna", "Obje tvrdnje su tačne", "Nijedna tvrdnja nije tačna"],
+    "correctIndex": 2,
+    "category": "kardiologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Obje tvrdnje su tačne i međusobno povezane: prema tablicama kardiovaskularnog rizika, kombinacija godina, pušenja, prekomjerne težine i porodične anamneze daje 10-godišnji rizik od 10 do 20%, što je prag za uvođenje statina u primarnoj prevenciji."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Efedrin, primijenjen sporom intravenskom injekcijom, može se koristiti za korekciju hipotenzije nakon epiduralne anestezije.\nTvrdnja 2: Efedrin je vazokonstriktorni simpatomimetik koji se ne smije koristiti kod bradikardije.",
+    "options": ["Obje tvrdnje su tačne", "Samo tvrdnja 1 je tačna", "Samo tvrdnja 2 je tačna", "Nijedna tvrdnja nije tačna"],
+    "correctIndex": 0,
+    "category": "anestezija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Obje tvrdnje su tačne, ali druga ne objašnjava prvu. Efedrin se zaista koristi kod hipotenzije nakon epiduralne anestezije, a njegova vazokonstriktorna svojstva i ograničenja kod bradikardije su zasebna činjenica."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Bukalne tablete prohlorperazina stavljaju se visoko između gornje usne i desni, gdje se rastvaraju.\nTvrdnja 2: Koriste se kod mučnine i povraćanja povezanih s migrenom jer zaobilaze usporenu apsorpciju iz želuca.",
+    "options": ["Samo tvrdnja 1 je tačna", "Nijedna tvrdnja nije tačna", "Samo tvrdnja 2 je tačna", "Obje tvrdnje su tačne"],
+    "correctIndex": 3,
+    "category": "neurologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Obje tvrdnje su tačne i druga objašnjava prvu: tokom migrenskog napada pražnjenje želuca je usporeno, pa oralni lijek slabo djeluje. Bukalna primjena zaobilazi probavni trakt i osigurava apsorpciju."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Flumazenil je specifični agonist koji se koristi u anesteziji za poništavanje depresivnih efekata na centralni nervni sistem.\nTvrdnja 2: Flumazenil se ne smije primjenjivati brzo, kako bi se izbjeglo prenaglo buđenje uz agitaciju, anksioznost i strah.",
+    "options": ["Obje tvrdnje su tačne", "Samo tvrdnja 2 je tačna", "Samo tvrdnja 1 je tačna", "Nijedna tvrdnja nije tačna"],
+    "correctIndex": 1,
+    "category": "anestezija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Flumazenil je ANTAGONIST benzodiazepinskih receptora, ne agonist — zato i poništava sedaciju. Druga tvrdnja je tačna: primjenjuje se sporo i titrirano, jer nagli prekid sedacije izaziva agitaciju, a kod ovisnika i konvulzije."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Orlistat je inhibitor enzima.\nTvrdnja 2: Orlistat se uzima uz svaki glavni obrok, dakle najčešće tri puta dnevno.",
+    "options": ["Samo tvrdnja 1 je tačna", "Nijedna tvrdnja nije tačna", "Obje tvrdnje su tačne", "Samo tvrdnja 2 je tačna"],
+    "correctIndex": 2,
+    "category": "gojaznost",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Obje tvrdnje su tačne. Orlistat inhibira pankreasnu i želučanu lipazu i uzima se uz svaki glavni obrok koji sadrži masti — kod tri obroka dnevno to je tri puta dnevno. Doza se preskače ako obrok ne sadrži mast."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Enalapril može precipitirati hipoglikemijski napad kod dijabetičkog pacijenta.\nTvrdnja 2: Enalapril može pojačati efekat sulfonilureja.",
+    "options": ["Samo tvrdnja 2 je tačna", "Samo tvrdnja 1 je tačna", "Nijedna tvrdnja nije tačna", "Obje tvrdnje su tačne"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Obje tvrdnje su tačne i druga objašnjava prvu: ACE inhibitori povećavaju osjetljivost tkiva na inzulin i potenciraju djelovanje sulfonilureja, čime raste rizik od hipoglikemije, naročito na početku terapije."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Repaglinid stimuliše perifernu iskoristivost glukoze.\nTvrdnja 2: Repaglinid je indiciran isključivo kao monoterapija kod dijabetes melitusa.",
+    "options": ["Nijedna tvrdnja nije tačna", "Obje tvrdnje su tačne", "Samo tvrdnja 1 je tačna", "Samo tvrdnja 2 je tačna"],
+    "correctIndex": 0,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Obje tvrdnje su netačne. Repaglinid stimuliše lučenje inzulina iz beta-ćelija (perifernu iskoristivost glukoze poboljšavaju metformin i tiazolidindioni), a koristi se i u kombinaciji s metforminom, ne samo kao monoterapija."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: Analiza glukoze u urinu dobar je pokazatelj i hipoglikemije i hiperglikemije.\nTvrdnja 2: Koncentracija glukoze u krvi treba biti održavana na potpuno konstantnom nivou tokom dana.",
+    "options": ["Obje tvrdnje su tačne", "Samo tvrdnja 1 je tačna", "Nijedna tvrdnja nije tačna", "Samo tvrdnja 2 je tačna"],
+    "correctIndex": 2,
+    "category": "endokrinologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Obje tvrdnje su netačne. Glukoza se u urinu pojavljuje tek iznad bubrežnog praga, pa test otkriva hiperglikemiju ali nikako hipoglikemiju. Glikemija fiziološki varira tokom dana, posebno postprandijalno — cilj je držati je u ciljnom rasponu, ne konstantnu."
+  },
+  {
+    "text": "Koja je tvrdnja tačna?\nTvrdnja 1: 100 µg budezonida ekvivalentno je 200 µg flutikazona.\nTvrdnja 2: Budezonid i flutikazon su oba indicirani za profilaksu alergijskog rinitisa.",
+    "options": ["Obje tvrdnje su tačne", "Samo tvrdnja 2 je tačna", "Samo tvrdnja 1 je tačna", "Nijedna tvrdnja nije tačna"],
+    "correctIndex": 1,
+    "category": "alergologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Odnos je obrnut: flutikazon je potentniji, pa je 100 µg budezonida približno ekvivalentno 50 µg flutikazona. Druga tvrdnja je tačna — oba se koriste kao nazalni kortikosteroidi u profilaksi alergijskog rinitisa."
+  },
+  {
+    "text": "Pacijentu su propisane kapi za oči s latanoprostom, jedna kap navečer. Za koje stanje se koriste?",
+    "options": ["Kataraktu", "Blefaritis", "Glaukom", "Konjunktivitis"],
+    "correctIndex": 2,
+    "category": "oftalmologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Latanoprost je analog prostaglandina F2-alfa koji povećava uveoskleralni odljev očne vodice i snižava intraokularni pritisak — prva linija terapije glaukoma otvorenog ugla."
+  },
+  {
+    "text": "Latanoprost:\n1. Je analog prostaglandina\n2. Može uzrokovati promjenu boje oka\n3. Primjenjuje se jednom dnevno",
+    "options": ["1, 2 i 3", "1 i 2", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "oftalmologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sve tri tvrdnje su tačne. Latanoprost se ukapava jednom dnevno navečer, a može trajno potamniti šarenicu i pojačati rast trepavica — na to pacijenta treba unaprijed upozoriti, posebno kod jednostrane terapije."
+  },
+  {
+    "text": "Pacijent koji uzima imipramin dobija dijagnozu hipertenzije. Koji je NAJBOLJI prvi izbor antihipertenziva?",
+    "options": ["Bendroflumetiazid", "Propranolol", "Furosemid", "Perindopril"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "ACE inhibitor poput perindoprila nema klinički značajnu interakciju s tricikličkim antidepresivom. Tiazid pojačava rizik od posturalne hipotenzije, propranolol inhibicijom CYP2D6 podiže koncentraciju imipramina, a furosemid nije lijek izbora za hipertenziju."
+  },
+  {
+    "text": "Pacijent uzima imipramin i dijagnostikovana mu je hipertenzija. Koji lijek je NAJMANJE prikladan izbor za liječenje njegove hipertenzije?",
+    "options": ["Perindopril", "Furosemid", "Bendroflumetiazid", "Propranolol"],
+    "correctIndex": 1,
+    "category": "kardiologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Furosemid je diuretik Henleove petlje namijenjen prvenstveno liječenju edema i srčane insuficijencije; za rutinsko liječenje hipertenzije koriste se tiazidi, ACE inhibitori, blokatori kalcijumskih kanala i sartani."
+  },
+  {
+    "text": "Pacijent uzima imipramin. Uz koji je antihipertenziv rizik od posturalne hipotenzije najveći?",
+    "options": ["Bendroflumetiazid", "Perindopril", "Propranolol", "Furosemid"],
+    "correctIndex": 0,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Triciklički antidepresivi blokiraju alfa-1 adrenergičke receptore i sami izazivaju ortostatsku hipotenziju. Uz tiazidni diuretik, koji smanjuje volumen plazme, taj se efekat zbraja — rizik od pada je posebno velik kod starijih."
+  },
+  {
+    "text": "Koji lijek, primijenjen istovremeno s imipraminom, povećava njegovu plazmatsku koncentraciju?",
+    "options": ["Perindopril", "Bendroflumetiazid", "Propranolol", "Furosemid"],
+    "correctIndex": 2,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Propranolol inhibira CYP2D6, enzim koji razgrađuje imipramin, pa koncentracija antidepresiva raste. Posljedica su izraženiji antiholinergički efekti, sedacija i povećan rizik od poremećaja srčanog ritma."
+  },
+  {
+    "text": "Pacijentkinja uzima bendroflumetiazid. Zašto joj možda neće trebati suplementacija kalijuma?",
+    "options": ["Zato što uzima diazepam", "Zato što uzima prednizolon", "Zato što uzima metotreksat", "Zato što uzima lisinopril"],
+    "correctIndex": 3,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "ACE inhibitori smanjuju lučenje aldosterona i time zadržavaju kalijum, čime kompenzuju gubitak koji izaziva tiazidni diuretik. Prednizolon, naprotiv, dodatno snižava kalijum."
+  },
+  {
+    "text": "Pacijentkinja uzima lisinopril, bendroflumetiazid, metotreksat, diazepam i prednizolon. Treba je savjetovati da izbjegava istovremenu upotrebu:\n1. Antacida s aluminijum/magnezijum hidroksidom\n2. Alkohola\n3. Diklofenaka",
+    "options": ["1, 2 i 3", "2 i 3", "1 i 2", "Samo 1"],
+    "correctIndex": 1,
+    "category": "interakcije",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Diklofenak smanjuje bubrežno izlučivanje metotreksata i povećava rizik od njegove toksičnosti, a uz ACE inhibitor i diuretik ugrožava bubrežnu funkciju. Alkohol pojačava hipotenzivni efekat lisinoprila i sedaciju uz diazepam. Antacidi u ovoj kombinaciji nisu problem."
+  },
+  {
+    "text": "Pacijentkinja na metotreksatu i prednizolonu treba kontaktirati ljekara ako se razvije kašalj jer:\n1. Metotreksat može uzrokovati plućnu toksičnost\n2. Kašalj može ukazivati na infekciju koja zahtijeva antibiotik\n3. Kašalj može ukazivati na supresiju nadbubrežne žlijezde",
+    "options": ["1, 2 i 3", "2 i 3", "Samo 1", "1 i 2"],
+    "correctIndex": 3,
+    "category": "klinicka-farmacija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Metotreksat može izazvati pneumonitis i plućnu fibrozu, a uz mijelosupresiju i kortikosteroid pacijentkinja je podložnija infekcijama. Kašalj nije znak supresije nadbubrežne žlijezde — ona se ispoljava umorom, slabošću i hipotenzijom."
+  },
+  {
+    "text": "Koje laboratorijske pretrage treba redovno raditi kod pacijenta na terapiji metotreksatom?\n1. Testove jetrene funkcije\n2. Kompletnu krvnu sliku\n3. Testove bubrežne funkcije",
+    "options": ["1, 2 i 3", "1 i 2", "2 i 3", "Samo 1"],
+    "correctIndex": 0,
+    "category": "klinicka-farmacija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Potrebne su sve tri: jetrena funkcija zbog hepatotoksičnosti, krvna slika zbog mijelosupresije, a bubrežna funkcija jer se metotreksat izlučuje bubrezima — pad klirensa naglo povećava njegovu toksičnost."
+  },
+  {
+    "text": "Kojom dinamikom se metotreksat uzima u terapiji reumatoidnog artritisa?",
+    "options": ["Svakodnevno", "Dva puta dnevno", "Jednom sedmično", "Svaki drugi dan"],
+    "correctIndex": 2,
+    "category": "reumatologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metotreksat se kao antireumatik koji modifikuje tok bolesti uzima JEDNOM SEDMIČNO, uvijek istog dana. Svakodnevno uzimanje je klasična, potencijalno smrtonosna greška u doziranju — na to pacijenta treba izričito upozoriti."
+  },
+  {
+    "text": "Nedostaci dugotrajne terapije prednizolonom uključuju:\n1. Precipitiranje osteoporoze\n2. Nesanicu\n3. Kandidijazu",
+    "options": ["1 i 2", "1, 2 i 3", "2 i 3", "Samo 1"],
+    "correctIndex": 1,
+    "category": "nuspojave",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sve tri tvrdnje su tačne. Dugotrajna kortikosteroidna terapija smanjuje koštanu gustinu, remeti san (zato se doza uzima ujutro) i zbog imunosupresije pogoduje kandidijazi."
+  }
+]
