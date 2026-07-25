@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import Confetti from './Confetti'
 
 // Level-up animacija (Modul 5) — puni ekran preko rezultata kviza.
 // props: level (novi level), rank, rankChanged (bool), bonusXp (opciono,
@@ -49,12 +50,17 @@ export default function LevelUpOverlay({ level, rank, rankChanged, bonusXp = 0, 
 
       {bonusXp > 0 && (
         <motion.div
-          className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/15 px-5 py-2.5 font-title text-lg font-extrabold text-amber-200"
+          className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/15 px-5 py-2.5 text-center"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.85 }}
         >
-          🎁 Bonus +{bonusXp} XP!
+          <p className="font-title text-lg font-extrabold text-amber-200">
+            🎁 Otključan kovčeg: +{bonusXp} XP
+          </p>
+          <p className="mt-0.5 text-xs text-amber-100/80">
+            Otvori ga na ljestvici u Preživljavanju
+          </p>
         </motion.div>
       )}
 
@@ -68,38 +74,5 @@ export default function LevelUpOverlay({ level, rank, rankChanged, bonusXp = 0, 
         Super! →
       </motion.button>
     </motion.div>
-  )
-}
-
-// Konfeti preko tamne pozadine (teal + zlatna + bijela).
-const COLORS = ['#2dd4bf', '#f59e0b', '#fbbf24', '#ffffff']
-const PIECES = Array.from({ length: 36 }, (_, i) => ({
-  left: `${(i * 29) % 100}%`,
-  color: COLORS[i % COLORS.length],
-  delay: (i % 9) * 0.22,
-  duration: 2.6 + ((i * 17) % 12) / 8,
-  rotate: ((i * 47) % 360) - 180,
-}))
-
-function Confetti() {
-  return (
-    <div className="pointer-events-none absolute inset-0" aria-hidden>
-      {PIECES.map((p, i) => (
-        <motion.span
-          key={i}
-          className="absolute top-0 block h-2.5 w-2"
-          style={{ left: p.left, backgroundColor: p.color, borderRadius: 2 }}
-          initial={{ y: -24, opacity: 1, rotate: 0 }}
-          animate={{ y: 900, opacity: [1, 1, 0], rotate: p.rotate }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            ease: 'easeIn',
-            repeat: Infinity,
-            repeatDelay: 1.2,
-          }}
-        />
-      ))}
-    </div>
   )
 }

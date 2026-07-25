@@ -19,9 +19,13 @@ service cloud.firestore {
                     && request.resource.data.xp == 0;
       // Izmjena: samo vlastiti profil, i SAMO ime/avatar — XP, statistika,
       // taskovi i sve ostalo su rezervisani za server.
+      // Izuzetak: levelRewardOpened (zadnji kovčeg koji je igrač OTVORIO na
+      // ljestvici). To nije XP polje — bonus isplaćuje server preko
+      // levelRewardMilestone; ovo je samo oznaka "animaciju sam vidio", pa
+      // falsifikovanje ne donosi nikakvu prednost.
       allow update: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['displayName', 'avatar']);
+                         .hasOnly(['displayName', 'avatar', 'levelRewardOpened']);
       allow delete: if false;
     }
 

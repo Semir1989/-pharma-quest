@@ -40,3 +40,12 @@ export async function getUserProfile(uid) {
 export async function updateUserProfile(uid, data) {
   await updateDoc(doc(db, 'users', uid), data)
 }
+
+// Pamti da je igrač OTVORIO kovčeg za dati prag (svaki 10. level).
+// Nije XP polje — bonus je server odavno isplatio (awardLevelMilestones); ovo
+// samo bilježi da je animaciju vidio, da mu se ne nudi ponovo. Zato je jedino
+// ovo polje uz displayName/avatar otvoreno klijentu u firestore.rules:
+// falsifikovanje ne donosi nikakav XP, samo sakrije/vrati animaciju.
+export async function markChestOpened(uid, milestone) {
+  await updateDoc(doc(db, 'users', uid), { levelRewardOpened: milestone })
+}

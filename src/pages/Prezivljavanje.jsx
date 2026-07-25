@@ -5,10 +5,13 @@ import { startSurvival, submitSurvivalAnswer } from '../services/quizApi'
 import { subscribeSurvivalLeaderboard } from '../services/survival'
 import { secondsUntilSurvivalReset, formatCountdown } from '../utils/periods'
 import { track } from '../services/analytics'
-import { levelFromXp, rankFromLevel } from '../utils/levels'
+import { markChestOpened } from '../services/userProfile'
+import { levelFromXp, milestoneReward, rankFromLevel, unopenedChests } from '../utils/levels'
 import SurvivalQuestion from '../components/SurvivalQuestion'
 import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
+import ChestOpenOverlay from '../components/ChestOpenOverlay'
+import LevelLadder from '../components/LevelLadder'
 import Avatar from '../components/Avatar'
 
 // Preživljavanje (Etapa 8): endless mod, jedna sedmična "sudbina".
@@ -29,6 +32,7 @@ export default function Prezivljavanje() {
   const [rows, setRows] = useState([])
   const [levelUp, setLevelUp] = useState(null)
   const [badgeQueue, setBadgeQueue] = useState([])
+  const [chest, setChest] = useState(null) // prag čiji se kovčeg upravo otvara
   const xpAtStartRef = useRef(0)
   const badgesRef = useRef([]) // skupljeni novi bedževi tokom run-a
   const bonusRef = useRef(0) // skupljeni level-bonus XP tokom run-a
@@ -121,6 +125,20 @@ export default function Prezivljavanje() {
     setPhase('paused')
   }
 
+  // Ljestvica levela (1 → 100) — igračev globalni napredak, ne survival niz.
+  const level = levelFromXp(profile?.xp || 0)
+  const opened = profile?.levelRewardOpened || 0
+  const pendingChests = unopenedChests(level, opened)
+
+  // Otvaranje kovčega je samo animacija — XP je server već isplatio. Oznaku
+  // upisujemo odmah (ne po zatvaranju overlaya) da se ne izgubi ako igrač
+  // zatvori aplikaciju usred animacije.
+  function handleOpenChest(milestone) {
+    setChest(milestone)
+    track('level_chest_open', { milestone })
+    if (user?.uid) markChestOpened(user.uid, milestone).catch(() => {})
+  }
+
   // Animacije imaju prednost nad sadržajem (redoslijed: level → bedž → ekran).
   if (levelUp) {
     return (
@@ -138,6 +156,16 @@ export default function Prezivljavanje() {
       <BadgeUnlockOverlay
         badge={badgeQueue[0]}
         onClose={() => setBadgeQueue((q) => q.slice(1))}
+      />
+    )
+  }
+
+  if (chest) {
+    return (
+      <ChestOpenOverlay
+        level={chest}
+        reward={milestoneReward(chest)}
+        onClose={() => setChest(null)}
       />
     )
   }
@@ -267,6 +295,30 @@ export default function Prezivljavanje() {
           Nazad na početnu →
         </button>
       )}
+
+      {/* Ljestvica levela — vidi se u svim fazama osim dok traje pitanje.
+          Ovdje igrač konačno vidi bonus koji je za svaki 10. level dobio. */}
+      <section className="mt-5">
+        {pendingChests > 0 && (
+          <div className="mb-2 flex items-center gap-2 rounded-2xl bg-amber-500 px-4 py-3 text-white shadow">
+            <span className="text-2xl">🎁</span>
+            <p className="flex-1 text-sm font-bold">
+              {pendingChests === 1
+                ? 'Imaš neotvoren kovčeg na ljestvici!'
+                : `Imaš ${pendingChests} neotvorena kovčega na ljestvici!`}
+              <span className="block font-normal text-amber-50">
+                Pritisni ga da vidiš koliko si bonus XP-a osvojio/la.
+              </span>
+            </p>
+          </div>
+        )}
+        <LevelLadder
+          level={level}
+          xp={profile?.xp || 0}
+          opened={opened}
+          onOpenChest={handleOpenChest}
+        />
+      </section>
 
       {/* Leaderboard sedmice */}
       <section className="mt-5">
