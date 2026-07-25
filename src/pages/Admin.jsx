@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getAllQuestions, getQuestionSecret, saveQuestion, createQuestion } from '../services/admin'
+import {
+  normalizeCategory,
+  categoryLabel,
+  similarCategories,
+  categoriesFromQuestions,
+} from '../utils/kategorije'
 
 const BLANK = {
   question: { id: null, text: '', options: ['', '', '', ''], category: '', difficulty: 2, points: 10, active: true },
@@ -22,6 +28,10 @@ export default function Admin() {
     if (!isAdmin) return
     getAllQuestions().then(setQuestions).catch(() => setQuestions([]))
   }, [isAdmin])
+
+  // Postojeće kategorije iz banke — editor iz njih nudi izbor umjesto da se
+  // kategorija svaki put kuca napamet.
+  const categories = useMemo(() => categoriesFromQuestions(questions), [questions])
 
   const filtered = useMemo(() => {
     if (!questions) return []
@@ -57,7 +67,14 @@ export default function Admin() {
   }
 
   if (editing) {
-    return <QuestionEditor entry={editing} onCancel={() => setEditing(null)} onSaved={onSaved} />
+    return (
+      <QuestionEditor
+        entry={editing}
+        categories={categories}
+        onCancel={() => setEditing(null)}
+        onSaved={onSaved}
+      />
+    )
   }
 
   return (
@@ -118,20 +135,123 @@ export default function Admin() {
 }
 
 const LETTERS = ['A', 'B', 'C', 'D']
+const NOVA = '__nova__'
 
-function QuestionEditor({ entry, onCancel, onSaved }) {
+// Birač kategorije: padajuća lista postojećih (s brojem pitanja) ili unos nove.
+// Nova se odmah normalizuje u slug, a ako liči na postojeću — upozori, da se
+// banka ne rascjepka na 'antibiotici' / 'antibiotik' / 'Antibiotici'.
+function CategoryPicker({ categories, value, onChange, problem }) {
+  const imena = categories.map((c) => c.name)
+  const [rezimNova, setRezimNova] = useState(false)
+  const [unos, setUnos] = useState('')
+
+  const slug = normalizeCategory(unos)
+  const vecPostoji = rezimNova && slug.length >= 3 && imena.includes(slug)
+  const slicne = rezimNova && !vecPostoji ? similarCategories(slug, imena) : []
+
+  function izaberi(v) {
+    if (v === NOVA) {
+      setRezimNova(true)
+      setUnos('')
+      onChange('')
+    } else {
+      setRezimNova(false)
+      onChange(v)
+    }
+  }
+
+  return (
+    <>
+      <label className="mt-4 block text-sm font-bold text-slate-600">Kategorija</label>
+      <select
+        value={rezimNova ? NOVA : value || ''}
+        onChange={(e) => izaberi(e.target.value)}
+        className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 outline-none focus:border-teal-500"
+      >
+        <option value="" disabled>
+          — odaberi kategoriju —
+        </option>
+        {categories.map((c) => (
+          <option key={c.name} value={c.name}>
+            {categoryLabel(c.name)} ({c.count})
+          </option>
+        ))}
+        <option value={NOVA}>➕ Nova kategorija…</option>
+      </select>
+
+      {rezimNova && (
+        <div className="mt-2 rounded-2xl border border-slate-200 bg-white p-3">
+          <input
+            value={unos}
+            onChange={(e) => {
+              setUnos(e.target.value)
+              onChange(normalizeCategory(e.target.value))
+            }}
+            autoFocus
+            placeholder="npr. Klinička farmacija"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-teal-500"
+          />
+          {slug && (
+            <p className="mt-2 text-xs text-slate-500">
+              Sprema se kao: <code className="font-bold text-slate-700">{slug}</code>
+            </p>
+          )}
+          {vecPostoji && (
+            <p className="mt-2 text-sm font-medium text-amber-600">
+              Ova kategorija već postoji — pitanje će joj se pridružiti.
+            </p>
+          )}
+          {slicne.length > 0 && (
+            <div className="mt-2 rounded-xl bg-amber-50 p-2.5">
+              <p className="text-sm font-medium text-amber-700">
+                Slično već postoji — možda si mislio/la na:
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {slicne.map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => izaberi(k)}
+                    className="rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-teal-700 shadow-sm active:bg-teal-50"
+                  >
+                    {k}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {problem && !rezimNova && !value && (
+        <p className="mt-1.5 text-xs text-slate-400">
+          Postojećih kategorija: {categories.length}. Novu dodaj samo ako nijedna ne odgovara.
+        </p>
+      )}
+    </>
+  )
+}
+
+function QuestionEditor({ entry, categories, onCancel, onSaved }) {
   const q = entry.question
   const isNew = !!entry.isNew
   const [text, setText] = useState(q.text || '')
   const [options, setOptions] = useState(() => [0, 1, 2, 3].map((i) => q.options?.[i] || ''))
   const [correctIndex, setCorrectIndex] = useState(entry.secret.correctIndex ?? 0)
   const [explanation, setExplanation] = useState(entry.secret.explanation || '')
-  const [category, setCategory] = useState(q.category || '')
+  const [category, setCategory] = useState(normalizeCategory(q.category))
   const [difficulty, setDifficulty] = useState(q.difficulty || 2)
   const [points, setPoints] = useState(q.points || 10)
   const [active, setActive] = useState(q.active !== false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Kategorija se čuva kao normalizovan slug — provjeravamo samo da nije
+  // prazna ili besmislena; poklapanje s postojećom je poželjno, ne greška.
+  const categoryProblem = useMemo(() => {
+    if (!category) return 'Odaberi kategoriju iz liste ili dodaj novu.'
+    if (category.length < 3) return 'Naziv kategorije je prekratak.'
+    return ''
+  }, [category])
 
   function setOption(i, val) {
     setOptions((o) => o.map((x, idx) => (idx === i ? val : x)))
@@ -142,13 +262,13 @@ function QuestionEditor({ entry, onCancel, onSaved }) {
     if (text.trim().length < 10) return setError('Tekst pitanja je prekratak.')
     if (options.some((o) => !o.trim())) return setError('Sve 4 opcije moraju biti popunjene.')
     if (!explanation.trim()) return setError('Objašnjenje ne smije biti prazno.')
-    if (!category.trim()) return setError('Kategorija ne smije biti prazna.')
+    if (categoryProblem) return setError(categoryProblem)
     setSaving(true)
     try {
       const pub = {
         text: text.trim(),
         options: options.map((o) => o.trim()),
-        category: category.trim().toLowerCase(),
+        category: normalizeCategory(category),
         difficulty: Number(difficulty) || 2,
         points: Number(points) || 10,
         active,
@@ -222,12 +342,11 @@ function QuestionEditor({ entry, onCancel, onSaved }) {
         className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 outline-none focus:border-teal-500"
       />
 
-      <label className="mt-4 block text-sm font-bold text-slate-600">Kategorija</label>
-      <input
+      <CategoryPicker
+        categories={categories}
         value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        placeholder="npr. interakcije"
-        className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800 outline-none focus:border-teal-500"
+        onChange={setCategory}
+        problem={categoryProblem}
       />
 
       <div className="mt-4 flex items-center gap-3">
