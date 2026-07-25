@@ -106,6 +106,14 @@ export function formatCountdown(totalSeconds) {
   return `${pad(h)}:${pad(m)}:${pad(s)}`
 }
 
+// Odbrojavanje koje može trajati danima: '5d 19:51:10' ili '19:51:10'.
+// formatCountdown bi za 5 dana ispisao '139:51:10', što se ne čita.
+export function formatCountdownLong(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds))
+  const days = Math.floor(s / 86400)
+  return days > 0 ? `${days}d ${formatCountdown(s % 86400)}` : formatCountdown(s)
+}
+
 // Broj dana do kraja sedmice / mjeseca (za "Obnavlja se za X dana"), po BiH danu.
 export function daysUntilWeekEnd(d = new Date()) {
   const { y, m, d: day } = bihParts(d)

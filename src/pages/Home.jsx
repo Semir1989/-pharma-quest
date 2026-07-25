@@ -4,9 +4,11 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import CircleProgress from '../components/CircleProgress'
 import InstallBanner from '../components/InstallBanner'
-import { TrophyIcon } from '../components/icons'
+import DuelCard from '../components/DuelCard'
+import XpRaceCard from '../components/XpRaceCard'
 import { levelFromXp, xpProgress } from '../utils/levels'
 import { getTasks, progressForType, taskValue, dailyTasksFor } from '../services/tasks'
+import { getTournamentConfig } from '../services/tournament'
 import { dailyKey } from '../utils/periods'
 
 const DAILY_QUIZ_LIMIT = 3
@@ -19,7 +21,20 @@ function greeting() {
 }
 
 export default function Home() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  // Config vikend eventa dijele obje kartice (1v1 i XP trka) — čita se jednom.
+  const [tournamentCfg, setTournamentCfg] = useState(null)
+
+  useEffect(() => {
+    let alive = true
+    getTournamentConfig()
+      .then((c) => alive && setTournamentCfg(c))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+
   if (!profile) return null
 
   const level = levelFromXp(profile.xp)
@@ -65,22 +80,10 @@ export default function Home() {
       {/* Dnevni taskovi — kružići napretka (Modul 6) */}
       <DailyTasksCard profile={profile} />
 
-      {/* Vikend turnir — XP trka (Faza 2) */}
-      <Link
-        to="/turnir"
-        className="mt-4 flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
-      >
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
-            <TrophyIcon className="h-6 w-6" />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">Vikend turnir</h2>
-            <p className="text-xs text-slate-500">XP trka — petak 18h do nedjelja 18h</p>
-          </div>
-        </div>
-        <span className="text-sm font-bold text-teal-700">Uđi →</span>
-      </Link>
+      {/* Vikend event (Faza 2) — dvije odvojene kartice, jer su to dva
+          različita takmičenja: duel traži prijavu unaprijed, XP trka ne. */}
+      <DuelCard cfg={tournamentCfg} uid={user?.uid} />
+      <XpRaceCard cfg={tournamentCfg} />
 
       {/* Preživljavanje — sedmični izazov (Etapa 8) */}
       <Link
