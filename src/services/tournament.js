@@ -61,7 +61,11 @@ export function subscribeTournamentLeaderboard(key, callback) {
     q,
     (snap) => {
       const rows = []
-      snap.forEach((child) => rows.push({ uid: child.key, ...child.val() }))
+      // Tijelo MORA biti u vitičastim zagradama: forEach prekida obilazak čim
+      // callback vrati nešto istinito, a rows.push vraća dužinu niza (1).
+      snap.forEach((child) => {
+        rows.push({ uid: child.key, ...child.val() })
+      })
       rows.reverse()
       callback(rows)
     },

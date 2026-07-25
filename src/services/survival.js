@@ -13,7 +13,13 @@ export function subscribeSurvivalLeaderboard(callback) {
     q,
     (snap) => {
       const rows = []
-      snap.forEach((child) => rows.push({ uid: child.key, ...child.val() }))
+      // PAŽNJA: DataSnapshot.forEach prekida obilazak čim callback vrati nešto
+      // istinito. Skraćeni zapis `(c) => rows.push(...)` vraća novu dužinu niza
+      // (1), pa se lista zaustavljala na PRVOM igraču. Tijelo mora biti u
+      // vitičastim zagradama da vrati undefined.
+      snap.forEach((child) => {
+        rows.push({ uid: child.key, ...child.val() })
+      })
       rows.reverse() // limitToLast vraća rastuće — želimo najboljeg prvog
       callback(rows)
     },

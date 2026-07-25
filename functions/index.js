@@ -883,7 +883,13 @@ const XP_RACE_REWARDS = [500, 300, 150] // 1., 2., 3. mjesto
 async function finalizeXpRace(tid) {
   const snap = await rtdb.ref(`tournament/${tid}`).orderByChild('xp').limitToLast(3).get()
   const rows = []
-  snap.forEach((c) => rows.push({ uid: c.key, ...c.val() }))
+  // Tijelo u vitičastim zagradama je OBAVEZNO: forEach prekida obilazak čim
+  // callback vrati nešto istinito, a rows.push vraća dužinu niza. Sa skraćenim
+  // zapisom je ovdje ostajao samo jedan red — i to najslabiji od prva tri, pa
+  // je prvu nagradu (500 XP) dobijao trećeplasirani.
+  snap.forEach((c) => {
+    rows.push({ uid: c.key, ...c.val() })
+  })
   rows.reverse() // limitToLast je rastuće — želimo najboljeg prvog
   const top = []
   for (let i = 0; i < rows.length; i++) {
