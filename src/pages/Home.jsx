@@ -4,11 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import CircleProgress from '../components/CircleProgress'
 import InstallBanner from '../components/InstallBanner'
-import DuelCard from '../components/DuelCard'
-import XpRaceCard from '../components/XpRaceCard'
 import { levelFromXp, xpProgress } from '../utils/levels'
-import { getTasks, progressForType, taskValue, dailyTasksFor } from '../services/tasks'
-import { getTournamentConfig } from '../services/tournament'
+import {
+  getTasks,
+  progressForType,
+  taskValue,
+  dailyTasksFor,
+  claimableXp,
+} from '../services/tasks'
 import { dailyKey } from '../utils/periods'
 
 const DAILY_QUIZ_LIMIT = 3
@@ -20,20 +23,11 @@ function greeting() {
   return 'Dobro veče'
 }
 
+// Početna nosi SAMO core loop: ko sam, koliko mi treba do levela, šta igram
+// danas. Vikend dueli, XP trka i Preživljavanje žive u Areni (tab u donjoj
+// navigaciji) — prije su trošili ~40% prvog ekrana, a aktivni su par dana.
 export default function Home() {
-  const { profile, user } = useAuth()
-  // Config vikend eventa dijele obje kartice (1v1 i XP trka) — čita se jednom.
-  const [tournamentCfg, setTournamentCfg] = useState(null)
-
-  useEffect(() => {
-    let alive = true
-    getTournamentConfig()
-      .then((c) => alive && setTournamentCfg(c))
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
-  }, [])
+  const { profile } = useAuth()
 
   if (!profile) return null
 
@@ -79,26 +73,6 @@ export default function Home() {
 
       {/* Dnevni taskovi — kružići napretka (Modul 6) */}
       <DailyTasksCard profile={profile} />
-
-      {/* Vikend event (Faza 2) — dvije odvojene kartice, jer su to dva
-          različita takmičenja: duel traži prijavu unaprijed, XP trka ne. */}
-      <DuelCard cfg={tournamentCfg} uid={user?.uid} />
-      <XpRaceCard cfg={tournamentCfg} />
-
-      {/* Preživljavanje — sedmični izazov (Etapa 8) */}
-      <Link
-        to="/prezivljavanje"
-        className="mt-4 flex items-center justify-between rounded-2xl p-4 text-white shadow-sm active:opacity-95"
-        style={{ background: 'linear-gradient(180deg, #0f5750 0%, #0a3b36 100%)' }}
-      >
-        <div>
-          <h2 className="text-lg font-bold">Preživljavanje</h2>
-          <p className="text-xs text-teal-100">
-            Sedmični izazov — izađi kad hoćeš, greška te izbacuje
-          </p>
-        </div>
-        <span className="text-sm font-bold text-amber-300">Igraj →</span>
-      </Link>
 
       {/* Leaderboard kartica (Modul 7) */}
       <Link
@@ -147,15 +121,24 @@ function QuizCounter({ profile }) {
 
 // Kartica dnevnih taskova s kružnim progresom — klik vodi na Questove.
 // Prikazuje ista tri zadatka koja je server izabrao za današnji dan.
+//
+// Desna oznaka je i prečica do nagrade: ako igrač ima nepreuzeti XP bilo gdje
+// (dnevni, sedmični ili mjesečni zadaci), "Pogledaj" se pretvara u "Preuzmi
+// N XP" i vodi na Questove, gdje preuzimanje već ima level-up i bedž animacije.
 function DailyTasksCard({ profile }) {
-  const [daily, setDaily] = useState(null)
+  const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
+  const [daily, setDaily] = useState(null) // današnja tri
 
   const pickedKey = (profile?.taskProgress?.daily?.picked || []).join(',')
   useEffect(() => {
     let alive = true
     getTasks()
-      .then((t) => dailyTasksFor(t.daily, profile))
-      .then((list) => alive && setDaily(list))
+      .then(async (t) => {
+        if (!alive) return
+        setTasks(t)
+        const list = await dailyTasksFor(t.daily, profile)
+        if (alive) setDaily(list)
+      })
       .catch(() => alive && setDaily([]))
     return () => {
       alive = false
@@ -167,6 +150,7 @@ function DailyTasksCard({ profile }) {
 
   const progress = progressForType(profile, 'daily')
   const allDone = daily.every((t) => taskValue(progress, t) >= t.goal)
+  const claimable = claimableXp(profile, tasks, daily)
 
   return (
     <Link
@@ -174,10 +158,16 @@ function DailyTasksCard({ profile }) {
       className="mt-6 block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-slate-800">📅 Dnevni zadaci</h2>
-        <span className={`text-sm font-bold ${allDone ? 'text-green-600' : 'text-teal-700'}`}>
-          {allDone ? 'Sve završeno! ✓' : 'Pogledaj →'}
-        </span>
+        <h2 className="text-lg font-bold text-slate-800">Dnevni zadaci</h2>
+        {claimable > 0 ? (
+          <span className="rounded-xl bg-amber-500 px-3 py-1.5 font-title text-sm font-extrabold text-white shadow-sm">
+            ⭐ Preuzmi {claimable} XP
+          </span>
+        ) : (
+          <span className={`text-sm font-bold ${allDone ? 'text-green-600' : 'text-teal-700'}`}>
+            {allDone ? 'Sve završeno! ✓' : 'Pogledaj →'}
+          </span>
+        )}
       </div>
       <div className="mt-3 flex justify-around">
         {daily.map((task) => {

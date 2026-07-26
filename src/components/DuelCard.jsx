@@ -5,6 +5,7 @@ import { registerForDuel } from '../services/quizApi'
 import { track } from '../services/analytics'
 import { formatCountdownLong } from '../utils/periods'
 import { useNow } from '../utils/useNow'
+import { refreshArenaAlert } from '../utils/useArenaAlert'
 
 // Kartica 1v1 duel turnira na početnoj.
 // Prijava se radi ODAVDE — igrač ne mora ulaziti u /turnir da bi se prijavio.
@@ -49,6 +50,7 @@ export default function DuelCard({ cfg, uid }) {
       track('tournament_register')
       setRegistered(true)
       setCount((c) => c + 1)
+      refreshArenaAlert() // 'duel-reg' signal mora nestati odmah
     } catch (e) {
       setError(e?.message || 'Greška pri prijavi. Pokušaj ponovo.')
     } finally {

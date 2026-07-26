@@ -89,6 +89,22 @@ export function TrophyIcon({ className = '' }) {
   )
 }
 
+// Ukršteni mačevi — tab Arena (dueli, XP trka, Preživljavanje).
+export function ArenaIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      {/* Mač s vrhom gore lijevo (drška dolje desno) */}
+      <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
+      <path d="M13 19l6-6" />
+      <path d="M16 16l4 4" />
+      {/* Mač s vrhom gore desno (drška dolje lijevo) */}
+      <path d="M14.5 6.5 18 3h3v3l-3.5 3.5" />
+      <path d="M5 14l4 4" />
+      <path d="M7 17l-3 3" />
+    </svg>
+  )
+}
+
 export function ClanIcon({ className = '' }) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base}>

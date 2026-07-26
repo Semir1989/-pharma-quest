@@ -85,6 +85,29 @@ export async function dailyTasksFor(allDaily, profile) {
     .sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
+// Ukupan XP koji igrač može odmah preuzeti — zadatak je završen, a nagrada
+// nije podignuta. Početna time zna da li da ponudi "Preuzmi" umjesto "Pogledaj".
+// Dnevni se broje SAMO iz današnjeg izbora (ostali dnevni questovi za igrača
+// tog dana ne postoje), sedmični i mjesečni svi.
+export function claimableXp(profile, tasks, dailyPicks) {
+  if (!profile || !tasks) return 0
+  const groups = [
+    ['daily', dailyPicks || []],
+    ['weekly', tasks.weekly || []],
+    ['monthly', tasks.monthly || []],
+  ]
+  let total = 0
+  for (const [type, list] of groups) {
+    const progress = progressForType(profile, type)
+    for (const task of list) {
+      if (taskValue(progress, task) >= task.goal && !progress.claimed[task.id]) {
+        total += task.reward || 0
+      }
+    }
+  }
+  return total
+}
+
 // Preuzimanje nagrade (Etapa 6): server provjerava uslov i dodjeljuje XP —
 // klijent više ništa ne upisuje sam. Vraća { reward, newBadges } — reward za
 // level-up provjeru, newBadges za animaciju otključavanja bedža (Etapa 8).

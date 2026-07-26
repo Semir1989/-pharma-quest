@@ -14,3 +14,29 @@ body {
 .font-title {
   font-family: 'Nunito', system-ui, sans-serif;
 }
+
+/* Signal "Arena te čeka" u donjoj navigaciji.
+   Namjerno GLOW (spori halo), ne blinkanje: treptanje je agresivno, problem za
+   fotosenzitivnost i izgleda jeftino. Nosilac informacije je amber tačkica —
+   halo je samo pojačava, pa signal ostaje čitljiv i kad je animacija ugašena. */
+@keyframes arena-halo {
+  0% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(217, 119, 6, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+  }
+}
+
+.arena-halo {
+  animation: arena-halo 2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arena-halo {
+    animation: none;
+  }
+}
