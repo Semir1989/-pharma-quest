@@ -1,0 +1,2032 @@
+[
+  {
+    "text": "Aleksander Fleming je Nobelovu nagradu za otkriće penicilina dobio:",
+    "options": [
+      "1928. godine",
+      "1941. godine",
+      "1941. godine zajedno sa biohemičarem Florijem i lekarom Čejnom",
+      "1945. godine zajedno sa biohemičarem Čejnom i lekarom Florijem"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Nobelova nagrada za fiziologiju/medicinu dodeljena je 1945. godine zajednički Flemingu (otkriće), Chainu i Floreyu (izolacija i klinička primena penicilina)."
+  },
+  {
+    "text": "Sulfonamide je otkrio:",
+    "options": [
+      "Domagk",
+      "Fleming",
+      "Florey",
+      "Black"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Gerhard Domagk je 1935. otkrio antibakterijsko dejstvo Prontosila (prvog sulfonamida), za šta je dobio Nobelovu nagradu."
+  },
+  {
+    "text": "Penicilin je otkriven:",
+    "options": [
+      "1928. godine",
+      "1932. godine",
+      "1940. godine",
+      "1941. godine"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Aleksander Fleming je 1928. godine primetio antibakterijsko dejstvo plesni Penicillium notatum."
+  },
+  {
+    "text": "Imena lekova mogu biti:",
+    "options": [
+      "hemijska imena",
+      "generička imena (INN)",
+      "zaštićena imena",
+      "sva prethodno nabrojana"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Svaki lek ima hemijsko ime, generičko (INN) ime i zaštićeno (komercijalno) ime — sve nabrojano je tačno."
+  },
+  {
+    "text": "Lečenje metalima prvi je započeo:",
+    "options": [
+      "Hippokrat",
+      "Galen",
+      "Paracelsus",
+      "Paul Ehrlich"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Paracelsus (16. vek) je uveo primenu metala (žive, olova, arsena) u terapiji, postavljajući osnove toksikologije/farmakologije."
+  },
+  {
+    "text": "Najstariji pisani farmakološki trag Ebersov Papyrus potiče iz:",
+    "options": [
+      "14. veka p.n.e.",
+      "14. veka",
+      "16. veka p.n.e.",
+      "18. veka"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Ebersov papirus datira oko 1550. godine p.n.e., odnosno iz 16. veka p.n.e."
+  },
+  {
+    "text": "Opijum se koristi još od 3000. godine p.n.e. (više tačnih odgovora u originalu — za kviz izabran jedan najbolji odgovor):",
+    "options": [
+      "kao analgetik",
+      "kao miotik",
+      "kao antidijaroik",
+      "kao sredstvo za uživanje"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Istorijski, najstarija i najšire dokumentovana upotreba opijuma je kao sredstvo za uživanje/opijanje; koristio se i kao analgetik i antidijaroik, ali izvorno pitanje dozvoljava više tačnih odgovora (A, C, D)."
+  },
+  {
+    "text": "Poveži ime naučnika Sertürner-a sa lekom:",
+    "options": [
+      "atropin",
+      "morfin",
+      "aspirin",
+      "beta blokator"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Friedrich Sertürner je 1804–1806. godine izolovao morfin iz opijuma — prvi izolovani alkaloid u istoriji."
+  },
+  {
+    "text": "Salvarsan se vezuje za:",
+    "options": [
+      "lečenje sifilisa živom",
+      "lečenje sifilisa sumporom",
+      "lečenje sifilisa metalima",
+      "lečenje sifilisa olovom"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Salvarsan (arsfenamin) je jedinjenje arsena (metala) koje je Paul Ehrlich uveo za lečenje sifilisa."
+  },
+  {
+    "text": "Paul Ehrlich je lečio živom:",
+    "options": [
+      "bakterijske infekcije",
+      "sifilis",
+      "gljivična oboljenja",
+      "upale gornjih respiratornih puteva"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Pre uvođenja Salvarsana, sifilis se lečio jedinjenjima žive; Ehrlich je kasnije razvio terapiju arsenom (Salvarsan)."
+  },
+  {
+    "text": "U kom veku su počeli da se koriste anestetici:",
+    "options": [
+      "u 17. veku",
+      "u 18. veku",
+      "u 19. veku",
+      "u 20. veku"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Opšta anestezija (etar, hloroform) uvedena je sredinom 19. veka (1840-e godine)."
+  },
+  {
+    "text": "Acetilholin se nalazi u:",
+    "options": [
+      "duvanu",
+      "velebilju",
+      "kori vrbe",
+      "crvenoj pustikari"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Acetilholin i njemu srodni alkaloidi (muskarin) prirodno se nalaze u pojedinim gljivama poput crvene pustikare (Amanita muscaria)."
+  },
+  {
+    "text": "Atropin je otkrio:",
+    "options": [
+      "Mein 1833. godine",
+      "Wilstatter 1901. godine",
+      "James Black",
+      "Henry Dale"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 1,
+    "points": 10,
+    "explanation": "Atropin je izolovao Mein 1833. godine iz biljke velebilje (Atropa belladonna)."
+  },
+  {
+    "text": "Atropin se nalazi u (više tačnih odgovora u originalu — ovde izdvojen jedan tačan za format kviza):",
+    "options": [
+      "velebilju",
+      "semenkama tatule",
+      "crnoj bunici",
+      "duvanu"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Atropin (hiosciamin) se nalazi u velebilju (Atropa belladonna); izvorno pitanje dozvoljava i B i C kao tačne (tatula, crna bunika), dok duvan (D) sadrži nikotin, a ne atropin."
+  },
+  {
+    "text": "Uticaj organizma na lek opisan je u:",
+    "options": [
+      "farmakodinamici",
+      "farmakokinetici",
+      "farmakognoziji",
+      "farmakoterapiji"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Farmakokinetika proučava šta organizam radi sa lekom (resorpcija, distribucija, metabolizam, eliminacija), za razliku od farmakodinamike koja proučava dejstvo leka na organizam."
+  },
+  {
+    "text": "Lek deluje najbrže ukoliko se primeni u obliku:",
+    "options": [
+      "lingvalete",
+      "supozitorije",
+      "tablete",
+      "infuzije"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Intravenska infuzija unosi lek direktno u sistemsku cirkulaciju, zaobilazeći fazu resorpcije, pa je dejstvo najbrže."
+  },
+  {
+    "text": "Sva navedena tvrđenja u vezi sa primenom lekova su tačna, OSIM:",
+    "options": [
+      "koncentracije leka u krvi rastu brže nakon i.m. nego oralne aplikacije",
+      "efekt \"prvog prolaska\" je posledica metabolisanja leka nakon resorpcije, a pre ulaska u sistemsku cirkulaciju",
+      "davanje antihistaminika putem aerosola je povezano sa ispoljavanjem većeg broja neželjenih dejstava nego kad se lek daje sistemski",
+      "davanje lekova putem transdermalnih flastera je često sporo, ali ima manji efekt \"prvog prolaska\" nego kod oralne aplikacije"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Netačno je da aerosolna (lokalna) primena antihistaminika daje VIŠE neželjenih dejstava od sistemske — naprotiv, lokalna primena obično smanjuje sistemska neželjena dejstva."
+  },
+  {
+    "text": "Jedno od navedenih tvrđenja za peroralnu aplikaciju lekova NIJE tačno:",
+    "options": [
+      "resorpcija je često varijabilna",
+      "to je najmanje siguran put unošenja leka",
+      "lek može nadražiti sluznicu probavnog trakta",
+      "veliki deo leka može biti razgrađen putem jetrinog metabolizma i pre nego što dospe u sistemsku cirkulaciju"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Peroralni put nije najmanje siguran — naprotiv, smatra se jednim od najsigurnijih i najčešće korišćenih puteva primene lekova."
+  },
+  {
+    "text": "Od navedenih načina jedan NE pripada parenteralnom načinu davanja lekova:",
+    "options": [
+      "subkutani",
+      "intramuskularni",
+      "intravenski",
+      "rektalni"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Rektalna primena je enteralni, a ne parenteralni put; supkutani, intramuskularni i intravenski put su parenteralni."
+  },
+  {
+    "text": "Resorpciju leka iz potkožnog tkiva može ubrzati:",
+    "options": [
+      "protamin",
+      "hijalorunidaza",
+      "adrenalin",
+      "polivinil-pirolidon"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Hijaluronidaza razgrađuje hijaluronsku kiselinu vezivnog tkiva, olakšavajući širenje i resorpciju leka iz potkožnog depoa (adrenalin bi, naprotiv, usporio resorpciju vazokonstrikcijom)."
+  },
+  {
+    "text": "Bazični lek ima pKa vrednost 3.0. Pretpostavimo da je u želucu pH 1, u tankom crevu pH 8, a u krvi pH 7. Lek ulazi u krv:",
+    "options": [
+      "brže iz želuca nego iz tankog creva",
+      "brže iz tankog creva nego iz želuca",
+      "podjednako brzo resorbuje se iz tankog creva i želuca",
+      "ne resorbuje se ni iz tankog creva ni iz želuca"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod ovako slabe baze, lek je pretežno nejonizovan (lipofilan) pri višem pH tankog creva, pa se odatle bolje resorbuje nego iz jako kiselog želuca gde je skoro potpuno jonizovan."
+  },
+  {
+    "text": "Jedan bazni lek ima pKa 3.0. Ako pretpostavimo da je u tankom crevu pH 6, a u krvi pH 7, kakav je odnos nejonizovanog prema jonizovanom obliku leka u tankom crevu:",
+    "options": [
+      "1:2",
+      "1:200",
+      "1:1000",
+      "1:5000"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Po Henderson–Hasselbalchovoj jednačini za bazu: [B]/[BH+] = 10^(pH−pKa) = 10^(6−3) = 1000, tj. odnos nejonizovanog prema jonizovanom je 1000:1, što odgovara ponuđenom zapisu 1:1000."
+  },
+  {
+    "text": "Kiseli lek koji ima pKa 4.0 nalazi se u rastvoru čiji pH je 3.0. Koji je odnos nejonizovanog prema jonizovanom leku:",
+    "options": [
+      "1:1.0",
+      "1:10",
+      "1:100",
+      "1:1000"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Za kiselinu: [HA]/[A⁻] = 10^(pKa−pH) = 10^(4−3) = 10, odnosno odnos je približno 10:1 (u ponuđenom zapisu 1:10)."
+  },
+  {
+    "text": "Koje tvrdnje su tačne za prolaz lekova kroz biomembrane?",
+    "options": [
+      "jonizovani deo leka slabo ili nikako ne prolazi u ćeliju",
+      "biološka raspoloživost obeležava deo leka koji nije vezan za proteine plazme",
+      "prosta difuzija ne zavisi od veličine površine na kojoj se vrši apsorpcija",
+      "aktivnim transportom kroz biomembrane prolaze samo veoma velike molekule"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Jonizovani (naelektrisani) deo molekula slabo ili nikako ne prolazi kroz lipidni sloj ćelijske membrane prostom difuzijom."
+  },
+  {
+    "text": "Koji od navedenih faktora nema uticaja na brzinu i stepen resorpcije lekova?",
+    "options": [
+      "veličina molekula leka",
+      "rastvorljivost u lipidima",
+      "stepen jonizovanosti",
+      "vreme uzimanja leka"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vreme uzimanja leka samo po sebi ne utiče na fizičko-hemijske faktore resorpcije; veličina molekula, rastvorljivost u lipidima i jonizovanost direktno određuju resorpciju."
+  },
+  {
+    "text": "Koji od navedenih oblika nakon resorpcije prolazi prvo kroz jetru pre ulaska u sistemsku cirkulaciju?",
+    "options": [
+      "analne supozitorije",
+      "sporo-otpuštajuće oralne tablete",
+      "inhalacija aerosola",
+      "sublingvalne tablete"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Oralno uzeti lekovi se resorbuju u crevima i portalnom venom idu prvo kroz jetru (efekat prvog prolaska), za razliku od sublingvalne, inhalacione ili (delom) rektalne primene koje delimično zaobilaze jetru."
+  },
+  {
+    "text": "Koliko je postotaka datog leka disocirano u rastvoru koji ima pH jednak sa pKa vrednosti leka?",
+    "options": [
+      "25%",
+      "50%",
+      "75%",
+      "100%"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Po definiciji pKa, kada je pH rastvora jednak pKa leka, lek je 50% u jonizovanom i 50% u nejonizovanom obliku."
+  },
+  {
+    "text": "pH vrednost crevnog soka je:",
+    "options": [
+      "1,0",
+      "3,5",
+      "5,3",
+      "7,0"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Crevni sok u tankom crevu ima blago alkalnu do neutralnu reakciju; od ponuđenih vrednosti najbliža je 7,0."
+  },
+  {
+    "text": "Kroz epitel želudačne sluznice najlakše prolazi:",
+    "options": [
+      "acetilsalicilna kiselina",
+      "fenobarbiton",
+      "alkohol",
+      "streptomicin"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Alkohol je mala, visoko lipidno rastvorljiva molekula koja lako difunduje kroz sluznicu želuca, brže od navedenih lekova."
+  },
+  {
+    "text": "Lek koji ima pKa vrednost 4.5 resorbuje se:",
+    "options": [
+      "bolje iz želuca nego iz tankog creva",
+      "bolje iz tankog creva nego iz želuca",
+      "približno podjednako iz tankog creva i želuca",
+      "na osnovu date pKa vrednosti ne može se izvesti zaključak o uticaju na resorpciju"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kao relativno slaba kiselina, ovaj lek je pretežno nejonizovan u kiseloj sredini želuca, pa se tamo bolje resorbuje nego u alkalnijem tankom crevu."
+  },
+  {
+    "text": "Mleko smanjuje resorpciju:",
+    "options": [
+      "penicilina",
+      "cefalosporina",
+      "tetraciklina",
+      "sulfonamida"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kalcijum iz mleka gradi nerastvorljive helatne komplekse sa tetraciklinima, značajno smanjujući njihovu resorpciju."
+  },
+  {
+    "text": "Najčešći način prodiranja lekova u ćeliju je:",
+    "options": [
+      "prenos putem specifičnih nosača",
+      "difuzija kroz lipidnu fazu ćelijske membrane",
+      "endocitoza",
+      "difuzija kroz vodenu fazu ćelijske membrane"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Većina lekova (nejonizovanih, lipofilnih molekula) prolazi kroz ćelijsku membranu prostom difuzijom kroz lipidni dvosloj."
+  },
+  {
+    "text": "Najčešći način prolaska leka kroz biomembranu je:",
+    "options": [
+      "olakšana difuzija",
+      "pasivna difuzija",
+      "aktivni transport",
+      "pinocitoza"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pasivna (prosta) difuzija je dominantan mehanizam prolaska većine lekova kroz biološke membrane."
+  },
+  {
+    "text": "Najveći broj lekova se resorbuje preko sluznice:",
+    "options": [
+      "usne šupljine",
+      "želuca",
+      "tankog creva",
+      "debelog creva"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Tanko crevo ima ogromnu resorptivnu površinu (resice, mikrovili) i najveći protok krvi među delovima probavnog trakta."
+  },
+  {
+    "text": "Nakon intravenskog davanja leka faktori koji određuju početne koncentracije leka u krvi su:",
+    "options": [
+      "doza i klirens leka",
+      "doza i volumen distribucije",
+      "volumen distribucije i klirens",
+      "klirens i vreme polueliminacije"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Neposredno nakon i.v. bolusa, početna koncentracija = doza / volumen distribucije (C0 = D/Vd)."
+  },
+  {
+    "text": "Olakšana difuzija leka postoji ako:",
+    "options": [
+      "joni difunduju kroz električki nabijene pore na membrani",
+      "lek prolazi kroz membranu posredstvom molekula \"nosača\"",
+      "membranska ATP-aza daje energiju za difuziju",
+      "nepolarni lekovi prolaze kroz lipidni sloj"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Olakšana difuzija podrazumeva prolazak leka kroz membranu uz pomoć specifičnog transportnog proteina (nosača), bez utroška energije, niz koncentracioni gradijent."
+  },
+  {
+    "text": "Resorpcija lekova iz gastrointestinalnog trakta zavisi od:",
+    "options": [
+      "volumena distribucije",
+      "vremena polueliminacije leka",
+      "pH sredine iz koje se vrši apsorpcija",
+      "fizičke aktivnosti pacijenta"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "pH sredine mesta resorpcije direktno utiče na stepen jonizacije leka, a time i na njegovu resorpciju (pH-particioni princip)."
+  },
+  {
+    "text": "Resorptivna površina sluznice tankog creva iznosi:",
+    "options": [
+      "50 m²",
+      "100 m²",
+      "200 m²",
+      "400 m²"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zbog resica i mikrovila, resorptivna površina tankog creva se u udžbenicima navodi kao oko 200 m²."
+  },
+  {
+    "text": "Smanjenjem pH u crevima povećava se resorpcija:",
+    "options": [
+      "slabih baza",
+      "slabih kiselina",
+      "slabih baza i slabih kiselina",
+      "kvaternernih azotnih jedinjenja"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Niži (kiseliji) pH povećava udeo nejonizovanog oblika slabih kiselina, olakšavajući njihovu resorpciju kroz membranu."
+  },
+  {
+    "text": "Specifični \"nosači\" koji omogućavaju prolaz supstance sa jedne na drugu stranu membrane u pravcu gradijenta koncentracije učestvuju u procesu:",
+    "options": [
+      "proste difuzije",
+      "filtracije",
+      "olakšane difuzije",
+      "aktivnog transporta"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ovo je definicija olakšane difuzije — transport pomoću nosača niz koncentracioni gradijent, bez utroška energije (ATP)."
+  },
+  {
+    "text": "Šta se podrazumeva pod pojmom neresorbovana količina leka?",
+    "options": [
+      "količina leka koja zadržava aktivnost do određenog vremena",
+      "zbir željenih dejstava za vreme zadržavanja leka u organizmu",
+      "količina leka koja za vreme ukupnog zadržavanja ostaje farmakodinamski aktivna",
+      "količina leka koja sa mesta primene ne dospeva u organizam"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Neresorbovana količina je deo doze koji sa mesta primene ne dospe u sistemsku cirkulaciju."
+  },
+  {
+    "text": "Šta se podrazumeva pod pojmom resorbovana količina leka?",
+    "options": [
+      "zbir željenih dejstava za vreme zadržavanja leka u organizmu",
+      "količina leka koja za vreme ukupnog zadržavanja ostaje farmakodinamski aktivna",
+      "količina leka koja sa mesta primene dospeva u organizam",
+      "količina leka koja u plazmi nije vezana za proteine"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Resorbovana količina je deo doze leka koji sa mesta primene stvarno dospe u organizam (sistemsku cirkulaciju)."
+  },
+  {
+    "text": "U želucu će se u jonizovanom, disociranom obliku nalaziti:",
+    "options": [
+      "slabe organske baze",
+      "slabe organske kiseline",
+      "polarna jedinjenja",
+      "kalcijum"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U kiseloj sredini želuca (nizak pH) slabe organske baze se protonuju i ostaju pretežno u jonizovanom (naelektrisanom) obliku."
+  },
+  {
+    "text": "U želucu se u nejonizovanom obliku nalaze:",
+    "options": [
+      "slabe baze",
+      "slabe kiseline",
+      "neutralna organska jedinjenja",
+      "kvaternerna azotna jedinjenja"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Slabe kiseline u kiseloj sredini želuca ostaju pretežno nedisosovane (nejonizovane), pa se dobro resorbuju već u želucu."
+  },
+  {
+    "text": "Uopšteno rečeno, lek može da prođe kroz zid creva pod svim navedenim uslovima, OSIM:",
+    "options": [
+      "ako je slaba kiselina, a pH lumena je ispod njegovog pKa",
+      "ako je slaba baza, a pH lumena je iznad njegovog pKa",
+      "ako je lek u crevu potpuno jonizovan",
+      "ako je za lek potreban transportni sistem"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Potpuno jonizovan lek ne može proći pasivnom difuzijom kroz lipidnu membranu creva — to je uslov koji sprečava, a ne omogućava prolazak."
+  },
+  {
+    "text": "Većina slabih kiselina kao i slabih baza se nakon oralne primene u najvećoj meri resorbuju preko sluznice tankog creva jer:",
+    "options": [
+      "obe vrste lekova su najjače jonizovane u tankom crevu",
+      "obe vrste lekova su najslabije jonizovane u tankom crevu",
+      "protok krvi u tankom crevu je veći nego u drugim abdominalnim organima",
+      "resorptivna površina tankog creva je veća nego u ostalim delovima probavnog trakta"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Ogromna resorptivna površina tankog creva (resice, mikrovili) nadmašuje uticaj stepena jonizacije, pa se tu resorbuje najveći deo i kiselina i baza."
+  },
+  {
+    "text": "Zaokruži tačnu tvrdnju:",
+    "options": [
+      "u želucu je nizak pH, te se iz želuca dobro resorbuju baze",
+      "u želucu je nizak pH, te se iz želuca dobro resorbuju kiseline",
+      "u želucu je visok pH, te se iz želuca dobro resorbuju baze",
+      "u želucu je nizak pH, te se iz želuca dobro resorbuju kiseline"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U želucu je nizak pH, pa se slabe kiseline (nejonizovane u kiseloj sredini) dobro resorbuju već iz želuca (odgovori B i D su identični po sadržaju)."
+  },
+  {
+    "text": "Ako je volumen distribucije nekog leka kod odrasle osobe probližno 5 L, to znači da je lek raspoređen:",
+    "options": [
+      "samo u plazmi",
+      "u ekstracelularnoj tečnosti",
+      "u intracelularnoj tečnosti",
+      "u čitavoj telesnoj tečnosti"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vd od približno 5 L odgovara volumenu plazme/krvi — lek ostaje uglavnom u krvotoku, ne prelazi značajno u tkiva."
+  },
+  {
+    "text": "Ako je volumen distribucije (Vd) nekog leka kod odrasle osobe 10 L/kg to znači da je lek raspoređen:",
+    "options": [
+      "u čitavom organizmu",
+      "u ekstracelularnoj tečnosti",
+      "samo u plazmi",
+      "da se nagomilava u specifičnim tkivima"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vd od 10 L/kg (≈700 L za odraslu osobu) daleko premašuje ukupnu telesnu vodu, što ukazuje da se lek u velikoj meri nagomilava (vezuje) u specifičnim tkivima, a ne slobodno raspoređuje u telesnim tečnostima."
+  },
+  {
+    "text": "Ako je volumen distribucije leka kod odrasle osobe 10-20 L, to znači da je lek distribuiran:",
+    "options": [
+      "samo u cirkulaciji",
+      "u cirkulaciji i u ekstracelularnoj tečnosti",
+      "u cirkulaciji, ekstracelularnoj i intracelularnoj tečnosti",
+      "u svim telesnim tečnostima"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vd od 10-20 L približno odgovara volumenu cirkulacije plus ekstracelularne tečnosti."
+  },
+  {
+    "text": "Neka je Vd leka kod odrasle osobe 25-30 L, to znači da je lek distribuiran:",
+    "options": [
+      "samo u cirkulaciji",
+      "u cirkulaciji i u ekstracelularnoj tečnosti",
+      "u cirkulaciji, ekstracelularnoj i intracelularnoj tečnosti",
+      "u svim telesnim tečnostima"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vd od 25-30 L odgovara distribuciji leka i u cirkulaciji, i u ekstracelularnoj i (delimično) u intracelularnoj tečnosti."
+  },
+  {
+    "text": "Ako je Vd nekog leka kod odrasle osobe oko 40 L, to znači da je lek distribuiran:",
+    "options": [
+      "samo u cirkulaciji",
+      "u cirkulaciji i u ekstracelularnoj tečnosti",
+      "u cirkulaciji, ekstracelularnoj i intracelularnoj tečnosti",
+      "u svim telesnim tečnostima"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vd od oko 40 L približno odgovara ukupnoj telesnoj vodi (svim telesnim tečnostima) kod prosečne odrasle osobe."
+  },
+  {
+    "text": "Ako je Vd nekog leka kod odrasle osobe preko 100 L, pri čemu je telesna težina pacijenta 70 kg, to znači da je lek distribuiran:",
+    "options": [
+      "samo u cirkulaciji",
+      "u cirkulaciji i u ekstracelularnoj tečnosti",
+      "u cirkulaciji, ekstracelularnoj i intracelularnoj tečnosti",
+      "u masnom tkivu ili vezan za neka specifična tkiva"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Vd veći od stvarnog volumena tela (preko 100 L kod osobe od 70 kg) ukazuje da je lek u velikoj meri vezan za tkiva (npr. masno tkivo) ili specifične strukture, a ne slobodan u telesnim tečnostima."
+  },
+  {
+    "text": "Biološka raspoloživost leka izražena u procentima može biti:",
+    "options": [
+      "veća, manja ili jednaka 100%",
+      "veća, manja ili jednaka 200%",
+      "veća ili jednaka 100%",
+      "manja ili jednaka 100%"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U zavisnosti od puta primene i metoda merenja, bioraspoloživost teorijski može biti manja, veća (ređe, npr. zbog stvaranja aktivnih metabolita) ili jednaka 100%."
+  },
+  {
+    "text": "Distribucija leka u tkiva:",
+    "options": [
+      "nezavisna je od rastvorljivosti leka u datom tkivu",
+      "zavisi od koncentracionog gradijenta između krvi i tkiva",
+      "veća je za lekove koji su u velikom procentu vezani za proteine plazme",
+      "nema dejstva na vreme polueliminacije iz plazme"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Prelazak leka iz krvi u tkiva zavisi pre svega od koncentracionog gradijenta između krvi i datog tkiva, pored rastvorljivosti i protoka krvi."
+  },
+  {
+    "text": "Istiskivanje leka iz veze sa proteinima plazme dovodi do:",
+    "options": [
+      "smanjenja dejstva leka",
+      "pojačanja dejstva leka",
+      "ne utuče na dejstvo leka",
+      "usporavanja metabolisanja leka"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Povećanjem slobodne (nevezane) frakcije leka u plazmi, njegovo farmakološko dejstvo se pojačava."
+  },
+  {
+    "text": "Istiskivanje leka iz veze sa proteinima plazme — kakav je efekat na distribuciju leka?",
+    "options": [
+      "smanjenja nivoa leka u tkivima",
+      "smanjenja volumena distribucije",
+      "povećanja volumena distribucije",
+      "usporavanja metabolisanja leka"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Povećana slobodna frakcija leka lakše prelazi u tkiva, što efektivno povećava prividni volumen distribucije."
+  },
+  {
+    "text": "Koja definicija je tačna za \"ukupnu biološku raspoloživost\"?",
+    "options": [
+      "količina leka koja zadržava aktivnost do određenog vremena",
+      "zbir željenih dejstava za vreme zadržavanja leka u organizmu",
+      "količina leka koja sa mesta primene dospeva u opštu cirkulaciju",
+      "količina leka koja u plazmi nije vezana za proteine"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Bioraspoloživost predstavlja deo primenjene doze leka koji dospe u opštu (sistemsku) cirkulaciju u nepromenjenom obliku."
+  },
+  {
+    "text": "Koji od navedenih lekova ne prolazi krvno-moždanu barijeru?",
+    "options": [
+      "amfetamin",
+      "benzilpenicilin",
+      "levodopa",
+      "manitol"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Benzilpenicilin je jonizovan (visoko polaran) pri fiziološkom pH i slabo prolazi neoštećenu krvno-moždanu barijeru."
+  },
+  {
+    "text": "Koliko puta mora početna doza biti veća od doze za održavanje ako je kinetika leka linearna, a interval doziranja identičan vremenu polueliminacije leka?",
+    "options": [
+      "2",
+      "5",
+      "17",
+      "25"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kada je interval doziranja jednak vremenu poluživota, potrebna je udarna (početna) doza otprilike dvostruko veća od doze održavanja da bi se brže postigla terapijska (stacionarna) koncentracija."
+  },
+  {
+    "text": "Koncentracija nekog leka u plazmi zavisi od svih navedenih mehanizama, OSIM:",
+    "options": [
+      "resorpcije",
+      "biotransformacije",
+      "izlučivanja",
+      "smanjenja površinskog napona"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Smanjenje površinskog napona nije farmakokinetički mehanizam — koncentraciju leka u plazmi određuju resorpcija, biotransformacija i izlučivanje."
+  },
+  {
+    "text": "Plazmatsko vreme polueliminacije je:",
+    "options": [
+      "vreme koje protekne dok se polovina leka izluči",
+      "vreme koje protekne dok se polovina leka deponuje",
+      "vreme koje protekne dok se koncentracija leka u plazmi svede na polovinu",
+      "vreme koje protekne dok se postigne polovina maksimalnog efekta leka"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vreme polueliminacije je vreme potrebno da se koncentracija leka u plazmi prepolovi usled eliminacije."
+  },
+  {
+    "text": "Šta može da znači velik volumen distribucije za neki lek?",
+    "options": [
+      "veliki ukupni volumen tečnosti u organizmu",
+      "slabo izlučivanje leka",
+      "velika lipofilnost leka",
+      "velika hidrofilnost leka"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Visoka lipofilnost omogućava leku da se u velikoj meri raspodeli i deponuje u tkivima, dajući veliki (prividni) volumen distribucije."
+  },
+  {
+    "text": "Svaka od navedenih osobina, koja se odnosi na vezivanje lekova za serumski albumin je tačna, OSIM:",
+    "options": [
+      "kompleks albumin-lek teško prolazi kroz kapilare u tkivo",
+      "kompleks albumin-lek ne prolazi u značajnim količinama kroz kapilare u tkivo",
+      "lek vezan za protein ostaje u toj vezi sve dok se protein ne razgradi",
+      "molekuli vezani za albumin su u ravnoteži sa molekulima rastvorenim u plazmi"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Netačno je da lek ostaje vezan za protein sve dok se protein ne razgradi — vezivanje za albumin je reverzibilno i u dinamičkoj je ravnoteži sa slobodnim lekom u plazmi (opisano tačno pod D)."
+  },
+  {
+    "text": "Tačna tvrdnja vezana za distribuciju lekova:",
+    "options": [
+      "farmakološki aktivna je samo ona frakcija leka koja je vezana za proteine plazme",
+      "distribucija lekova je oblast farmakodinamije",
+      "farmakološki aktivna je samo slobodna frakcija leka u plazmi",
+      "veća je za lekove koji su u velikom procentu vezani za proteine plazme"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Farmakološki aktivna je isključivo slobodna (nevezana za proteine plazme) frakcija leka, jer samo ona može da difunduje u tkiva i vezuje se za receptore."
+  },
+  {
+    "text": "U koja od navedenih tkiva lek najteže prodire:",
+    "options": [
+      "bubrege",
+      "mozak",
+      "testise",
+      "jetru"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Krvno-moždana barijera (endotel kapilara mozga sa čvrstim spojevima) najviše otežava prodor lekova u odnosu na bubrege, testise i jetru."
+  },
+  {
+    "text": "Zaokruži jednačinu koja opisuje volumen distribucije leka:",
+    "options": [
+      "Vd = Cl/t½",
+      "Vd = Cl/ke",
+      "Vd = Cl x ke",
+      "Vd = Cl x t½"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Iz relacije t½ = 0,693 × Vd/Cl sledi Vd = Cl/ke (jer je ke = 0,693/t½), odnosno Vd = Cl × t½/0,693."
+  },
+  {
+    "text": "Zaokruži supstance koje ne prolaze krvno-moždanu barijeru:",
+    "options": [
+      "atropin",
+      "supstance sa kvaternernim azotom",
+      "skopolamin",
+      "propranolol"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Jedinjenja sa kvaternernim (trajno naelektrisanim) azotom su stalno jonizovana i ne mogu difundovati kroz lipidnu krvno-moždanu barijeru, za razliku od atropina, skopolamina i propranolola koji su lipofilni tercijarni amini."
+  },
+  {
+    "text": "Zaokruži tačno tvrđenje o biološkoj raspoloživosti leka:",
+    "options": [
+      "biološka raspoloživost leka je veća nakon per os, u odnosu na intravensku primenu leka",
+      "biološka raspoloživost leka je količina leka koja se metaboliše nakon prvog prolaska kroz jetru",
+      "biološka raspoloživost leka je manja nakon per os u odnosu na parenteralnu primenu leka",
+      "biološka raspoloživost leka je količina leka koja u plazmi nije vezana za proteine"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Bioraspoloživost je po pravilu manja nakon peroralne nego nakon parenteralne primene zbog nepotpune resorpcije i efekta prvog prolaska kroz jetru."
+  },
+  {
+    "text": "Efekt prvog prolaska\" je najizraženiji ako se lek daje:",
+    "options": [
+      "oralno",
+      "intravenski",
+      "sublingvalno",
+      "rektalno"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Oralno uzet lek se resorbuje u crevima i portalnom venom ide direktno u jetru, gde može biti značajno metabolisan pre nego što dospe u sistemsku cirkulaciju."
+  },
+  {
+    "text": "\"Indukcija\" metaboličkih enzima:",
+    "options": [
+      "dovodi do stvaranja glatkog endoplazmatskog retikuluma",
+      "dovodi do stvaranja grubog endoplazmatskog retikuluma",
+      "smanjuje nivo enzima u citosolu",
+      "ireverzibilna je"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Indukcija enzima (npr. citohroma P450) praćena je proliferacijom glatkog endoplazmatskog retikuluma hepatocita, gde su ti enzimi locirani."
+  },
+  {
+    "text": "Enzim angiotenzin konvertaza (ACE) vrši reakcije:",
+    "options": [
+      "oksidacije",
+      "estarske hidrolize",
+      "amidne hidrolize",
+      "redukcije"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "ACE je peptidaza koja cepa peptidnu (amidnu) vezu, uklanjajući dipeptid sa C-kraja angiotenzina I da bi nastao angiotenzin II."
+  },
+  {
+    "text": "Enterohepatična recirkulacija leka:",
+    "options": [
+      "povišava koncentraciju leka u krvi",
+      "omogućava tačnije doziranje leka",
+      "usporava eliminaciju leka",
+      "ostvaruje zaobilaženje jetre i zbog toga je smanjena biotransformacija"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vraćanje leka iz creva nazad u krvotok (nakon žučne ekskrecije i reapsorpcije) produžava njegovo prisustvo i povišava koncentraciju u krvi."
+  },
+  {
+    "text": "Izražen \"efekat prvog prolaska\" kroz jetru imaju svi nabrojani lekovi, OSIM:",
+    "options": [
+      "varfarin",
+      "propranolol",
+      "verapamil",
+      "metoprolol"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Varfarin ima visoku i predvidivu oralnu bioraspoloživost sa malo izraženim efektom prvog prolaska, za razliku od propranolola, verapamila i metoprolola."
+  },
+  {
+    "text": "Koje od navedenih tvrđenja u vezi s metabolizmom lekova NIJE tačno?",
+    "options": [
+      "najčešći tip metaboličke reakcije je oksidacija",
+      "glukuronidi koji se izlučuju putem žuči mogu hidrolizirati i slobodan lek se može reapsorbovati",
+      "najčešće se metabolizam lekova odvija preko mikrozomalnog sistema hepatocita",
+      "konjugacija predstavlja jedinjenje dva ili više lekova datih istovremeno"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Konjugacija (faza II) podrazumeva spajanje leka sa endogenom supstancom (glukuronskom kiselinom, sulfatom i sl.), a ne spajanje dva različita leka."
+  },
+  {
+    "text": "Koja od navedenih reakcija NE pripada fazi I metabolizma lekova?",
+    "options": [
+      "oksidacija",
+      "redukcija",
+      "hidroliza",
+      "acetilacija"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Acetilacija je tipična reakcija faze II (konjugacije); oksidacija, redukcija i hidroliza pripadaju fazi I."
+  },
+  {
+    "text": "Koja od navedenih reakcija NIJE povezana sa sistemom citohrom P-450?",
+    "options": [
+      "deaminacija",
+      "formiranje sulfoksida",
+      "metilacija",
+      "O-dealkilacija"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Metilacija se odvija posredstvom metiltransferaza, a ne citohrom P-450 sistema; deaminacija, formiranje sulfoksida i O-dealkilacija su tipične CYP450 reakcije."
+  },
+  {
+    "text": "Koje od navedenih tvrđenja u vezi sa metabolisanjem lekova NIJE tačno?",
+    "options": [
+      "kod osoba sa atipičnom holinesterazom metabolizam sukcinilholina je ubrzan",
+      "metabolizam izonijazida je različit kod različitih etničkih skupina",
+      "metabolizam jednog broja lekova je određen polom pacijenta",
+      "metabolizam lekova se najčešće odvija na mikrosomima"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod osoba sa atipičnom (genetski izmenjenom) holinesterazom metabolizam sukcinilholina je usporen (ne ubrzan), što dovodi do produženog neuromišićnog bloka i apneje."
+  },
+  {
+    "text": "Krajnji rezultat biotransformacije lekova najčešće je:",
+    "options": [
+      "lakše prodiranje leka u ćeliju",
+      "manja liposolubilnost u odnosu na početni lek",
+      "mogućnost bolje reapsorpcije u tubulima bubrega",
+      "veća liposolubilnost u odnosu na početni lek"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Biotransformacija po pravilu čini lek manje liposolubilnim (hidrofilnijim) radi lakšeg izlučivanja putem bubrega."
+  },
+  {
+    "text": "Reakcijama II faze biotranformacije ksenobiotika pripada:",
+    "options": [
+      "N-demetilacija",
+      "O-demetilacija",
+      "N-acetilacija",
+      "S-oksidacija"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "N-acetilacija je klasična konjugaciona (faza II) reakcija; N- i O-demetilacija i S-oksidacija su reakcije faze I."
+  },
+  {
+    "text": "Šta je od sledećeg karakteristično za citohrom P-450?",
+    "options": [
+      "nalazi se u lipidnom sloju membrane mitohondrija",
+      "katalizira reakcije O-, S- i N-metilacije",
+      "katalizira reakcije O-, S- i N-demetilacije",
+      "katalizira rekcije konjugacije"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Sistem citohroma P-450 katalizuje oksidativne reakcije, uključujući O-, S- i N-demetilaciju (uklanjanje metil grupa)."
+  },
+  {
+    "text": "Šta od navedenog NIJE posledica I faze biotransformacije?",
+    "options": [
+      "stvaranje farmakološki aktivnijih metabolita",
+      "sinteza lekova sa endogenim supstancama",
+      "uvođenje aktivnog mesta za konjugaciju sa aminokiselinama",
+      "stvaranje metabolita bez farmakološkog dejstva"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Sinteza jedinjenja leka sa endogenim supstancama (npr. glukuronidacija) predstavlja reakciju faze II (konjugacije), a ne posledicu faze I."
+  },
+  {
+    "text": "Stvaranje hidrosolubilnih konjugata posledica je aktivnosti:",
+    "options": [
+      "citohroma P-450",
+      "esteraza u plazmi",
+      "enzima koji vrše amidnu hidrolizu",
+      "enzima glukuronil transferaze"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Glukuronil transferaza katalizuje konjugaciju leka sa glukuronskom kiselinom, stvarajući hidrosolubilne glukuronide."
+  },
+  {
+    "text": "Taloženje bilirubina u CNS (kernikterus) kod novorođenčadi, može se sprečiti:",
+    "options": [
+      "indukcijom aktivnosti N-acetil transferaze",
+      "indukcijom aktivnosti hidroksilaze",
+      "indukcijom aktivnosti glutationa",
+      "indukcijom aktivnosti glukuronil transferaze"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Indukcijom glukuronil transferaze ubrzava se konjugacija bilirubina, sprečavajući njegovo nagomilavanje i taloženje u CNS-u."
+  },
+  {
+    "text": "U cilju smanjenja nekonjugovanog bilirubina, primenjuju se:",
+    "options": [
+      "inhibitori mikrozomalnih enzima",
+      "induktori enzimskih sistema jetre",
+      "donori sulfhidrilnih (-SH) grupa",
+      "primenjuje se etil-alkohol"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Induktori jetrenih enzimskih sistema (npr. fenobarbiton) ubrzavaju konjugaciju bilirubina putem glukuronil transferaze."
+  },
+  {
+    "text": "U metabolisanju izonijazida učestvuje:",
+    "options": [
+      "glukuronil transferaza",
+      "alkoholna dehidrogenaza",
+      "aldehidna dehidrogenaza",
+      "acetiltransferaza"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Izonijazid se metaboliše acetilacijom putem N-acetiltransferaze (brzina ove reakcije genetski je varijabilna — 'brzi' i 'spori acetilatori')."
+  },
+  {
+    "text": "Ukoliko se lek metaboliše u jetri u pravcu nastanka aktivnog metabolita, u uslovima insuficijencije jetre, delovanje leka će biti:",
+    "options": [
+      "smanjeno",
+      "nepromenjeno",
+      "pojačano",
+      "terapijski odgovor na lek se neće menjati"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Smanjena funkcija jetre smanjuje stvaranje aktivnog metabolita, pa će terapijski efekat leka biti smanjen."
+  },
+  {
+    "text": "Za mikrozomalni enzimski sistem tačno je tvrđenje:",
+    "options": [
+      "potrebno je prisustvo NADPH i molekularnog kiseonika",
+      "deluje samo na egzogeno unesene supstance",
+      "uključuje i alkoholnu dehidrogenazu",
+      "ne može se indukovati"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Mikrozomalne monooksigenaze (citohrom P450) zahtevaju prisustvo NADPH i molekularnog kiseonika za odvijanje oksidativnih reakcija."
+  },
+  {
+    "text": "Za oksidaciju lekova citohrom P-450 treba:",
+    "options": [
+      "samo molekularni kiseonik",
+      "atomski kiseonik i NADPH",
+      "molekularni kiseonik i NADPH",
+      "citohrom P-450 ne učestvuje u oksidaciji lekova"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Reakcije oksidacije katalizovane citohromom P-450 zahtevaju i molekularni kiseonik i NADPH kao kofaktor."
+  },
+  {
+    "text": "Zaokruži prolek koji se u jetri metaboliše u aktivnu supstancu:",
+    "options": [
+      "kaptopril",
+      "enalapril",
+      "nitroglicerin",
+      "propranolol"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Enalapril je prolek koji se hepatičkom hidrolizom pretvara u aktivni enalaprilat; kaptopril deluje direktno, nitroglicerin nije prolek u ovom smislu, a propranolol nije prolek."
+  },
+  {
+    "text": "Zaokruži tačno tvrđenje o biotransformaciji lekova:",
+    "options": [
+      "lek u organizmu mora proći obe faze biotransformacije",
+      "produkt biotransformacije lekova je uvek neaktivni metabolit",
+      "produkt biotransformacije lekova može biti toksični metabolit",
+      "cilj II faze biotransformacije lekova je stvaranje liposolubilnih konjugata"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Produkt biotransformacije ponekad može biti toksičan ili reaktivan metabolit (npr. NAPQI kod paracetamola), ne uvek neaktivan; nije obavezno da lek prođe obe faze, a cilj II faze je stvaranje hidrosolubilnih (ne liposolubilnih) konjugata."
+  },
+  {
+    "text": "Ako lek ima linearnu kinetika:",
+    "options": [
+      "brzina eliminacije ne zavisi od koncentracije leka u plazmi",
+      "brzina eliminacije je obrnuto proporcionalna koncentraciji leka u krvi",
+      "promene doze leka će dati predvidive promene koncentracije u plazmi",
+      "kinetika leka nema uticaja na koncentracije leka u plazmi"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod linearne kinetike (kinetike prvog reda), promena doze dovodi do proporcionalne, predvidive promene koncentracije leka u plazmi."
+  },
+  {
+    "text": "Ako se lek izlučuje nepromenjen putem bubrega, u slučaju smanjenja bubrežne funkcije, delovanje leka:",
+    "options": [
+      "će biti smanjeno",
+      "će biti nepromenjeno",
+      "će biti pojačano",
+      "zavisiće od funkcije jetre"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Smanjeno izlučivanje dovodi do nagomilavanja leka u organizmu, pa će njegovo dejstvo (i toksičnost) biti pojačano."
+  },
+  {
+    "text": "Bubrežni klirens leka je 10 ml/min. Lek ima molekulsku masu 350, a 20% je vezano za proteine plazme. Šta se dešava s lekom u bubrezima:",
+    "options": [
+      "glomerulska filtracija",
+      "aktivna tubularna sekrecija",
+      "glomerulska filtracija i aktivna tubularna sekrecija",
+      "glomerulska filtracija i pasivna tubularna reapsorpcija"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Klirens od 10 ml/min je znatno niži od očekivane filtracije nevezane frakcije leka (0,8 × GFR ≈ 96 ml/min), što ukazuje na značajnu pasivnu tubularnu reapsorpciju nakon glomerulske filtracije."
+  },
+  {
+    "text": "Bubrežni klirens nekog leka iznosi 60 ml/min. To znači da:",
+    "options": [
+      "postoji snažna tubularna sekrecija leka",
+      "postoji snažna tubularna reapsorpcija leka",
+      "lek nije vezan za proteine plazme",
+      "da se lek izlučuje i filtracijom i sekrecijom"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Vrednost bliska/nešto niža od normalne GFR (≈120 ml/min, uz vezivanje za proteine) ukazuje da se lek izlučuje kombinacijom glomerulske filtracije i tubularne sekrecije."
+  },
+  {
+    "text": "Klirens leka je:",
+    "options": [
+      "zapremina telesne tečnosti koja se prečisti od leka u jedinici vremena",
+      "količina lekova koja se eliminiše bubrezima u jedinici vremena",
+      "količina leka koja se eliminiše svim putevima (bubrezi, jetra, i dr) u jedinici vremena",
+      "vreme potrebno da se data količina leka svede na pola"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Klirens predstavlja zapreminu telesne tečnosti (plazme) koja se u jedinici vremena potpuno oslobodi (prečisti) od leka."
+  },
+  {
+    "text": "Koja od navedenih jednačina stavlja u ispravan odnos vremena polueliminacije leka (t½), volumen distribucije (Vd) i klirens eliminacije (CD)?",
+    "options": [
+      "t½=CL/Vd",
+      "t½=Vd/CL",
+      "t½=0.7 x Vd/CL",
+      "t½=Vd/(0.7 x CL)"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Standardna farmakokinetička relacija: t½ = 0,693 (≈0,7) × Vd/CL."
+  },
+  {
+    "text": "Koja se od navedenih supstanci eliminiše kinetikom nultog reda?",
+    "options": [
+      "propranolol",
+      "kaptopril",
+      "etilalkohol",
+      "svi navedeni"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Etanol se (u terapijskim/toksičnim koncentracijama) eliminiše konstantnom brzinom nezavisno od koncentracije — kinetikom nultog reda, za razliku od većine lekova koji imaju kinetiku prvog reda."
+  },
+  {
+    "text": "Kojem od navedenih lekova će se značajno pojačati eliminacija zakiseljavanjem urina?",
+    "options": [
+      "slaboj kiselini sa pKa 5.5",
+      "slaboj bazi sa pKa 3.5",
+      "slaboj bazi sa pKa 6.5",
+      "nijednim"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Zakiseljavanje urina jonizuje (protonuje) slabe baze čiji je pKa u fiziološki relevantnom opsegu (npr. 6,5), 'zarobljavajući' ih u urinu i ubrzavajući izlučivanje; baza sa pKa 3,5 je preslaba da bi promena pH urina značajno uticala na njenu jonizaciju, a kiselina se zakiseljavanjem urina slabije eliminiše."
+  },
+  {
+    "text": "Konstanta eliminacije leka sa linearnom kinetikom ima dimenzije:",
+    "options": [
+      "koncentracija/vreme",
+      "zapremina/vreme",
+      "masa/vreme",
+      "1/vreme"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Konstanta eliminacije (ke) izražava se u jedinicama 1/vreme (npr. h⁻¹)."
+  },
+  {
+    "text": "Šta je vreme polueliminacije leka?",
+    "options": [
+      "vreme potrebno da se data količina leka svede na pola",
+      "polovina vremena potrebnog da se data doza potpuno eliminiše",
+      "koncentracija leka kada prođe polovina vremena neophodnog za potpunu eliminaciju date doze leka",
+      "količina leka posle prolaska polovine vremena potrebnog za njegovu potpunu eliminaciju"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Definicija: vreme potrebno da se data (bilo koja) količina leka u organizmu/plazmi smanji na polovinu."
+  },
+  {
+    "text": "U slučaju izražene insuficijencije bubrega i očuvane funkcije jetre, lek koji se metaboliše u jetri u neaktivni metabolit ispoljiće:",
+    "options": [
+      "smanjeno delovanje",
+      "pojačano delovanje",
+      "isti efekat kao i u slučaju normalne funkcije bubrega",
+      "neće ispoljiti nikakav terapijski efekat"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Pošto se aktivni (nepromenjeni) lek i dalje normalno inaktiviše u jetri (koja je zdrava), njegovo dejstvo ostaje približno isto kao pri normalnoj bubrežnoj funkciji."
+  },
+  {
+    "text": "Ukoliko kažemo da koncentracija leka u krvi opada kinetikom prvog reda to znači:",
+    "options": [
+      "postoji samo jedan put metabolisanja leka",
+      "vreme polueliminacije je isto bez obzira na koncentraciju leka u plazmi",
+      "brzina eliminacije proporcionalna je brzini aplikacije leka",
+      "lek se ne raspoređuje izvan cirkulacije"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kod kinetike prvog reda, vreme polueliminacije je konstantno i ne zavisi od trenutne koncentracije leka u plazmi."
+  },
+  {
+    "text": "Zaokruži jednačinu koja opisuje klirens leka:",
+    "options": [
+      "Cl = BAV x / t½",
+      "Cl = BAV / ke",
+      "Cl = AUC x ke",
+      "Cl = Vd x ke"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Standardna relacija: Cl = Vd × ke (klirens jednak volumenu distribucije pomnoženom konstantom eliminacije), a takođe i Cl = F×Doza/AUC."
+  },
+  {
+    "text": "Zaokruži jednačinu koja opisuje konstantu eliminacije leka:",
+    "options": [
+      "ke = log 2/t½",
+      "ke = ln 2/t½",
+      "ke = log 10/t½",
+      "ke = log 2/t½"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Ke = ln2/t½ — koristi se prirodni logaritam broja 2 (ln2 ≈ 0,693), a ne dekadni logaritam."
+  },
+  {
+    "text": "Zaokruži tačno tvrđenje:",
+    "options": [
+      "u slučaju insuficijencije bubrega, lekovi koji se eliminišu nepromenjeni putem bubrega, imaće slabije delovanje",
+      "u slučaju insuficijencije bubrega, lekovi koji se eliminišu nepromenjeni putem bubrega, imaće pojačano delovanje",
+      "delovanje lekova koji se eliminišu putem bubrega, u slučaju insuficijencije bubrega, neće se značajnije menjati",
+      "u slučaju insuficijencije jetre, lekovi koji se inaktivišu u jetri, imaće slabije delovanje"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod insuficijencije bubrega, lekovi koji se eliminišu nepromenjeni putem bubrega akumuliraju se i ispoljavaju pojačano (produženo) dejstvo."
+  },
+  {
+    "text": "U farmakokinetskim modelima se koriste odeljci tj. kompartmani, koji predstavljaju:",
+    "options": [
+      "pojedine organe",
+      "sisteme organa",
+      "delove organizma u kojima je kinetika nekog leka uniformna",
+      "delovi organizma okruženi jednom polupropustnom membranom"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Kompartman je teoretski, ne anatomski pojam — predstavlja deo organizma u kome je kinetika leka (raspodela, brzina promena) uniformna."
+  },
+  {
+    "text": "Zaokruži tačno tvrđenje o studijama bioekvivalencije:",
+    "options": [
+      "tokom studija bioekvivalencije, porede se farmakokinetski parametri istog generičkog leka koga proizvode različite farmacetske kompanije",
+      "tokom studija bioekvivalencije, porede se farmakodinamski parametri istog generičkog leka koga proizvode različite farmacetske kompanije",
+      "studije bioekvivalencije se izvode nakom pretkliničkih ispitivanja i predstavljaju prvu primenu ispitivane supstance na ljudima",
+      "studije bioekvivalencije pripadaju II fazi kliničkih ispitivanja"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Studije bioekvivalencije upoređuju farmakokinetske parametre (npr. AUC, Cmax) istog generičkog leka proizvedenog od strane različitih proizvođača, a ne farmakodinamske parametre niti su prva primena na ljudima."
+  },
+  {
+    "text": "Označi pojmove koji se koriste u farmakodinamici:",
+    "options": [
+      "bioiskoristljivost, volumen distribucije, klirens",
+      "agonista, antagonista, receptor",
+      "alergije, idiosinkrazije, toksičnosti",
+      "trošak, dobit, korist"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Farmakodinamika proučava mehanizme dejstva leka na organizam preko interakcije sa receptorima (agonizam/antagonizam), za razliku od farmakokinetičkih pojmova (bioraspoloživost, Vd, klirens) nabrojanih pod A."
+  },
+  {
+    "text": "Superfamiliji intracelularnih receptora pripada:",
+    "options": [
+      "atrijalni natriuretički peptid",
+      "insulinski receptor",
+      "muskarinski receptor",
+      "receptor za kortikosteroide"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Receptori za steroidne hormone (npr. kortikosteroide) su intracelularni (nuklearni) receptori koji regulišu transkripciju gena."
+  },
+  {
+    "text": "Superfamiliji receptora vezanih za G proteine pripada:",
+    "options": [
+      "nikotinski receptor",
+      "insulinski receptor",
+      "adrenergički β-receptor",
+      "GABA_A receptor"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Adrenergički β-receptor je klasičan primer receptora spregnutog sa G-proteinom (metabotropni receptor)."
+  },
+  {
+    "text": "G proteini prenose signal sa receptora na membrani:",
+    "options": [
+      "na okolne ćelije",
+      "direktno u jedro",
+      "u citoplazmu",
+      "direktno na sekretorne granule"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Aktivacijom G-proteina oslobađaju se drugi glasnici (cAMP, IP3, DAG) unutar citoplazme ćelije."
+  },
+  {
+    "text": "Označi holinergičke receptore:",
+    "options": [
+      "M i N",
+      "mGluR1 i mGluR2",
+      "H1 i H2",
+      "A1 i A2"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Muskarinski (M) i nikotinski (N) receptori čine dve podgrupe holinergičkih receptora."
+  },
+  {
+    "text": "Označi adrenergičke receptore:",
+    "options": [
+      "α i β",
+      "5HT1 i 5HT2",
+      "NMDA i AMPA",
+      "μ i δ"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Alfa (α) i beta (β) receptori su podtipovi adrenergičkih receptora."
+  },
+  {
+    "text": "Ekcitatorni muskarinski receptori nalaze se u svim organima, OSIM:",
+    "options": [
+      "oku",
+      "bronhijama",
+      "egzokrinim žlezdama",
+      "srcu"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "U srcu su muskarinski (M2) receptori inhibitorni (usporavaju rad srca), za razliku od ekscitatornog dejstva u oku, bronhijama i egzokrinim žlezdama."
+  },
+  {
+    "text": "Označi agonistu:",
+    "options": [
+      "salbutamol",
+      "atropin",
+      "nifedipin",
+      "metoprolol"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Salbutamol je β2-agonista koji aktivira receptor izazivajući odgovor; atropin, nifedipin i metoprolol su antagonisti/blokatori."
+  },
+  {
+    "text": "Superfamiliji receptora vezanih za jonske kanale pripadaju:",
+    "options": [
+      "nikotinski receptori",
+      "insulinski receptori",
+      "muskarinski receptori",
+      "receptor za tiroksin"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Nikotinski holinergički receptori su jonotropni receptori direktno spregnuti sa jonskim (Na+) kanalom."
+  },
+  {
+    "text": "Bioiskoristljivost je mera koja pokazuje:",
+    "options": [
+      "koliko leka je dato na mestu primene",
+      "deo (procenat) unetog leka koji dospe do sistemske cirkulacije",
+      "koliko je leka iskorišćeno u procesu enterohepatičke cirkulacije",
+      "odnos ukupne količine datog leka i dela koji podleže enterohepatičkoj cirkulaciji"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Bioiskoristljivost (bioraspoloživost) predstavlja procenat/deo unetog leka koji dospe do sistemske cirkulacije u aktivnom obliku."
+  },
+  {
+    "text": "Terapijski indeks je količnik:",
+    "options": [
+      "srednje profilaktičke i srednje terapijske doze",
+      "srednje letalne i srednje terapijske doze",
+      "srednje terapijske i minimalne toksične doze",
+      "srednje terapijske i maksimalne letalne doze"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Terapijski indeks = srednja letalna doza (LD50) / srednja terapijska (efektivna) doza (ED50)."
+  },
+  {
+    "text": "Označi lek koji se primenjuje oralno:",
+    "options": [
+      "heparin-Na",
+      "streptokinaza",
+      "varfarin",
+      "krioprecipitat plazme"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Varfarin je oralni antikoagulans, dok su heparin, streptokinaza i krioprecipitat namenjeni parenteralnoj primeni."
+  },
+  {
+    "text": "Označi lek pogodan za transdermalnu primenu:",
+    "options": [
+      "amjodaron",
+      "nitroglicerin",
+      "verapamil",
+      "metildopa"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Nitroglicerin se zbog visoke liposolubilnosti dobro resorbuje kroz kožu i koristi se u obliku transdermalnih flastera."
+  },
+  {
+    "text": "Označi lek koji se dobro resorbuje iz digestivnog trakta:",
+    "options": [
+      "nistatin",
+      "vankomicin",
+      "metronidazol",
+      "neomicin"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Metronidazol ima odličnu oralnu bioraspoloživost, dok se nistatin, vankomicin i neomicin slabo resorbuju iz creva (koriste se za lokalno crevno dejstvo)."
+  },
+  {
+    "text": "Pojam \"komplijansa\" podrazumeva:",
+    "options": [
+      "skup aktivnosti povezanih sa detekcijom, procenom, razumevanjem i prevencijom neželjenih reakcija na lekove",
+      "brzinu i stepen raspoloživosti aktivne supstance iz leka",
+      "stepen do koga bolesnici izvršavaju instrukcije lekara u vezi sa pridržavanjem režima terapije",
+      "vreme potrebno za postizanje stanja ravnoteže (platoa)"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Komplijansa (adherencija) predstavlja stepen do kog pacijent poštuje propisani režim terapije."
+  },
+  {
+    "text": "Produžen Q-T interval na EKG-u i ventrikularnu tahikardiju kod osetljivih osoba može izazvati istovremena primena dva navedena leka:",
+    "options": [
+      "terfenadina i ketokonazola",
+      "fenobarbitona i varfarina",
+      "rifampicina i varfarina",
+      "fenobarbitona i rifampicina"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Terfenadin i ketokonazol (inhibitor CYP3A4 koji sprečava metabolizam terfenadina) klasičan su primer interakcije koja izaziva opasno produženje QT intervala i torsades de pointes."
+  },
+  {
+    "text": "Određivanje biološke raspoloživosti lekova je od posebnog značaja za:",
+    "options": [
+      "lekove koji imaju malu terapijsku širinu",
+      "lekove koji imaju veliku terapijsku širinu",
+      "lekove koji se izdaju bez recepta",
+      "homeopatske lekove"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kod lekova sa malom terapijskom širinom, i male razlike u bioraspoloživosti mogu dovesti do toksičnosti ili neefikasnosti, pa je precizno merenje ključno."
+  },
+  {
+    "text": "Koja od navedenih interakcija je farmakokinetička?",
+    "options": [
+      "interakcija heparina sa baznim lekovima",
+      "interakcija gentamicina i prokain-benzilpenicilina",
+      "interakcija oralnih kontraceptiva i antibiotika",
+      "interakcija NSAIL i antihipertenziva"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Interakcija oralnih kontraceptiva i antibiotika (smanjenje enterohepatične recirkulacije estrogena) je farmakokinetička (utiče na resorpciju/eliminaciju), za razliku od preostalih koje su farmakodinamske ili farmaceutske."
+  },
+  {
+    "text": "Koja od navedenih interakcija je farmakodinamska?",
+    "options": [
+      "interakcija oralnih preparata gvožđa i tetraciklina",
+      "interakcija probenecida i penicilina",
+      "interakcija fluorisanih hinolona i lekova koji sadrže aluminijum",
+      "interakcija diuretika koji štede kalijum i ACE inhibitora"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Diuretici koji štede kalijum i ACE inhibitori deluju na isti fiziološki sistem (kalijum), dajući aditivni (farmakodinamski) efekat hiperkalijemije; ostale navedene interakcije su farmakokinetičke/farmaceutske."
+  },
+  {
+    "text": "Zaokruži tačan odgovor o etničkim razlikama u metabolizmu lekova:",
+    "options": [
+      "bela rasa metaboliše propranolol brže od Kineza",
+      "Kinezi metabolišu propranolol brže od belaca",
+      "osobe crne rase poreklom sa Kariba su mnogo osetljivije na kardiovaskularna dejstva propranolola u odnosu na Kineze",
+      "metabolišući etanol Kinezi proizvode manju količinu acetaldehida od belaca"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Poznato je da bela rasa u proseku brže metaboliše propranolol u odnosu na kinesku populaciju, usled genetskih razlika u metaboličkim enzimima."
+  },
+  {
+    "text": "Interakcija fenobarbitona i varfarina je primer:",
+    "options": [
+      "farmakokinetičke interakcije u toku resorpcije",
+      "farmakokinetičke interakcije u toku vezivanja lekova za proteine plazme",
+      "farmakokinetičke interakcije u toku njihovog metabolizovanja u jetri",
+      "farmakokinetičke interakcije u toku njihovog izlučivanja preko bubrega"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Fenobarbiton indukuje jetrene enzime koji ubrzavaju metabolizam varfarina — farmakokinetička interakcija na nivou hepatičkog metabolizma."
+  },
+  {
+    "text": "Interakcije lekova in vitro poznate su pod imenom:",
+    "options": [
+      "farmakokinetičke interakcije",
+      "farmaceutska inkompatibilnost",
+      "farmakodinamske interakcije",
+      "idiosinkrazija"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Farmaceutska inkompatibilnost odnosi se na fizičko-hemijske reakcije lekova van organizma (in vitro), npr. u istom rastvoru za infuziju."
+  },
+  {
+    "text": "Istovremena primena bakteriostatskih i baktericidnih lekova:",
+    "options": [
+      "znatno umanjuje njihovu antibakterijsku aktivnost",
+      "znatno povećava njihovu antibakterijsku aktivnost",
+      "slabo utiče na njihovu antibakterijsku aktivnost",
+      "ne utiče na njihovu antibakterijsku aktivnost"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Baktericidni antibiotici obično zahtevaju aktivno umnožavanje bakterija; bakteriostatici to sprečavaju, pa kombinacija može antagonistički znatno umanjiti ukupnu antibakterijsku aktivnost."
+  },
+  {
+    "text": "Zaokruži induktora mikrozomnih enzima jetre:",
+    "options": [
+      "karbamazepin",
+      "alopurinol",
+      "eritromicin",
+      "ciprofloksacin"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Karbamazepin je poznati induktor citohrom P450 enzima jetre; alopurinol, eritromicin i ciprofloksacin su, naprotiv, inhibitori pojedinih CYP450 enzima."
+  },
+  {
+    "text": "Kod ispitivanja koje grupe lekova se bolesnici uključuju već u najranijoj (prvoj) fazi kliničkog ispitivanja:",
+    "options": [
+      "cefalosporina",
+      "fibrata",
+      "antimikotika",
+      "citostatika"
+    ],
+    "correctIndex": 3,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Zbog visoke toksičnosti citostatika, faza I ispitivanja se, izuzetno, sprovodi direktno na obolelim pacijentima, a ne na zdravim dobrovoljcima kao kod ostalih lekova."
+  },
+  {
+    "text": "Zaokruži inhibitora mikrozomnih enzima jetre:",
+    "options": [
+      "rifampicin",
+      "ketokonazol",
+      "karbamazepin",
+      "kantarion"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Ketokonazol je poznat inhibitor citohrom P450 (posebno CYP3A4) enzima; rifampicin, karbamazepin i kantarion (kantarion/gospina trava) su, naprotiv, induktori."
+  },
+  {
+    "text": "Fluorohinoloni prave helatne komplekse sa lekovima koji sadrže aluminijum. Ovo je primer:",
+    "options": [
+      "farmaceutske inkompatibilije",
+      "farmakokinetičke interakcije",
+      "farmakodinamske interakcije",
+      "interakcije lekova sa biohemijskim parametrima"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Stvaranje helata je fizičko-hemijska (farmaceutska) inkompatibilnost koja sprečava resorpciju leka."
+  },
+  {
+    "text": "Interakcija fluorohinolona i teofilina je primer:",
+    "options": [
+      "farmakokinetičke interakcije u toku resorpcije",
+      "farmakokinetičke interakcije u toku vezivanja lekova za proteine plazme",
+      "farmakokinetičke interakcije u toku njihovog metabolizovanja u jetri",
+      "farmakokinetičke interakcije u toku njihovog izlučivanja preko bubrega"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Fluorohinoloni inhibišu jetreni metabolizam teofilina (CYP1A2), povećavajući njegovu koncentraciju — farmakokinetička interakcija na nivou metabolizma."
+  },
+  {
+    "text": "Uništavajući normalnu bakterijsku floru digestivnog trakta neki antibiotici (npr. tetraciklini) mogu da otežaju sintezu dovoljnih količina vitamina K i time prouzrokuju hipoprotrombinemiju. Ovo je primer:",
+    "options": [
+      "interakcije u toku resorpcije",
+      "interakcije u toku vezivanja lekova za proteine plazme",
+      "interakcije lekova u toku njihovog metabolizovanja u jetri",
+      "interakcije lekova u toku njihovog izlučivanja preko bubrega"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Ovaj mehanizam se odvija na nivou creva (smanjena bakterijska sinteza i dostupnost vitamina K za resorpciju), pa se u ovom kontekstu svrstava u interakcije vezane za resorpciju."
+  },
+  {
+    "text": "Međusobno kombinovanje samo bakteriostatskih ili samo baktericidnih lekova je opravdano jer se na taj način:",
+    "options": [
+      "smanjuje njihova antibakterijska aktivnost",
+      "pojačava njihova antibakterijska aktivnost",
+      "ne utiče na njihovu antibakterijsku aktivnost",
+      "ni jedan odgovor nije tačan"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kombinovanjem lekova istog tipa dejstva (oba bakteriostatska ili oba baktericidna) obično se postiže sinergističko pojačanje antibakterijskog efekta, za razliku od mešanja bakteriostatika i baktericida."
+  },
+  {
+    "text": "Zaokruži tačan odgovor o interakciji diuretika i kardiotoničkih glikozida:",
+    "options": [
+      "diuretici prouzrokuju hipokaliemiju koja značajno potencira neželjene efekte kardiotoničkih glikozida",
+      "diuretici prouzrokuju hiperkaliemiju koja značajno potencira neželjene efekte kardiotoničkih glikozida",
+      "kardiotonički glikozidi prouzrokuju hiperkaliemiju koja značajno potencira neželjene efekte diuretika",
+      "nisu zabeležene klinički značajne interakcije između diuretika i kardiotoničkih glikozida"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Diuretici (naročito tiazidni i Henleove petlje) mogu izazvati hipokaliemiju koja značajno potencira toksična dejstva kardiotoničkih glikozida (digoksina)."
+  },
+  {
+    "text": "Zaokruži lek koji je inhibitor mikrozomnih enzima jetre:",
+    "options": [
+      "eritromicin",
+      "fenobarbiton",
+      "rifampicin",
+      "grizeofulvin"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Eritromicin (makrolid) je poznat inhibitor citohrom P450 3A4 enzima, dok su fenobarbiton, rifampicin i grizeofulvin, naprotiv, induktori enzima."
+  },
+  {
+    "text": "Biološka raspoloživost lekova izražava se u procentima, i može biti:",
+    "options": [
+      "manja ili jednaka 100%",
+      "veća ili jednaka 100%",
+      "manja, veća ili jednaka 100%",
+      "veća od 100%"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Teorijski, bioraspoloživost može biti manja, veća (ređe, npr. usled formiranja mernih artefakata ili aktivnih metabolita) ili jednaka 100%."
+  },
+  {
+    "text": "Farmakovigilansa je deo farmakologije čiji je cilj:",
+    "options": [
+      "da nađe najbolji mogući lek koji će dati optimalne efekte uz najnižu cenu koštanja lečenja",
+      "da prati i poredi upotrebu lekova u različitim sredinama",
+      "da prati neželjena delovanja lekova nakon stavljanja u promet",
+      "da proučava genetske varijacije koje prouzrokuju individualne razlike u reakciji prema lekovima"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Farmakovigilansa prati bezbednost i neželjena dejstva lekova nakon njihovog stavljanja u promet (postmarketing nadzor)."
+  },
+  {
+    "text": "Istovremeno uzimanje mleka smanjuje resorpciju kog leka?",
+    "options": [
+      "tetraciklina",
+      "hloramfenikola",
+      "penicilina",
+      "piranozida"
+    ],
+    "correctIndex": 0,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Kalcijum iz mleka gradi nerastvorljive helatne komplekse sa tetraciklinima, značajno smanjujući njihovu resorpciju iz creva."
+  },
+  {
+    "text": "Inhibicijom tubularne sekrecije probenecid inhibiše renalno izlučivanje:",
+    "options": [
+      "doksiciklina",
+      "vankomicina",
+      "penicilina",
+      "hloramfenikola"
+    ],
+    "correctIndex": 2,
+    "category": "opsta-farmakologija",
+    "difficulty": 2,
+    "points": 10,
+    "explanation": "Probenecid blokira aktivnu tubularnu sekreciju penicilina, produžavajući njegovo dejstvo u organizmu — klasična terapijska kombinacija za postizanje viših i dužih koncentracija penicilina."
+  },
+  {
+    "text": "Zbog sinergističkog delovanja na inotropnost i dromotropnost, do kardijalnog aresta može dovesti istovremena primena:",
+    "options": [
+      "oralnih antikoagulanasa i amjodarona",
+      "beta blokatora i verapamila",
+      "ACE inhibitora i hidrohlorotiazida",
+      "oralnih antikoagulanasa i vitamina K"
+    ],
+    "correctIndex": 1,
+    "category": "opsta-farmakologija",
+    "difficulty": 3,
+    "points": 15,
+    "explanation": "Istovremena primena beta-blokatora i verapamila aditivno snažno smanjuje kontraktilnost i sprovođenje impulsa kroz AV čvor, što može dovesti do teške bradikardije i kardijalnog aresta."
+  }
+]
