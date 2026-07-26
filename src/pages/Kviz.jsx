@@ -4,17 +4,21 @@ import { useAuth } from '../context/AuthContext'
 import { startQuizSession, submitQuizAnswer } from '../services/quizApi'
 import { track } from '../services/analytics'
 import { levelFromXp } from '../utils/levels'
-import { dailyKey, formatCountdown, nextDailyResetAt } from '../utils/periods'
+import { formatCountdown, nextDailyResetAt } from '../utils/periods'
+import { QUIZ_ENERGY_MAX, quizEnergy, rewardCounts } from '../utils/quizEnergy'
+import { spendQuizRefill } from '../services/quizApi'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 import ResultsScreen from '../components/quiz/ResultsScreen'
 
-// Fallback vrijednosti za prikaz dok server ne odgovori (izvor istine je server).
-const DEFAULT_LIMIT = 3
-const DEFAULT_XP_CAP = 300
+// Fallback strop XP-a dok server ne odgovori (izvor istine je server:
+// DAILY_QUIZ_XP_CAP u functions/index.js). Podignut s 300 na 1000 kad su
+// pokušaji postali energija — inače bi regenerisani kvizovi nosili nula XP-a.
+const DEFAULT_XP_CAP = 1000
 
 // Kviz (Etapa 6 — server verzija): server bira pitanja, provjerava odgovore
 // i dodjeljuje XP. Klijent vodi samo prikaz i prikuplja feedback za pregled.
-// Dnevni limit (3 kviza / 300 XP) drži server — ovdje se samo prikazuje.
+// Pokušaji rade kao ENERGIJA (Etapa 9): 3 odjednom, po jedan se regeneriše
+// svaka 4 sata, novi dan puni na 3. Strop XP-a i dalje drži server.
 export default function Kviz() {
   const { profile } = useAuth()
   const navigate = useNavigate()
@@ -128,37 +132,42 @@ export default function Kviz() {
     )
   }
 
-  // Stanje limita se čita iz profila (server ga upisuje) — tako se brojač vidi
-  // i prije nego se kviz uopšte pokuša pokrenuti.
-  const today = dailyKey()
-  const stored = profile?.quizLimit?.day === today ? profile.quizLimit : null
-  const used = limit?.used ?? stored?.started ?? 0
-  const maxQuizzes = limit?.limit ?? DEFAULT_LIMIT
-  const xpToday = limit?.xpToday ?? stored?.xp ?? 0
-  const exhausted = phase === 'limited' || used >= maxQuizzes
+  // Energija se računa iz profila (server je upisuje) — brojač je tačan i
+  // prije nego se kviz uopšte pokuša pokrenuti.
+  const { energy, regenAt } = quizEnergy(profile)
+  const { quizRefill } = rewardCounts(profile)
+  const xpToday = limit?.xpToday ?? profile?.quizLimit?.xp ?? 0
+  const xpCap = limit?.xpCap ?? DEFAULT_XP_CAP
+  const exhausted = phase === 'limited' || energy <= 0
 
   if (exhausted) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center p-6 text-center">
-        <span className="text-6xl">✅</span>
+        <span className="text-6xl">⏳</span>
         <h1 className="mt-4 font-title text-3xl font-extrabold text-slate-900">
-          Gotovo za danas!
+          Nemaš pokušaja
         </h1>
         <p className="mt-2 text-slate-500">
-          Odigrao/la si sva {maxQuizzes} dnevna kviza i osvojio/la{' '}
-          <b className="text-amber-600">{xpToday} XP</b>.
+          Danas si osvojio/la <b className="text-amber-600">{xpToday} XP</b> od{' '}
+          {xpCap} mogućih.
           <br />
-          Novi kvizovi stižu za:
+          Sljedeći pokušaj se regeneriše za:
         </p>
         <span className="mt-4 rounded-2xl bg-white px-6 py-3 font-mono text-2xl font-bold text-teal-800 shadow-sm">
-          <ResetCountdown resetsAt={limit?.resetsAt} />
+          <RegenCountdown regenAt={regenAt} resetsAt={limit?.resetsAt} />
         </span>
+
+        {quizRefill > 0 && (
+          <RefillButton count={quizRefill} onDone={() => setPhase('intro')} />
+        )}
+
         <p className="mt-4 max-w-xs text-sm text-slate-500">
-          Preživljavanje i turnir se ne broje u ovaj limit — tamo možeš još igrati.
+          Jedan pokušaj se vraća svaka 4 sata, a u ponoć ih opet imaš{' '}
+          {QUIZ_ENERGY_MAX}. Preživljavanje i turnir se ne broje ovdje.
         </p>
         <button
           onClick={() => navigate('/questovi')}
-          className="mt-8 w-full max-w-xs rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
+          className="mt-6 w-full max-w-xs rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800"
         >
           Pogledaj questove →
         </button>
@@ -173,7 +182,7 @@ export default function Kviz() {
       <h1 className="mt-4 font-title text-3xl font-extrabold text-slate-900">Kviz</h1>
 
       <span className="mt-3 rounded-xl border border-teal-200 bg-teal-50 px-3 py-1 text-sm font-bold text-teal-800">
-        Danas: {used}/{maxQuizzes} kvizova · {xpToday}/{DEFAULT_XP_CAP} XP
+        Pokušaji: {energy}/{QUIZ_ENERGY_MAX} · {xpToday}/{xpCap} XP danas
       </span>
 
       {phase === 'error' ? (
@@ -184,7 +193,7 @@ export default function Kviz() {
         <p className="mt-2 text-slate-500">
           10 nasumičnih pitanja · 30 sekundi po pitanju.
           <br />
-          Do {maxQuizzes} kviza dnevno, najviše {DEFAULT_XP_CAP} XP.
+          Jedan pokušaj se vraća svaka 4 sata · najviše {xpCap} XP dnevno.
         </p>
       )}
 
@@ -199,10 +208,10 @@ export default function Kviz() {
   )
 }
 
-// Odbrojavanje do ponoći po BiH vremenu. Ako server nije vratio resetsAt
-// (npr. limit je prepoznat iz profila), računa se lokalno — isti trenutak.
-function ResetCountdown({ resetsAt }) {
-  const target = resetsAt || nextDailyResetAt()
+// Odbrojavanje do sljedećeg pokušaja. Cilj je regeneracija (svaka 4 sata), a
+// ako je nema — ponoć po BiH vremenu, kad se spremnik ionako puni na pun.
+function RegenCountdown({ regenAt, resetsAt }) {
+  const target = regenAt || resetsAt || nextDailyResetAt()
   const [left, setLeft] = useState(() => Math.max(0, Math.floor((target - Date.now()) / 1000)))
 
   useEffect(() => {
@@ -214,4 +223,38 @@ function ResetCountdown({ resetsAt }) {
   }, [target])
 
   return formatCountdown(left)
+}
+
+// Trošenje žetona iz kovčega na ekranu kviza — igrač ne mora nazad na početnu.
+function RefillButton({ count, onDone }) {
+  const [trosi, setTrosi] = useState(false)
+  const [greska, setGreska] = useState('')
+
+  async function potrosi() {
+    if (trosi) return
+    setTrosi(true)
+    setGreska('')
+    try {
+      await spendQuizRefill()
+      track('quiz_refill_use')
+      // Profil je live-pretplaćen; energija stiže sama, pa se ekran otključa.
+      onDone()
+    } catch (e) {
+      setGreska(e?.message || 'Nije uspjelo, pokušaj ponovo.')
+      setTrosi(false)
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={potrosi}
+        disabled={trosi}
+        className="mt-4 w-full max-w-xs rounded-2xl bg-amber-500 py-3.5 font-title font-extrabold text-white shadow active:bg-amber-600 disabled:opacity-60"
+      >
+        {trosi ? 'Trošim…' : `🎟️ Iskoristi žeton (+1 pokušaj) · imaš ${count}`}
+      </button>
+      {greska && <p className="mt-2 text-sm font-medium text-red-600">{greska}</p>}
+    </>
+  )
 }
