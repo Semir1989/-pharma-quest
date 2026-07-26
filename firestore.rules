@@ -40,16 +40,22 @@ service cloud.firestore {
                         .hasOnly(resource.data.get('badges', {}).keys()));
       }
 
-      // Kozmetika: mijenja se SAMO cosmetics.frame, i to na okvir koji igrač
-      // stvarno posjeduje. Lista osvojenih (cosmetics.owned) mora ostati
-      // identična — inače bi si igrač sam dodijelio sve okvire.
+      // Kozmetika ima tri nezavisna mjesta — okvir (dueli), pozadina
+      // (Preživljavanje) i aura (XP trka). U svako smije ići samo ukras koji
+      // igrač stvarno posjeduje, ili null.
+      function slotOk(slot) {
+        return request.resource.data.cosmetics.get(slot, null) == null
+               || request.resource.data.cosmetics.get(slot, null)
+                    in request.resource.data.cosmetics.get('owned', []);
+      }
+
+      // Lista osvojenih (cosmetics.owned) mora ostati identična — inače bi si
+      // igrač sam dodijelio sve ukrase. Nju puni isključivo server.
       function validCosmetics() {
         return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['cosmetics'])
                || (request.resource.data.cosmetics.get('owned', [])
                      == resource.data.get('cosmetics', {}).get('owned', [])
-                   && (request.resource.data.cosmetics.get('frame', null) == null
-                       || request.resource.data.cosmetics.get('frame', null)
-                            in request.resource.data.cosmetics.get('owned', [])));
+                   && slotOk('ring') && slotOk('background') && slotOk('aura'));
       }
 
       // Čitanje: svaki prijavljen korisnik (leaderboard i javni profili).

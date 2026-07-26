@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { startQuizSession, submitQuizAnswer } from '../services/quizApi'
 import { track } from '../services/analytics'
-import { levelFromXp, rankFromLevel } from '../utils/levels'
+import { levelFromXp } from '../utils/levels'
 import { dailyKey, formatCountdown, nextDailyResetAt } from '../utils/periods'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 import ResultsScreen from '../components/quiz/ResultsScreen'
@@ -25,7 +25,6 @@ export default function Kviz() {
   const [answers, setAnswers] = useState([]) // za pregled na rezultatima
   const [summary, setSummary] = useState(null) // { earnedXp, rawXp, capped, correctCount, total }
   const [limit, setLimit] = useState(null) // { used, limit, xpToday, xpCap, resetsAt }
-  const [levelUp, setLevelUp] = useState(null)
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
   const xpAtStartRef = useRef(0)
 
@@ -50,7 +49,6 @@ export default function Kviz() {
       setQuestion(res.question)
       setAnswers([])
       setSummary(null)
-      setLevelUp(null)
       setBadgeQueue([])
       xpAtStartRef.current = profile.xp || 0
       setPhase('playing')
@@ -84,18 +82,12 @@ export default function Kviz() {
         resetsAt: res.resetsAt,
       })
       track('quiz_complete', { score: res.summary.correctCount, total: res.summary.total, xp: res.summary.earnedXp })
-      // Level-up: server vraća konačni newLevel (uključuje bonus na 10. level).
+      // Level-up se NE prikazuje ovdje: od Etape 9 svaki pređeni level ostavlja
+      // kovčeg u XP baru na početnoj, a animacija ide samo na njegovo otvaranje.
+      // Tako nagrada ima jedno mjesto i ne proleti usput iza rezultata kviza.
       const oldLevel = levelFromXp(xpAtStartRef.current)
       const newLevel = res.newLevel ?? levelFromXp(xpAtStartRef.current + res.summary.earnedXp)
-      if (newLevel > oldLevel) {
-        track('level_up', { level: newLevel })
-        setLevelUp({
-          level: newLevel,
-          rank: rankFromLevel(newLevel),
-          rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
-          bonusXp: res.levelBonus?.bonusXp || 0,
-        })
-      }
+      if (newLevel > oldLevel) track('level_up', { level: newLevel })
       // Novododijeljeni bedževi — animacija poslije level-upa (Etapa 8).
       if (res.newBadges?.length) setBadgeQueue(res.newBadges)
     }
@@ -129,8 +121,6 @@ export default function Kviz() {
         earnedXp={summary?.earnedXp || 0}
         capped={summary?.capped ? { rawXp: summary.rawXp, cap: limit?.xpCap } : null}
         quizzesToday={limit ? `${limit.used}/${limit.limit}` : null}
-        levelUp={levelUp}
-        onLevelUpSeen={() => setLevelUp(null)}
         badge={badgeQueue[0] || null}
         onBadgeSeen={() => setBadgeQueue((q) => q.slice(1))}
         onContinue={() => navigate('/')}

@@ -33,8 +33,19 @@ const GRACE_SECONDS = 15
 // Dnevni limit kvizova: najviše 3 kviza i najviše 300 XP iz kvizova po danu
 // (BiH dan). Limit se odnosi SAMO na kviz — nagrade za questove, Preživljavanje
 // i turnir dolaze povrh toga.
-const DAILY_QUIZ_LIMIT = 3
-const DAILY_QUIZ_XP_CAP = 300
+// Strop XP-a iz kvizova po BiH danu. Podignut s 300 na 1000 kad su pokušaji
+// postali energija koja se regeneriše — inače bi regenerisani kvizovi nosili
+// nula XP-a i izgledali kao pokvarena nagrada.
+const DAILY_QUIZ_XP_CAP = 1000
+
+// Energija za kvizove (Etapa 9).
+// Igrač ima najviše 3 pokušaja ODJEDNOM. Novi dan ih vraća na 3, a tokom dana
+// se po jedan regeneriše svaka 4 sata, opet do istog stropa. Time igra ima šta
+// nuditi i kad nema vikend eventa, a strop od 3 sprečava da se sve odigra u
+// jednoj minuti. Nagrade iz kovčega NE dižu strop — one su žetoni koji
+// spremnik pune (vidi rewards.quizRefill).
+const QUIZ_ENERGY_MAX = 3
+const QUIZ_REGEN_MS = 4 * 3600 * 1000
 
 // Preživljavanje (Etapa 8): endless mod, +3 XP po tačnom, kraj na prvu grešku.
 const SURVIVAL_XP_PER_CORRECT = 3
@@ -136,8 +147,27 @@ async function bumpStreak(uid) {
     if (!s.exists) return
     const p = s.data()
     if (p.lastPlayDay === today) return // već zabilježeno danas
-    const streak = p.lastPlayDay === yesterday ? (p.streak || 0) + 1 : 1
-    tx.update(uRef, { streak, lastPlayDay: today })
+
+    if (p.lastPlayDay === yesterday) {
+      tx.update(uRef, { streak: (p.streak || 0) + 1, lastPlayDay: today })
+      return
+    }
+
+    // Preskočen dan: zaštita streaka (žeton iz kovčega) pokriva prekid i niz se
+    // NASTAVLJA. Žeton stoji na profilu neograničeno i troši se tek ovdje —
+    // tačno u trenutku kad bi niz inače pao na nulu.
+    const zastita = p.rewards?.streakFreeze || 0
+    if (p.lastPlayDay && zastita > 0 && (p.streak || 0) > 0) {
+      tx.update(uRef, {
+        streak: (p.streak || 0) + 1,
+        lastPlayDay: today,
+        'rewards.streakFreeze': zastita - 1,
+        streakFreezeUsedAt: today, // klijent na osnovu ovoga javi šta se desilo
+      })
+      return
+    }
+
+    tx.update(uRef, { streak: 1, lastPlayDay: today })
   })
 }
 
@@ -640,16 +670,46 @@ async function getSecret(questionId) {
 
 // ---------------------------------------------------------------------------
 // startQuiz — server bira nasumičnih 10 pitanja i otvara sesiju
-// Dnevni limit: 3 kviza po BiH danu. Stanje je u users/{uid}.quizLimit
-// { day, started, xp, sessionId }. Broje se ZAPOČETI kvizovi — inače bi se
+// Pokušaji rade kao ENERGIJA: najviše 3 odjednom, novi dan puni na 3, i po
+// jedan se regeneriše svaka 4 sata. Stanje je u users/{uid}.quizLimit
+// { day, energy, regenAt, xp, sessionId }. Troši se ZAPOČETI kviz — inače bi se
 // odustajanjem moglo "rerollati" do lakših pitanja. Zato nedovršena sesija
 // istog dana ne troši novi pokušaj nego se nastavlja.
 // ---------------------------------------------------------------------------
-function quizLimitState(profile, day = dailyKey()) {
+function quizEnergyState(profile, day = dailyKey(), now = Date.now()) {
   const l = profile?.quizLimit
-  return l && l.day === day
-    ? { day, started: l.started || 0, xp: l.xp || 0, sessionId: l.sessionId || null }
-    : { day, started: 0, xp: 0, sessionId: null }
+  // Novi dan (ili prvi put) — pun spremnik, bez tajmera.
+  if (!l || l.day !== day) {
+    return { day, energy: QUIZ_ENERGY_MAX, regenAt: null, xp: 0, sessionId: null }
+  }
+  // Zatečeni profili nemaju `energy`, nego `started` — izvedi da migracija ne
+  // pokloni nikome pokušaje koje je već potrošio danas.
+  let energy = l.energy ?? Math.max(0, QUIZ_ENERGY_MAX - (l.started || 0))
+  energy = Math.min(QUIZ_ENERGY_MAX, Math.max(0, energy))
+  let regenAt = l.regenAt || null
+  // Spremnik nije pun a tajmer ne postoji → zapis je od PRIJE uvođenja
+  // energije. Bez sidra bi takav igrač ostao zaključan do ponoći: energija 0,
+  // a regeneracija nikad ne kreće jer je pokreće tek trošenje pokušaja.
+  // Sidro je početak današnjeg dana — fiksno, pa odbrojavanje ne skače
+  // pri svakom čitanju.
+  if (!regenAt && energy < QUIZ_ENERGY_MAX) {
+    regenAt = nextDailyResetAt() - 86400000 + QUIZ_REGEN_MS
+  }
+  // Nadoknadi SVE pragove koji su prošli otkad je stanje zadnji put gledano —
+  // igrač koji se vrati poslije 12 sati dobija tri, ne jedan.
+  while (regenAt && energy < QUIZ_ENERGY_MAX && now >= regenAt) {
+    energy++
+    regenAt += QUIZ_REGEN_MS
+  }
+  if (energy >= QUIZ_ENERGY_MAX) regenAt = null // pun spremnik ne broji vrijeme
+  return { day, energy, regenAt, xp: l.xp || 0, sessionId: l.sessionId || null }
+}
+
+// Trošenje jednog pokušaja. Tajmer regeneracije kreće tek kad spremnik nije
+// pun; ako već ide, ne dira se (inače bi svaki kviz odgađao regeneraciju).
+function spendQuizEnergy(state, now = Date.now()) {
+  const energy = Math.max(0, state.energy - 1)
+  return { ...state, energy, regenAt: state.regenAt || now + QUIZ_REGEN_MS }
 }
 
 export const startQuiz = onCall(async (request) => {
@@ -660,10 +720,12 @@ export const startQuiz = onCall(async (request) => {
   const userRef = db.doc(`users/${uid}`)
   const userSnap = await userRef.get()
   if (!userSnap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
-  const limit = quizLimitState(userSnap.data(), day)
+  const limit = quizEnergyState(userSnap.data(), day)
   const limitInfo = {
-    used: limit.started,
-    limit: DAILY_QUIZ_LIMIT,
+    used: QUIZ_ENERGY_MAX - limit.energy,
+    limit: QUIZ_ENERGY_MAX,
+    energy: limit.energy,
+    regenAt: limit.regenAt,
     xpToday: limit.xp,
     xpCap: DAILY_QUIZ_XP_CAP,
     resetsAt: nextDailyResetAt(),
@@ -689,7 +751,7 @@ export const startQuiz = onCall(async (request) => {
     }
   }
 
-  if (limit.started >= DAILY_QUIZ_LIMIT) return { limited: true, ...limitInfo }
+  if (limit.energy <= 0) return { limited: true, ...limitInfo }
 
   const pool = await getActiveQuestions()
   if (pool.length === 0) throw new HttpsError('failed-precondition', 'Banka pitanja je prazna.')
@@ -714,16 +776,16 @@ export const startQuiz = onCall(async (request) => {
   // Trošenje pokušaja ide transakcijom — dva paralelna starta ne smiju proći.
   // Sesija se upisuje tek kad je pokušaj rezervisan, da race ne ostavi siroče.
   const ref = db.collection('quizSessions').doc()
-  let started = limit.started + 1
+  let poslije = limit
   await db.runTransaction(async (tx) => {
     const s = await tx.get(userRef)
     if (!s.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
-    const cur = quizLimitState(s.data(), day)
-    if (cur.started >= DAILY_QUIZ_LIMIT) {
-      throw new HttpsError('resource-exhausted', 'Dnevni limit kvizova je iskorišten.')
+    const cur = quizEnergyState(s.data(), day)
+    if (cur.energy <= 0) {
+      throw new HttpsError('resource-exhausted', 'Nemaš više pokušaja za kviz.')
     }
-    started = cur.started + 1
-    tx.update(userRef, { quizLimit: { ...cur, started, sessionId: ref.id } })
+    poslije = spendQuizEnergy(cur)
+    tx.update(userRef, { quizLimit: { ...poslije, sessionId: ref.id } })
   })
   await ref.set(session)
 
@@ -731,7 +793,9 @@ export const startQuiz = onCall(async (request) => {
     sessionId: ref.id,
     total: chosen.length,
     ...limitInfo,
-    used: started,
+    used: QUIZ_ENERGY_MAX - poslije.energy,
+    energy: poslije.energy,
+    regenAt: poslije.regenAt,
     question: publicQuestion(chosen[0].id, chosen[0], 0),
   }
 })
@@ -815,7 +879,7 @@ export const submitAnswer = onCall(async (request) => {
     )
 
     // Dnevni cap: iz kvizova se ne može osvojiti više od 300 XP dnevno.
-    const limit = quizLimitState(profile, day)
+    const limit = quizEnergyState(profile, day)
     awardedXp = Math.min(earnedXp, Math.max(0, DAILY_QUIZ_XP_CAP - limit.xp))
     xpToday = limit.xp + awardedXp
 
@@ -860,8 +924,8 @@ export const submitAnswer = onCall(async (request) => {
       correctCount,
       total: answers.length,
     },
-    quizzesToday: quizLimitState(profileAfter, day).started,
-    quizLimit: DAILY_QUIZ_LIMIT,
+    quizzesToday: QUIZ_ENERGY_MAX - quizEnergyState(profileAfter, day).energy,
+    quizLimit: QUIZ_ENERGY_MAX,
     xpToday,
     xpCap: DAILY_QUIZ_XP_CAP,
     resetsAt: nextDailyResetAt(),
@@ -1551,6 +1615,165 @@ export const submitSurvivalAnswer = onCall(async (request) => {
 })
 
 // ---------------------------------------------------------------------------
+// Kovčezi za level (Etapa 9)
+//
+// Svaki pređeni level ostavlja kovčeg u XP baru na početnoj. Ako igrač u jednom
+// kvizu skoči s levela 1 na 3, čekaju ga DVA kovčega — otvaraju se jedan po
+// jedan, redom. Animacija level-upa se od sada prikazuje SAMO na otvaranje
+// kovčega, ne više odmah poslije kviza/questa/Preživljavanja.
+//
+// Stanje: users/{uid}.levelChestClaimed = najviši level čiji je kovčeg otvoren.
+// Broj kovčega koji čekaju = trenutni level − levelChestClaimed.
+//
+// Zatečenim igračima se polje ne postavlja unaprijed — prvo čitanje ga tretira
+// kao 1 (početni level), pa im kovčezi za već pređene levele legnu odmah.
+// ---------------------------------------------------------------------------
+// Nagrade iz kovčega. Sve su ŽETONI koji stoje na profilu dok se ne potroše —
+// nijedna ne diže strop od 3 pokušaja odjednom, nego spremnik puni kad je
+// prazan. Zato +3 nikad ne propada ni kad su pokušaji puni.
+//
+// Šanse prate vrijednost: lakše i češće nagrade na vrhu, najvrednija na dnu.
+const CHEST_REWARDS = [
+  { id: 'quiz1', kind: 'quizRefill', amount: 1, chance: 32, label: '+1 pokušaj za kviz' },
+  { id: 'reroll', kind: 'questReroll', amount: 1, chance: 30, label: 'Zamjena dnevnog questa' },
+  { id: 'quiz2', kind: 'quizRefill', amount: 2, chance: 20, label: '+2 pokušaja za kviz' },
+  { id: 'freeze', kind: 'streakFreeze', amount: 1, chance: 12, label: 'Zaštita streaka' },
+  { id: 'quiz3', kind: 'quizRefill', amount: 3, chance: 6, label: '+3 pokušaja za kviz' },
+]
+
+function rollChestReward() {
+  const ukupno = CHEST_REWARDS.reduce((a, r) => a + r.chance, 0)
+  let t = Math.random() * ukupno
+  for (const r of CHEST_REWARDS) {
+    t -= r.chance
+    if (t < 0) return r
+  }
+  return CHEST_REWARDS[0]
+}
+
+export const claimLevelChest = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+
+  const cfg = await getLevelConfig()
+  const ref = db.doc(`users/${uid}`)
+  let rezultat = null
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const p = snap.data()
+    const level = levelFromXp(p.xp || 0, cfg)
+    const claimed = p.levelChestClaimed || 1
+    if (claimed >= level) {
+      throw new HttpsError('failed-precondition', 'Nema kovčega za otvaranje.')
+    }
+    // Otvara se UVIJEK najniži neotvoreni, da redoslijed levela ostane tačan.
+    const noviLevel = claimed + 1
+    // Izvlačenje je na SERVERU: da klijent ne može ponavljati dok ne padne +3.
+    const nagrada = rollChestReward()
+    const staro = p.rewards?.[nagrada.kind] || 0
+    tx.update(ref, {
+      levelChestClaimed: noviLevel,
+      [`rewards.${nagrada.kind}`]: staro + nagrada.amount,
+    })
+    rezultat = {
+      level: noviLevel,
+      preostalo: level - noviLevel,
+      reward: { id: nagrada.id, kind: nagrada.kind, amount: nagrada.amount, label: nagrada.label },
+    }
+  })
+
+  return rezultat
+})
+
+// Trošenje žetona za pokušaj kviza. Puni spremnik za 1, nikad iznad stropa —
+// ako su pokušaji već puni, žeton se NE troši (inače bi nagrada nestala uzalud).
+export const spendQuizRefill = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const ref = db.doc(`users/${uid}`)
+  let rezultat = null
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const p = snap.data()
+    const zetona = p.rewards?.quizRefill || 0
+    if (zetona <= 0) throw new HttpsError('failed-precondition', 'Nemaš žetona za pokušaj.')
+    const stanje = quizEnergyState(p)
+    if (stanje.energy >= QUIZ_ENERGY_MAX) {
+      throw new HttpsError('failed-precondition', 'Pokušaji su ti već puni.')
+    }
+    const energy = stanje.energy + 1
+    tx.update(ref, {
+      'rewards.quizRefill': zetona - 1,
+      quizLimit: { ...stanje, energy, regenAt: energy >= QUIZ_ENERGY_MAX ? null : stanje.regenAt },
+    })
+    rezultat = { energy, preostaloZetona: zetona - 1 }
+  })
+
+  return rezultat
+})
+
+// Zamjena jednog današnjeg dnevnog questa drugim iz bazena.
+// Namjerno ZAMJENA, ne reset: reset bi značio da isti quest nosi XP dvaput.
+export const rerollDailyQuest = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const taskId = request.data?.taskId
+  if (typeof taskId !== 'string' || !taskId) {
+    throw new HttpsError('invalid-argument', 'Nedostaje taskId.')
+  }
+
+  const day = dailyKey()
+  const [pool, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
+  const ref = db.doc(`users/${uid}`)
+  let rezultat = null
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const p = snap.data()
+    const zetona = p.rewards?.questReroll || 0
+    if (zetona <= 0) throw new HttpsError('failed-precondition', 'Nemaš žetona za zamjenu.')
+
+    const dnevni = p.taskProgress?.daily
+    if (dnevni?.period !== day || !Array.isArray(dnevni.picked)) {
+      throw new HttpsError('failed-precondition', 'Današnji questovi nisu spremni.')
+    }
+    if (!dnevni.picked.includes(taskId)) {
+      throw new HttpsError('failed-precondition', 'Taj quest nije među današnjim.')
+    }
+    if (dnevni.claimed?.[taskId]) {
+      throw new HttpsError('failed-precondition', 'Nagrada za taj quest je već preuzeta.')
+    }
+
+    // Kandidati: aktivni dnevni questovi koji danas nisu u igri, i čiji je
+    // event živ (ili ga uopšte nemaju).
+    const kandidati = pool.filter(
+      (t) =>
+        t.type === 'daily' &&
+        !dnevni.picked.includes(t.id) &&
+        (!t.event || events.includes(t.event))
+    )
+    if (kandidati.length === 0) {
+      throw new HttpsError('failed-precondition', 'Nema drugog questa za zamjenu.')
+    }
+    const novi = kandidati[Math.floor(Math.random() * kandidati.length)]
+    const picked = dnevni.picked.map((id) => (id === taskId ? novi.id : id))
+
+    tx.update(ref, {
+      'rewards.questReroll': zetona - 1,
+      'taskProgress.daily.picked': picked,
+    })
+    rezultat = { noviTaskId: novi.id, preostaloZetona: zetona - 1 }
+  })
+
+  return rezultat
+})
+
+// ---------------------------------------------------------------------------
 // ADMIN alati (Etapa 9) — sve traže custom claim admin:true.
 // Namjerno rade SAMO nad vlastitim nalogom osim gdje je izričito drugačije:
 // admin panel je alat za testiranje i gašenje požara, ne za mijenjanje tuđih
@@ -1624,8 +1847,13 @@ export const adminSetCosmetic = onCall(async (request) => {
     const owned = c.owned || []
     const next = grant === false ? owned.filter((x) => x !== frameId) : [...new Set([...owned, frameId])]
     const patch = { 'cosmetics.owned': next }
-    // Ako se skida okvir koji je trenutno na avataru, mora se i skinuti.
-    if (grant === false && c.frame === frameId) patch['cosmetics.frame'] = null
+    // Ako se skida ukras koji je trenutno na avataru, mora se skinuti i s
+    // mjesta gdje stoji — inače bi ostao "duh" koji igrač ne može ukloniti.
+    if (grant === false) {
+      for (const slot of ['ring', 'background', 'aura']) {
+        if (c[slot] === frameId) patch[`cosmetics.${slot}`] = null
+      }
+    }
     tx.update(ref, patch)
   })
   await adminLog(uid, 'setCosmetic', { frameId, grant: grant !== false })
@@ -1638,7 +1866,12 @@ export const adminGrantAllCosmetics = onCall(async (request) => {
   const ids = Array.isArray(request.data?.ids) ? request.data.ids.filter((x) => typeof x === 'string') : []
   const clear = request.data?.clear === true
   if (clear) {
-    await db.doc(`users/${uid}`).update({ 'cosmetics.owned': [], 'cosmetics.frame': null })
+    await db.doc(`users/${uid}`).update({
+      'cosmetics.owned': [],
+      'cosmetics.ring': null,
+      'cosmetics.background': null,
+      'cosmetics.aura': null,
+    })
     await adminLog(uid, 'clearCosmetics')
     return { ok: true, owned: 0 }
   }

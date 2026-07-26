@@ -9,10 +9,15 @@ import { weeklyKey } from '../utils/periods'
 //   leaderboard/global/{uid}            → { name, avatar, level, xp, streak }
 //   leaderboard/weekly/{sedmica}/{uid}  → isto, ali xp = XP osvojen te sedmice
 
-// Live praćenje liste ('global' ili 'weekly') — vraća unsubscribe funkciju.
+// Live praćenje liste — vraća unsubscribe funkciju.
+// scope: 'global' | 'weekly' | 'streak'
+//   streak koristi ISTI čvor kao globalni (leaderboard/global već nosi polje
+//   streak), samo se sortira po njemu. Zato RTDB pravila moraju indeksirati i
+//   'streak', inače Firebase sortira na klijentu i lista bude pogrešna.
 export function subscribeLeaderboard(scope, callback) {
   const path = scope === 'weekly' ? `leaderboard/weekly/${weeklyKey()}` : 'leaderboard/global'
-  const q = query(ref(rtdb, path), orderByChild('xp'), limitToLast(50))
+  const sortBy = scope === 'streak' ? 'streak' : 'xp'
+  const q = query(ref(rtdb, path), orderByChild(sortBy), limitToLast(50))
   return onValue(
     q,
     (snap) => {

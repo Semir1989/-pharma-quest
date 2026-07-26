@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getUserProfile } from '../services/userProfile'
 import { getBadges, featuredBadgeEmojis } from '../services/badges'
 import Avatar from '../components/Avatar'
-import { equippedFrame } from '../data/cosmetics'
+import { equippedCosmetics } from '../data/cosmetics'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 
 // Javni profil igrača (Modul 7) — otvara se klikom na red u leaderboardu.
@@ -39,6 +39,8 @@ export default function JavniProfil() {
   }
 
   const level = levelFromXp(profile.xp)
+  const nose = equippedCosmetics(profile)
+  const nosiNesto = !!(nose.ring || nose.background || nose.aura)
 
   return (
     <div className="min-h-svh bg-slate-50">
@@ -55,9 +57,9 @@ export default function JavniProfil() {
             <Avatar
               id={profile.avatar}
               size={88}
-              className={equippedFrame(profile) ? '' : 'ring-4 ring-teal-400'}
+              className={nosiNesto ? '' : 'ring-4 ring-teal-400'}
               badges={featuredBadgeEmojis(profile, badges)}
-              frame={equippedFrame(profile)}
+              cosmetics={nose}
             />
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-teal-600 px-3 py-0.5 text-xs font-bold shadow">
               Lvl {level}

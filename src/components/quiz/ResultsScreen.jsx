@@ -1,24 +1,21 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import LevelUpOverlay from '../LevelUpOverlay'
 import BadgeUnlockOverlay from '../BadgeUnlockOverlay'
 
 // Ekran rezultata kviza: kružni skor, poruka, osvojeni XP,
 // lista pitanja s ✓/✗ i objašnjenjima (klik za otvaranje).
-// Redoslijed animacija prije rezultata: prvo LevelUpOverlay (ako je bilo
-// level-upa), pa BadgeUnlockOverlay za svaki novi bedž (Etapa 8).
+// Prije rezultata se prikazuje BadgeUnlockOverlay za svaki novi bedž (Etapa 8).
+// Level-up se od Etape 9 NE prikazuje ovdje — svaki pređeni level ostavlja
+// kovčeg u XP baru na početnoj, i animacija ide samo na njegovo otvaranje.
 // props: answers = [{ question, selected, correct }], earnedXp,
 //        capped ({ rawXp, cap } kad je dnevni strop odsjekao dio XP-a),
 //        quizzesToday ('2/3' ili null),
-//        levelUp ({ level, rank, rankChanged } ili null), onLevelUpSeen,
 //        badge ({ emoji, name, description } ili null), onBadgeSeen, onContinue
 export default function ResultsScreen({
   answers,
   earnedXp,
   capped,
   quizzesToday,
-  levelUp,
-  onLevelUpSeen,
   badge,
   onBadgeSeen,
   onContinue,
@@ -27,18 +24,6 @@ export default function ResultsScreen({
   const score = answers.filter((a) => a.correct).length
   const total = answers.length
   const great = score / total >= 0.7
-
-  if (levelUp) {
-    return (
-      <LevelUpOverlay
-        level={levelUp.level}
-        rank={levelUp.rank}
-        rankChanged={levelUp.rankChanged}
-        bonusXp={levelUp.bonusXp}
-        onClose={onLevelUpSeen}
-      />
-    )
-  }
 
   if (badge) {
     return <BadgeUnlockOverlay badge={badge} onClose={onBadgeSeen} />

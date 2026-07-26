@@ -50,11 +50,12 @@ export async function updateFeaturedBadges(uid, badgeIds) {
   await updateDoc(doc(db, 'users', uid), { featuredBadges: badgeIds })
 }
 
-// Okvir avatara koji igrač nosi. Piše se SAMO putanja cosmetics.frame — lista
-// osvojenih (cosmetics.owned) nikad ne ide s klijenta, pa je ne može ni
-// slučajno prepisati. Pravila povrh toga traže da je okvir iz vlastite liste.
-export async function equipFrame(uid, frameId) {
-  await updateDoc(doc(db, 'users', uid), { 'cosmetics.frame': frameId || null })
+// Ukras koji igrač nosi na jednom od tri mjesta: 'ring' | 'background' | 'aura'.
+// Piše se SAMO ta jedna putanja — lista osvojenih (cosmetics.owned) nikad ne
+// ide s klijenta, pa je ne može ni slučajno prepisati. Pravila povrh toga traže
+// da je ukras iz vlastite liste.
+export async function equipCosmetic(uid, kind, id) {
+  await updateDoc(doc(db, 'users', uid), { [`cosmetics.${kind}`]: id || null })
 }
 
 // Pamti da je igrač OTVORIO kovčeg na ljestvici Preživljavanja.

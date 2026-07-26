@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTasks, progressForType, taskValue, claimTask, dailyTasksFor } from '../services/tasks'
-import { levelFromXp, rankFromLevel } from '../utils/levels'
+import { rerollDailyQuest } from '../services/quizApi'
+import { rewardCounts } from '../utils/quizEnergy'
+import { levelFromXp } from '../utils/levels'
 import { track } from '../services/analytics'
-import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import {
   secondsUntilDailyReset,
@@ -24,8 +25,8 @@ export default function Questovi() {
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
   const [dailyPicks, setDailyPicks] = useState(null) // 3 današnja dnevna questa
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
-  const [levelUp, setLevelUp] = useState(null) // { level, rank, rankChanged } ili null
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
+  const [rerolling, setRerolling] = useState(null) // id questa koji se mijenja
 
   useEffect(() => {
     getTasks().then(setTasks).catch(() => setTasks({ daily: [], weekly: [], monthly: [] }))
@@ -50,21 +51,14 @@ export default function Questovi() {
     setClaiming(task.id)
     try {
       const xpBefore = profile.xp || 0
-      const { reward, newLevel: serverLevel, levelBonus, newBadges } = await claimTask(task)
+      const { reward, newLevel: serverLevel, newBadges } = await claimTask(task)
       track('task_claim', { taskId: task.id, reward })
       // Profil se osvježava sam (live listener) — claimed i XP stižu odmah.
-      // Level-up animacija i ovdje, ne samo poslije kviza (Modul 5).
+      // Level-up animacija je od Etape 9 vezana za kovčeg u XP baru na početnoj,
+      // pa se ovdje samo bilježi događaj.
       const oldLevel = levelFromXp(xpBefore)
       const newLevel = serverLevel ?? levelFromXp(xpBefore + reward)
-      if (newLevel > oldLevel) {
-        track('level_up', { level: newLevel })
-        setLevelUp({
-          level: newLevel,
-          rank: rankFromLevel(newLevel),
-          rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
-          bonusXp: levelBonus?.bonusXp || 0,
-        })
-      }
+      if (newLevel > oldLevel) track('level_up', { level: newLevel })
       // Novododijeljeni bedževi — animacija poslije level-upa (Etapa 8).
       if (newBadges?.length) setBadgeQueue(newBadges)
     } finally {
@@ -72,17 +66,20 @@ export default function Questovi() {
     }
   }
 
-  // Redoslijed: prvo level-up (ako ga je bilo), pa bedž(evi) jedan po jedan.
-  if (levelUp) {
-    return (
-      <LevelUpOverlay
-        level={levelUp.level}
-        rank={levelUp.rank}
-        rankChanged={levelUp.rankChanged}
-        bonusXp={levelUp.bonusXp}
-        onClose={() => setLevelUp(null)}
-      />
-    )
+  // Zamjena dnevnog questa žetonom iz kovčega. Namjerno ZAMJENA, ne reset:
+  // reset bi značio da isti quest nosi XP dvaput.
+  async function handleReroll(task) {
+    if (rerolling) return
+    setRerolling(task.id)
+    try {
+      await rerollDailyQuest(task.id)
+      track('quest_reroll', { taskId: task.id })
+      // Profil je live-pretplaćen; novi picked stiže sam i lista se osvježi.
+    } catch {
+      // Server je odbio (nema žetona, quest već preuzet) — stanje ostaje isto.
+    } finally {
+      setRerolling(null)
+    }
   }
 
   if (badgeQueue.length > 0) {
@@ -120,7 +117,15 @@ export default function Questovi() {
         <p className="mt-8 text-center text-slate-400">Učitavam taskove…</p>
       ) : (
         <div className="mt-4 flex flex-col gap-4">
-          <DailySection tasks={dailyPicks} profile={profile} claiming={claiming} onClaim={handleClaim} />
+          <DailySection
+            tasks={dailyPicks}
+            profile={profile}
+            claiming={claiming}
+            onClaim={handleClaim}
+            onReroll={handleReroll}
+            rerolling={rerolling}
+            zetona={rewardCounts(profile).questReroll}
+          />
           <PeriodSection
             title="Sedmični"
             icon="📅"
@@ -152,7 +157,7 @@ export default function Questovi() {
 }
 
 // Dnevna sekcija — tamna kartica s odbrojavanjem do ponoći.
-function DailySection({ tasks, profile, claiming, onClaim }) {
+function DailySection({ tasks, profile, claiming, onClaim, onReroll, rerolling, zetona }) {
   const [seconds, setSeconds] = useState(secondsUntilDailyReset())
 
   useEffect(() => {
@@ -180,6 +185,13 @@ function DailySection({ tasks, profile, claiming, onClaim }) {
         </span>
       </div>
 
+      {zetona > 0 && (
+        <p className="mt-2 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-teal-50">
+          🎟️ Imaš {zetona} {zetona === 1 ? 'žeton' : 'žetona'} za zamjenu — klikni „Zamijeni" na
+          questu koji ti ne odgovara.
+        </p>
+      )}
+
       <div className="mt-3 flex flex-col gap-2">
         {tasks === null ? (
           <p className="py-4 text-center text-sm text-teal-100/70">Biram današnje zadatke…</p>
@@ -192,6 +204,8 @@ function DailySection({ tasks, profile, claiming, onClaim }) {
               color="#0f766e"
               claiming={claiming}
               onClaim={onClaim}
+              onReroll={zetona > 0 ? onReroll : null}
+              rerolling={rerolling === task.id}
             />
           ))
         )}
@@ -246,10 +260,12 @@ function eventLive(profile, event) {
 const EVENT_LABEL = { survival: '🔥 Preživljavanje', tournament: '🏆 Turnir' }
 
 // Jedan red taska: kružić, naziv, XP oznaka ili Preuzmi/Preuzeto.
-function TaskRow({ task, progress, color, claiming, onClaim, eventClosed }) {
+function TaskRow({ task, progress, color, claiming, onClaim, eventClosed, onReroll, rerolling }) {
   const value = taskValue(progress, task)
   const done = value >= task.goal
   const claimed = !!progress.claimed[task.id]
+  // Zamjena ima smisla samo dok nagrada nije preuzeta.
+  const moze = !!onReroll && !claimed
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
@@ -263,6 +279,15 @@ function TaskRow({ task, progress, color, claiming, onClaim, eventClosed }) {
         <p className="font-semibold leading-snug text-slate-800">{task.title}</p>
         {done && !claimed && <p className="text-sm font-bold text-green-600">Završeno!</p>}
         {claimed && <p className="text-sm text-slate-400">Nagrada preuzeta ✓</p>}
+        {moze && !done && (
+          <button
+            onClick={() => onReroll(task)}
+            disabled={rerolling}
+            className="mt-0.5 text-xs font-bold text-teal-700 underline active:opacity-70 disabled:opacity-50"
+          >
+            {rerolling ? 'Mijenjam…' : '🎟️ Zamijeni'}
+          </button>
+        )}
         {eventClosed && !done && (
           <p className="text-sm text-slate-400">Event zatvoren — nastavak u srijedu</p>
         )}

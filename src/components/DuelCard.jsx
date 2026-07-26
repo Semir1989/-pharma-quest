@@ -59,7 +59,9 @@ export default function DuelCard({ cfg, uid }) {
   }
 
   return (
-    <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+    // Boja okvira razlikuje evente na prvi pogled: dueli teal, XP trka amber,
+    // Preživljavanje tamno zeleno (vidi Arena.jsx).
+    <div className="mt-4 rounded-2xl border-2 border-teal-500 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-xl">
           ⚔️

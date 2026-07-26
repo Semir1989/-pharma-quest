@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import { getBadges, featuredBadgeEmojis } from '../services/badges'
 import { updateFeaturedBadges } from '../services/userProfile'
-import { equippedFrame, FRAMES } from '../data/cosmetics'
+import { equippedCosmetics, COSMETICS } from '../data/cosmetics'
 import {
   levelFromXp,
   rankFromLevel,
@@ -32,7 +32,8 @@ export default function Profil() {
   const accuracyEntries = Object.entries(profile.accuracyByCategory || {})
   const earned = profile.badges || {}
   const earnedCount = badges.filter((b) => earned[b.id]).length
-  const frame = equippedFrame(profile)
+  const nose = equippedCosmetics(profile)
+  const nosiNesto = !!(nose.ring || nose.background || nose.aura)
   const ownedFrames = (profile.cosmetics?.owned || []).length
 
   // Istaknuti bedževi — koliko mjesta nosi trenutni level i šta je izabrano.
@@ -69,9 +70,9 @@ export default function Profil() {
           <Avatar
             id={profile.avatar}
             size={88}
-            className={frame ? '' : 'ring-4 ring-teal-400'}
+            className={nosiNesto ? '' : 'ring-4 ring-teal-400'}
             badges={featuredBadgeEmojis(profile, badges)}
-            frame={frame}
+            cosmetics={nose}
           />
           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-teal-600 px-3 py-0.5 text-xs font-bold shadow">
             Lvl {level}
@@ -182,12 +183,11 @@ export default function Profil() {
           className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
         >
           <div className="flex items-center gap-3">
-            <Avatar id={profile.avatar} size={40} frame={frame} />
+            <Avatar id={profile.avatar} size={40} cosmetics={nose} />
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Okviri</h2>
+              <h2 className="text-lg font-bold text-slate-800">Izgled avatara</h2>
               <p className="text-xs text-slate-500">
-                {frame ? `Nosiš: ${frame.name}` : 'Nemaš okvir na avataru'} ·{' '}
-                {ownedFrames}/{FRAMES.length} osvojeno
+                Okvir, pozadina i aura · {ownedFrames}/{COSMETICS.length} osvojeno
               </p>
             </div>
           </div>

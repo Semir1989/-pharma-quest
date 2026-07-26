@@ -85,10 +85,58 @@ body {
   animation: frame-shine 3.4s ease-in-out infinite;
 }
 
+/* Pozadine (Preživljavanje) — preliv se pomjera ispod emojija.
+   Sporije od sjaja na okviru: pozadina je veća površina, pa brz pokret smeta. */
+@keyframes bg-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.frame-bg-shift {
+  background-size: 220% 220%;
+  animation: bg-shift 6s ease-in-out infinite;
+}
+
+.frame-bg-spin {
+  animation: frame-spin 9s linear infinite;
+}
+
+/* Aure (XP trka) — sjaj IZVAN avatara. Dva oblika:
+   aura-pulse  meki halo koji diše (box-shadow, boja iz --aura-glow)
+   aura-spin   rotirajući conic preliv, zamućen da izgleda kao energija */
+@keyframes aura-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 var(--aura-spread, 12px) calc(var(--aura-spread, 12px) / 3)
+      rgba(var(--aura-glow, 45, 212, 191), 0.55);
+  }
+  50% {
+    box-shadow: 0 0 calc(var(--aura-spread, 12px) * 1.9) calc(var(--aura-spread, 12px) / 1.6)
+      rgba(var(--aura-glow, 45, 212, 191), 0.28);
+  }
+}
+
+.frame-aura-pulse {
+  animation: aura-pulse 2.4s ease-in-out infinite;
+}
+
+.frame-aura-spin {
+  animation: frame-spin 5s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .frame-spin,
   .frame-pulse,
-  .frame-shine {
+  .frame-shine,
+  .frame-bg-shift,
+  .frame-bg-spin,
+  .frame-aura-pulse,
+  .frame-aura-spin {
     animation: none;
   }
 }

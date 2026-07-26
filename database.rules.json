@@ -5,7 +5,7 @@
     "leaderboard": {
       "global": {
         ".read": "auth != null",
-        ".indexOn": ["xp"]
+        ".indexOn": ["xp", "streak"]
       },
       "weekly": {
         "$week": {

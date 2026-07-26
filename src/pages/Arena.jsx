@@ -44,6 +44,20 @@ export default function Arena() {
         Takmičenja — dueli, XP trka i sedmično Preživljavanje.
       </p>
 
+      {/* Legenda boja: svaki event nosi svoj okvir, da se razlikuju na prvi
+          pogled i kad su sve tri kartice na ekranu. */}
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold text-slate-400">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border-2 border-teal-500" /> Dueli
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border-2 border-amber-500" /> XP trka
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border-2 border-emerald-400" /> Preživljavanje
+        </span>
+      </div>
+
       {/* Vikend event (Faza 2) — dvije odvojene kartice, jer su to dva
           različita takmičenja: duel traži prijavu unaprijed, XP trka ne. */}
       <DuelCard cfg={cfg} uid={user?.uid} />
@@ -61,7 +75,7 @@ export default function Arena() {
       {/* Preživljavanje — sedmični izazov (Etapa 8) */}
       <Link
         to="/prezivljavanje"
-        className="mt-4 flex items-center justify-between rounded-2xl p-4 text-white shadow-sm active:opacity-95"
+        className="mt-4 flex items-center justify-between rounded-2xl border-2 border-emerald-400 p-4 text-white shadow-sm active:opacity-95"
         style={{ background: 'linear-gradient(180deg, #0f5750 0%, #0a3b36 100%)' }}
       >
         <div>

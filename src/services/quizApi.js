@@ -67,6 +67,25 @@ export async function submitDuelAnswer(answerIndex) {
   return (await submitDuelFn({ answerIndex })).data
 }
 
+// Otvaranje kovčega za level → { level, preostalo }
+const claimLevelChestFn = httpsCallable(functions, 'claimLevelChest')
+
+export async function claimLevelChest() {
+  return (await claimLevelChestFn({})).data
+}
+
+// Trošenje žetona za pokušaj kviza → { energy, preostaloZetona }
+const spendQuizRefillFn = httpsCallable(functions, 'spendQuizRefill')
+export async function spendQuizRefill() {
+  return (await spendQuizRefillFn({})).data
+}
+
+// Zamjena jednog današnjeg questa → { noviTaskId, preostaloZetona }
+const rerollDailyQuestFn = httpsCallable(functions, 'rerollDailyQuest')
+export async function rerollDailyQuest(taskId) {
+  return (await rerollDailyQuestFn({ taskId })).data
+}
+
 // --- Admin alati (Etapa 9) — server traži custom claim admin:true -----------
 // Sve rade nad VLASTITIM nalogom; panel je alat za testiranje, ne za
 // mijenjanje tuđih rezultata.

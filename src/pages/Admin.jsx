@@ -9,7 +9,7 @@ import {
   adminGrantAllCosmetics,
   adminClearCosmetics,
 } from '../services/quizApi'
-import { FRAMES } from '../data/cosmetics'
+import { COSMETICS } from '../data/cosmetics'
 import { levelFromXp } from '../utils/levels'
 import EventKontrola from '../components/admin/EventKontrola'
 import {
@@ -238,14 +238,14 @@ function TestAlati({ profile }) {
         />
 
         <Alat
-          naslov={`Okviri avatara (${okvira}/${FRAMES.length})`}
-          opis="Dodijeli sve okvire sebi da provjeriš kako izgledaju, bez čekanja eventa."
+          naslov={`Ukrasi avatara (${okvira}/${COSMETICS.length})`}
+          opis="Dodijeli sve okvire, pozadine i aure sebi, bez čekanja eventa."
           dugme="Daj mi sve"
           radi={radi === 'frames'}
           onClick={() =>
             pokreni(
               'frames',
-              () => adminGrantAllCosmetics(FRAMES.map((f) => f.id)),
+              () => adminGrantAllCosmetics(COSMETICS.map((c) => c.id)),
               'Svi okviri dodijeljeni — pogledaj /okviri.'
             )
           }

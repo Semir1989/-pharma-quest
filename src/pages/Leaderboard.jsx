@@ -9,7 +9,7 @@ import Avatar from '../components/Avatar'
 export default function Leaderboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('global') // 'global' | 'weekly'
+  const [tab, setTab] = useState('global') // 'global' | 'weekly' | 'streak'
   const [rows, setRows] = useState(null)
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function Leaderboard() {
       <div className="mt-4 flex gap-2">
         <Tab active={tab === 'global'} onClick={() => setTab('global')}>Globalni</Tab>
         <Tab active={tab === 'weekly'} onClick={() => setTab('weekly')}>Sedmični</Tab>
-        <Tab disabled>Klanovi</Tab>
+        <Tab active={tab === 'streak'} onClick={() => setTab('streak')}>🔥 Streak</Tab>
       </div>
 
       {rows === null ? (
@@ -46,7 +46,7 @@ export default function Leaderboard() {
         </p>
       ) : (
         <>
-          <Podium rows={rows.slice(0, 3)} myUid={user.uid} onOpen={openProfile} />
+          <Podium rows={rows.slice(0, 3)} myUid={user.uid} onOpen={openProfile} tab={tab} />
           <div className="mt-4 flex flex-col gap-2">
             {rows.slice(3).map((row, i) => (
               <Row
@@ -55,6 +55,7 @@ export default function Leaderboard() {
                 row={row}
                 isMe={row.uid === user.uid}
                 onClick={() => openProfile(row.uid)}
+                tab={tab}
               />
             ))}
           </div>
@@ -90,7 +91,7 @@ const MEDALS = [
   { ring: 'ring-amber-600', badge: '3', height: 'h-12', bg: 'bg-teal-600' },
 ]
 
-function Podium({ rows, myUid, onOpen }) {
+function Podium({ rows, myUid, onOpen, tab }) {
   // Raspored kolona: [2., 1., 3.]
   const order = [rows[1], rows[0], rows[2]].filter(Boolean)
 
@@ -115,7 +116,11 @@ function Podium({ rows, myUid, onOpen }) {
             <span className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-xs font-bold text-slate-600">
               Lvl {row.level}
             </span>
-            <span className="mt-0.5 text-sm font-bold text-amber-600">{row.xp} XP</span>
+            <span
+              className={`mt-0.5 text-sm font-bold ${tab === 'streak' ? 'text-orange-500' : 'text-amber-600'}`}
+            >
+              {tab === 'streak' ? `🔥 ${row.streak || 0}` : `${row.xp} XP`}
+            </span>
             <div className={`mt-2 flex w-full items-start justify-center rounded-t-xl ${m.bg} ${m.height} pt-2 font-title text-2xl font-extrabold text-white`}>
               {rank + 1}
             </div>
@@ -126,7 +131,7 @@ function Podium({ rows, myUid, onOpen }) {
   )
 }
 
-function Row({ position, row, isMe, onClick }) {
+function Row({ position, row, isMe, onClick, tab }) {
   return (
     <button
       onClick={onClick}
@@ -145,9 +150,19 @@ function Row({ position, row, isMe, onClick }) {
           Lvl {row.level}
         </span>
       </div>
+      {/* Na streak tabu glavna mjera je niz dana, a XP ide ispod. */}
       <div className="flex flex-col items-end">
-        <span className="font-bold text-slate-800">{row.xp} XP</span>
-        <span className="text-sm text-orange-500">🔥 {row.streak || 0}</span>
+        {tab === 'streak' ? (
+          <>
+            <span className="font-bold text-orange-500">🔥 {row.streak || 0}</span>
+            <span className="text-sm text-slate-400">{row.xp} XP</span>
+          </>
+        ) : (
+          <>
+            <span className="font-bold text-slate-800">{row.xp} XP</span>
+            <span className="text-sm text-orange-500">🔥 {row.streak || 0}</span>
+          </>
+        )}
       </div>
     </button>
   )

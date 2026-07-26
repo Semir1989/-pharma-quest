@@ -1,10 +1,27 @@
 import { motion } from 'framer-motion'
 import Confetti from './Confetti'
 
-// Level-up animacija (Modul 5) — puni ekran preko rezultata kviza.
-// props: level (novi level), rank, rankChanged (bool), bonusXp (opciono,
-// bonus za prelazak 10. levela — Etapa 8), onClose
-export default function LevelUpOverlay({ level, rank, rankChanged, bonusXp = 0, onClose }) {
+const REWARD_EMOJI = {
+  quizRefill: '🎟️',
+  questReroll: '🔄',
+  streakFreeze: '🧊',
+}
+
+// Level-up animacija. Od Etape 9 se pokreće SAMO otvaranjem kovčega u XP baru
+// na početnoj — kviz, questovi i Preživljavanje je više ne prikazuju.
+// props: level (novi level), rank, rankChanged (bool),
+//        bonusXp (bonus za prelazak 10. levela — Etapa 8),
+//        reward ({ kind, amount, label } — nagrada iz kovčega),
+//        preostalo (koliko kovčega još čeka), onClose
+export default function LevelUpOverlay({
+  level,
+  rank,
+  rankChanged,
+  bonusXp = 0,
+  reward = null,
+  preostalo = 0,
+  onClose,
+}) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden px-6"
@@ -57,6 +74,33 @@ export default function LevelUpOverlay({ level, rank, rankChanged, bonusXp = 0, 
         >
           🎁 Bonus +{bonusXp} XP!
         </motion.div>
+      )}
+
+      {reward && (
+        <motion.div
+          className="mt-4 flex flex-col items-center rounded-2xl border border-amber-300/40 bg-amber-400/15 px-6 py-3"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.9 }}
+        >
+          <span className="text-xs font-bold uppercase tracking-wide text-amber-200/80">
+            Iz kovčega
+          </span>
+          <span className="mt-0.5 font-title text-xl font-extrabold text-amber-200">
+            {REWARD_EMOJI[reward.kind] || '🎁'} {reward.label}
+          </span>
+        </motion.div>
+      )}
+
+      {preostalo > 0 && (
+        <motion.p
+          className="mt-3 text-sm text-teal-100"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          Još {preostalo} {preostalo === 1 ? 'kovčeg te čeka' : 'kovčega te čeka'}
+        </motion.p>
       )}
 
       <motion.button

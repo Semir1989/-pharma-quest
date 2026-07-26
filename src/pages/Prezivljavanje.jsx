@@ -10,7 +10,7 @@ import {
 } from '../utils/periods'
 import { track } from '../services/analytics'
 import { markSurvivalChestOpened } from '../services/userProfile'
-import { levelFromXp, rankFromLevel } from '../utils/levels'
+import { levelFromXp } from '../utils/levels'
 import {
   CHEST_STEP,
   MAX_STEP,
@@ -19,7 +19,6 @@ import {
   unopenedChests,
 } from '../utils/survivalLadder'
 import SurvivalQuestion from '../components/SurvivalQuestion'
-import LevelUpOverlay from '../components/LevelUpOverlay'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import ChestOpenOverlay from '../components/ChestOpenOverlay'
 import SurvivalLadder from '../components/SurvivalLadder'
@@ -41,7 +40,6 @@ export default function Prezivljavanje() {
   const [exhausted, setExhausted] = useState(false) // banka pitanja iscrpljena
   const [eventWindow, setEventWindow] = useState(null) // { openAt, closeAt } kad je zatvoreno
   const [rows, setRows] = useState([])
-  const [levelUp, setLevelUp] = useState(null)
   const [badgeQueue, setBadgeQueue] = useState([])
   const [chest, setChest] = useState(null) // prag čiji se kovčeg upravo otvara
   const [ladderStreak, setLadderStreak] = useState(0) // niz te sedmice (RTDB)
@@ -99,19 +97,13 @@ export default function Prezivljavanje() {
     return res
   }
 
-  // Prikaži level-up/bedževe skupljene tokom run-a (na izlasku ili ispadanju).
+  // Prikaži bedževe skupljene tokom run-a (na izlasku ili ispadanju).
+  // Level-up se od Etape 9 NE prikazuje ovdje — svaki pređeni level ostavlja
+  // kovčeg u XP baru na početnoj, i animacija ide samo na njegovo otvaranje.
   function flushOverlays() {
     const oldLevel = levelFromXp(xpAtStartRef.current)
     const newLevel = levelFromXp(profile?.xp || 0)
-    if (newLevel > oldLevel) {
-      track('level_up', { level: newLevel })
-      setLevelUp({
-        level: newLevel,
-        rank: rankFromLevel(newLevel),
-        rankChanged: rankFromLevel(newLevel) !== rankFromLevel(oldLevel),
-        bonusXp: bonusRef.current,
-      })
-    }
+    if (newLevel > oldLevel) track('level_up', { level: newLevel })
     if (badgesRef.current.length) setBadgeQueue(badgesRef.current)
     // Ispražnjeno da se pri sljedećem izlasku iste animacije ne ponove.
     badgesRef.current = []
@@ -157,18 +149,7 @@ export default function Prezivljavanje() {
     if (user?.uid) markSurvivalChestOpened(user.uid, week, step).catch(() => {})
   }
 
-  // Animacije imaju prednost nad sadržajem (redoslijed: level → bedž → ekran).
-  if (levelUp) {
-    return (
-      <LevelUpOverlay
-        level={levelUp.level}
-        rank={levelUp.rank}
-        rankChanged={levelUp.rankChanged}
-        bonusXp={levelUp.bonusXp}
-        onClose={() => setLevelUp(null)}
-      />
-    )
-  }
+  // Animacije imaju prednost nad sadržajem (bedž → ekran).
   if (badgeQueue.length > 0) {
     return (
       <BadgeUnlockOverlay

@@ -15,7 +15,7 @@ export default function XpRaceCard({ cfg }) {
   const phase = now < cfg.openAt ? 'pre' : now <= cfg.closeAt ? 'live' : 'ended'
 
   return (
-    <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+    <div className="mt-4 rounded-2xl border-2 border-amber-500 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
           <TrophyIcon className="h-6 w-6" />

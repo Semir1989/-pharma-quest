@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import CircleProgress from '../components/CircleProgress'
 import InstallBanner from '../components/InstallBanner'
+import LevelChests from '../components/LevelChests'
+import QuestProgress from '../components/QuestProgress'
+import QuizEnergy from '../components/QuizEnergy'
 import { levelFromXp, xpProgress } from '../utils/levels'
 import {
   getTasks,
@@ -12,9 +15,6 @@ import {
   dailyTasksFor,
   claimableXp,
 } from '../services/tasks'
-import { dailyKey } from '../utils/periods'
-
-const DAILY_QUIZ_LIMIT = 3
 
 function greeting() {
   const h = new Date().getHours()
@@ -28,6 +28,29 @@ function greeting() {
 // navigaciji) — prije su trošili ~40% prvog ekrana, a aktivni su par dana.
 export default function Home() {
   const { profile } = useAuth()
+  // Taskovi se učitavaju JEDNOM ovdje, pa se dijele kartici dnevnih zadataka i
+  // banneru napretka — inače bi oba zvala dailyTasksFor, a on zna otići na
+  // server po današnji izbor.
+  const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
+  const [daily, setDaily] = useState(null) // današnja tri
+
+  const pickedKey = (profile?.taskProgress?.daily?.picked || []).join(',')
+  useEffect(() => {
+    if (!profile) return
+    let alive = true
+    getTasks()
+      .then(async (t) => {
+        if (!alive) return
+        setTasks(t)
+        const list = await dailyTasksFor(t.daily, profile)
+        if (alive) setDaily(list)
+      })
+      .catch(() => alive && setDaily([]))
+    return () => {
+      alive = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickedKey, !!profile])
 
   if (!profile) return null
 
@@ -65,14 +88,20 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Dnevni limit kvizova (3/dan, max 300 XP) */}
-      <QuizCounter profile={profile} />
+      {/* Kovčezi za pređene levele — jedini put do level-up animacije */}
+      <LevelChests profile={profile} />
+
+      {/* Pokušaji za kviz — energija koja se regeneriše svaka 4 sata */}
+      <QuizEnergy profile={profile} />
 
       {/* Instaliraj aplikaciju (Modul 8 — PWA) */}
       <InstallBanner />
 
       {/* Dnevni taskovi — kružići napretka (Modul 6) */}
-      <DailyTasksCard profile={profile} />
+      <DailyTasksCard profile={profile} tasks={tasks} daily={daily} />
+
+      {/* Napredak sva tri perioda — svijetli kad negdje ima XP za preuzeti */}
+      <QuestProgress tasks={tasks} daily={daily} profile={profile} />
 
       {/* Leaderboard kartica (Modul 7) */}
       <Link
@@ -92,60 +121,13 @@ export default function Home() {
   )
 }
 
-// Koliko je kvizova ostalo danas. Stanje piše server u users/{uid}.quizLimit,
-// a profil je live-pretplaćen, pa je brojač uvijek svjež bez dodatnog poziva.
-function QuizCounter({ profile }) {
-  const l = profile?.quizLimit?.day === dailyKey() ? profile.quizLimit : null
-  const used = Math.min(l?.started || 0, DAILY_QUIZ_LIMIT)
-  const left = DAILY_QUIZ_LIMIT - used
-
-  return (
-    <Link
-      to="/kviz"
-      className="mt-3 flex items-center justify-between rounded-2xl bg-white px-4 py-2.5 shadow-sm active:bg-slate-50"
-    >
-      <span className="text-sm font-semibold text-slate-600">
-        {left > 0 ? `Dnevni kvizovi: ${left} ${left === 1 ? 'preostao' : 'preostala'}` : 'Dnevni kvizovi odigrani ✓'}
-      </span>
-      <span className="flex gap-1.5">
-        {Array.from({ length: DAILY_QUIZ_LIMIT }, (_, i) => (
-          <span
-            key={i}
-            className={`h-2.5 w-6 rounded-full ${i < used ? 'bg-amber-400' : 'bg-slate-200'}`}
-          />
-        ))}
-      </span>
-    </Link>
-  )
-}
-
 // Kartica dnevnih taskova s kružnim progresom — klik vodi na Questove.
 // Prikazuje ista tri zadatka koja je server izabrao za današnji dan.
 //
 // Desna oznaka je i prečica do nagrade: ako igrač ima nepreuzeti XP bilo gdje
 // (dnevni, sedmični ili mjesečni zadaci), "Pogledaj" se pretvara u "Preuzmi
 // N XP" i vodi na Questove, gdje preuzimanje već ima level-up i bedž animacije.
-function DailyTasksCard({ profile }) {
-  const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
-  const [daily, setDaily] = useState(null) // današnja tri
-
-  const pickedKey = (profile?.taskProgress?.daily?.picked || []).join(',')
-  useEffect(() => {
-    let alive = true
-    getTasks()
-      .then(async (t) => {
-        if (!alive) return
-        setTasks(t)
-        const list = await dailyTasksFor(t.daily, profile)
-        if (alive) setDaily(list)
-      })
-      .catch(() => alive && setDaily([]))
-    return () => {
-      alive = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pickedKey])
-
+function DailyTasksCard({ profile, tasks, daily }) {
   if (!daily || daily.length === 0) return null
 
   const progress = progressForType(profile, 'daily')
