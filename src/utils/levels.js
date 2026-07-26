@@ -42,6 +42,23 @@ export function xpProgress(xp = 0) {
   }
 }
 
+// Istaknuti bedževi: koliko ih igrač smije pokazati na avataru.
+// Mjesto na avataru je znak statusa, pa se otključava kroz levele — level 10
+// donosi prvo, 20 drugo, 30 treće. Ispod levela 10 nema nijednog.
+// PAŽNJA: firestore.rules drži tvrdu gornju granicu od 3; ako se ova lista
+// produži, mora se produžiti i tamo.
+export const FEATURED_SLOT_LEVELS = [10, 20, 30]
+export const MAX_FEATURED_BADGES = FEATURED_SLOT_LEVELS.length
+
+export function featuredBadgeSlots(level = 1) {
+  return FEATURED_SLOT_LEVELS.filter((l) => level >= l).length
+}
+
+// Sljedeći level koji donosi novo mjesto — null kad su sva otključana.
+export function nextFeaturedSlotLevel(level = 1) {
+  return FEATURED_SLOT_LEVELS.find((l) => level < l) ?? null
+}
+
 // Rang (titula) na osnovu levela — prikazuje se na profilu.
 export function rankFromLevel(level = 1) {
   if (level >= 40) return 'Legenda'

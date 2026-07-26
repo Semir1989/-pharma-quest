@@ -40,3 +40,55 @@ body {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Okviri avatara (data/cosmetics.js).
+   Efekat se vrti na prstenu IZA avatara, nikad na samom avataru — zato lice
+   ostaje mirno dok se okvir okreće. Boje i debljina dolaze inline iz kataloga.
+   --------------------------------------------------------------------------- */
+@keyframes frame-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes frame-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--frame-glow, 250, 204, 21), 0.55);
+  }
+  60% {
+    box-shadow: 0 0 0 7px rgba(var(--frame-glow, 250, 204, 21), 0);
+  }
+}
+
+/* Sjaj koji prelazi preko metalik okvira — pomjera se preliv, ne element. */
+@keyframes frame-shine {
+  0% {
+    background-position: -140% 0;
+  }
+  100% {
+    background-position: 240% 0;
+  }
+}
+
+.frame-spin {
+  animation: frame-spin 7s linear infinite;
+}
+
+.frame-pulse {
+  animation: frame-pulse 2.2s ease-out infinite;
+}
+
+.frame-shine {
+  background-size: 260% 100%;
+  animation: frame-shine 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame-spin,
+  .frame-pulse,
+  .frame-shine {
+    animation: none;
+  }
+}

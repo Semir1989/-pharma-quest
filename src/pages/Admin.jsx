@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getAllQuestions, getQuestionSecret, saveQuestion, createQuestion } from '../services/admin'
 import {
+  adminResetSurvival,
+  adminSetXp,
+  adminSetHidden,
+  adminGrantAllCosmetics,
+  adminClearCosmetics,
+} from '../services/quizApi'
+import { FRAMES } from '../data/cosmetics'
+import { levelFromXp } from '../utils/levels'
+import EventKontrola from '../components/admin/EventKontrola'
+import {
   normalizeCategory,
   categoryLabel,
   similarCategories,
@@ -87,9 +97,15 @@ export default function Admin() {
         Prijavljen kao <b>{profile?.displayName || 'admin'}</b> · {questions?.length ?? '…'} pitanja
       </p>
 
+      <EventKontrola />
+
+      <TestAlati profile={profile} />
+
+      <h2 className="mt-6 font-title text-lg font-extrabold text-slate-800">Banka pitanja</h2>
+
       <button
         onClick={() => setEditing(BLANK)}
-        className="mt-4 w-full rounded-2xl bg-teal-700 py-3 font-title font-extrabold text-white active:bg-teal-800"
+        className="mt-2 w-full rounded-2xl bg-teal-700 py-3 font-title font-extrabold text-white active:bg-teal-800"
       >
         + Dodaj pitanje
       </button>
@@ -130,6 +146,153 @@ export default function Admin() {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// Alati za testiranje — rade ISKLJUČIVO nad vlastitim nalogom (server to
+// provjerava). Namjerno nisu alat za mijenjanje tuđih rezultata: admin panel
+// služi da se event provjeri i da se ugasi požar, ne da se popravlja poredak.
+function TestAlati({ profile }) {
+  const [poruka, setPoruka] = useState('')
+  const [radi, setRadi] = useState('')
+  const [xpUnos, setXpUnos] = useState('')
+
+  const skriven = profile?.hideFromBoards === true
+  const okvira = (profile?.cosmetics?.owned || []).length
+
+  async function pokreni(kljuc, fn, uspjeh) {
+    if (radi) return
+    setRadi(kljuc)
+    setPoruka('')
+    try {
+      await fn()
+      setPoruka(uspjeh)
+    } catch (e) {
+      setPoruka('Greška: ' + (e?.message || 'pokušaj ponovo'))
+    } finally {
+      setRadi('')
+    }
+  }
+
+  return (
+    <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <h2 className="font-title text-lg font-extrabold text-amber-900">🧪 Alati za testiranje</h2>
+      <p className="mt-0.5 text-xs text-amber-700">
+        Sve djeluje samo na tvoj nalog · Level {levelFromXp(profile?.xp)} · {profile?.xp || 0} XP
+      </p>
+
+      <div className="mt-3 flex flex-col gap-2">
+        <Alat
+          naslov="Restartuj Preživljavanje"
+          opis="Briše sedmični pokušaj, niz i kovčege — možeš odmah ponovo ući."
+          dugme="Restartuj"
+          radi={radi === 'survival'}
+          onClick={() =>
+            pokreni('survival', adminResetSurvival, 'Preživljavanje resetovano — možeš ponovo igrati.')
+          }
+        />
+
+        <div className="rounded-xl bg-white p-3">
+          <p className="text-sm font-bold text-slate-800">Postavi svoj XP</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Za provjeru svega što ovisi o levelu (istaknuti bedževi na 10/20/30, rangovi).
+          </p>
+          <div className="mt-2 flex gap-2">
+            <input
+              type="number"
+              min={0}
+              value={xpUnos}
+              onChange={(e) => setXpUnos(e.target.value)}
+              placeholder="npr. 5000"
+              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-teal-500"
+            />
+            <button
+              onClick={() =>
+                pokreni('xp', () => adminSetXp(Number(xpUnos)), `XP postavljen na ${Number(xpUnos)}.`)
+              }
+              disabled={!!radi || xpUnos === ''}
+              className="rounded-xl bg-teal-700 px-4 py-2 font-bold text-white active:bg-teal-800 disabled:opacity-50"
+            >
+              {radi === 'xp' ? '…' : 'Postavi'}
+            </button>
+          </div>
+        </div>
+
+        <Alat
+          naslov={skriven ? 'Skriven s ljestvica ✓' : 'Vidljiv na ljestvicama'}
+          opis={
+            skriven
+              ? 'Ne pojavljuješ se ni na jednoj ljestvici. XP ti se i dalje normalno sabira.'
+              : 'Uključi da tvoji rezultati ne ulaze u poredak igračima.'
+          }
+          dugme={skriven ? 'Prikaži me' : 'Sakrij me'}
+          radi={radi === 'hidden'}
+          onClick={() =>
+            pokreni(
+              'hidden',
+              () => adminSetHidden(!skriven),
+              skriven ? 'Ponovo si na ljestvicama.' : 'Skriven si sa svih ljestvica.'
+            )
+          }
+        />
+
+        <Alat
+          naslov={`Okviri avatara (${okvira}/${FRAMES.length})`}
+          opis="Dodijeli sve okvire sebi da provjeriš kako izgledaju, bez čekanja eventa."
+          dugme="Daj mi sve"
+          radi={radi === 'frames'}
+          onClick={() =>
+            pokreni(
+              'frames',
+              () => adminGrantAllCosmetics(FRAMES.map((f) => f.id)),
+              'Svi okviri dodijeljeni — pogledaj /okviri.'
+            )
+          }
+          sporedno={{
+            tekst: 'Obriši sve',
+            onClick: () =>
+              pokreni('frames', adminClearCosmetics, 'Okviri obrisani.'),
+          }}
+        />
+      </div>
+
+      {poruka && (
+        <p
+          className={`mt-3 text-sm font-medium ${
+            poruka.startsWith('Greška') ? 'text-red-600' : 'text-emerald-700'
+          }`}
+        >
+          {poruka}
+        </p>
+      )}
+    </section>
+  )
+}
+
+function Alat({ naslov, opis, dugme, radi, onClick, sporedno }) {
+  return (
+    <div className="rounded-xl bg-white p-3">
+      <p className="text-sm font-bold text-slate-800">{naslov}</p>
+      <p className="mt-0.5 text-xs text-slate-500">{opis}</p>
+      <div className="mt-2 flex gap-2">
+        <button
+          onClick={onClick}
+          disabled={radi}
+          className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-bold text-white active:bg-teal-800 disabled:opacity-50"
+        >
+          {radi ? '…' : dugme}
+        </button>
+        {sporedno && (
+          <button
+            onClick={sporedno.onClick}
+            disabled={radi}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-500 active:bg-slate-50 disabled:opacity-50"
+          >
+            {sporedno.tekst}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

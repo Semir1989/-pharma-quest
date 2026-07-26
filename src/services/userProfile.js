@@ -41,6 +41,22 @@ export async function updateUserProfile(uid, data) {
   await updateDoc(doc(db, 'users', uid), data)
 }
 
+// Istaknuti bedževi — oni koji se vide na avataru drugim igračima.
+// Čisto kozmetika: nagrade (XP, bedževe) i dalje dodjeljuje isključivo server,
+// ovo je samo izbor ŠTA se od već osvojenog pokazuje. Zato je polje otvoreno
+// klijentu u firestore.rules, ali pravila provjeravaju da su svi id-evi iz
+// vlastite mape osvojenih bedževa i da ih nije više od tri.
+export async function updateFeaturedBadges(uid, badgeIds) {
+  await updateDoc(doc(db, 'users', uid), { featuredBadges: badgeIds })
+}
+
+// Okvir avatara koji igrač nosi. Piše se SAMO putanja cosmetics.frame — lista
+// osvojenih (cosmetics.owned) nikad ne ide s klijenta, pa je ne može ni
+// slučajno prepisati. Pravila povrh toga traže da je okvir iz vlastite liste.
+export async function equipFrame(uid, frameId) {
+  await updateDoc(doc(db, 'users', uid), { 'cosmetics.frame': frameId || null })
+}
+
 // Pamti da je igrač OTVORIO kovčeg na ljestvici Preživljavanja.
 // Nije XP polje — bonus isplaćuje server u istom trenutku kad niz dostigne
 // prag (submitSurvivalAnswer); ovo samo bilježi da je animaciju vidio, da mu

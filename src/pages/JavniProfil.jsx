@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getUserProfile } from '../services/userProfile'
+import { getBadges, featuredBadgeEmojis } from '../services/badges'
 import Avatar from '../components/Avatar'
+import { equippedFrame } from '../data/cosmetics'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
 
 // Javni profil igrača (Modul 7) — otvara se klikom na red u leaderboardu.
@@ -9,10 +11,18 @@ export default function JavniProfil() {
   const { uid } = useParams()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(undefined) // undefined = učitava
+  const [badges, setBadges] = useState([])
 
   useEffect(() => {
     getUserProfile(uid).then(setProfile).catch(() => setProfile(null))
   }, [uid])
+
+  // Definicije bedževa (keširane po sesiji) — trebaju samo za emoji istaknutih.
+  useEffect(() => {
+    getBadges()
+      .then(setBadges)
+      .catch(() => setBadges([]))
+  }, [])
 
   if (profile === undefined) {
     return <p className="mt-10 text-center text-slate-400">Učitavam profil…</p>
@@ -29,7 +39,6 @@ export default function JavniProfil() {
   }
 
   const level = levelFromXp(profile.xp)
-  const accuracyEntries = Object.entries(profile.accuracyByCategory || {})
 
   return (
     <div className="min-h-svh bg-slate-50">
@@ -43,9 +52,13 @@ export default function JavniProfil() {
         </button>
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="rounded-full ring-4 ring-teal-400">
-              <Avatar id={profile.avatar} size={88} />
-            </div>
+            <Avatar
+              id={profile.avatar}
+              size={88}
+              className={equippedFrame(profile) ? '' : 'ring-4 ring-teal-400'}
+              badges={featuredBadgeEmojis(profile, badges)}
+              frame={equippedFrame(profile)}
+            />
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-teal-600 px-3 py-0.5 text-xs font-bold shadow">
               Lvl {level}
             </span>
@@ -66,27 +79,9 @@ export default function JavniProfil() {
         <Stat icon="🛡️" label="Klan" value={profile.clan || '—'} />
       </div>
 
-      {/* Tačnost po oblastima */}
-      <section className="mx-4 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-lg font-bold text-slate-800">Tačnost po oblastima</h2>
-        {accuracyEntries.length === 0 ? (
-          <p className="text-sm text-slate-400">Još nema odigranih kvizova.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {accuracyEntries.map(([cat, pct]) => (
-              <div key={cat}>
-                <div className="mb-1 flex justify-between text-sm text-slate-600">
-                  <span>{cat}</span>
-                  <span className="font-semibold">{pct}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div className="h-2 rounded-full bg-teal-600" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* Tačnost po oblastima se NE prikazuje na tuđem profilu — to je uvid u
+          vlastite slabe tačke, koristan igraču, a ne podatak za javnost.
+          Ostaje samo na /profil. */}
     </div>
   )
 }

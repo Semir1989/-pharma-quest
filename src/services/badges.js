@@ -1,5 +1,6 @@
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
+import { featuredBadgeSlots, levelFromXp } from '../utils/levels'
 
 // Servis za bedževe (achievements).
 // Definicije žive u Firestore 'badges' kolekciji (admin skripta postavi-bedzeve.js),
@@ -17,6 +18,22 @@ export function getBadges() {
     })
   }
   return badgesPromise
+}
+
+// Emojiji bedževa koje je igrač istakao na avataru — koristi ih i vlastiti i
+// javni profil, pa filter mora živjeti na jednom mjestu.
+//
+// Filtrira se i pri ČITANJU, ne samo pri upisu: broj mjesta ovisi o levelu, a
+// osvojeni bedževi dolaze sa servera. Igrač koji je istakao tri bedža ne smije
+// zadržati sva tri ako lista bedževa ili pravila levela ikad odu unazad.
+export function featuredBadgeEmojis(profile, badges) {
+  const byId = new Map((badges || []).map((b) => [b.id, b]))
+  const earned = profile?.badges || {}
+  return (profile?.featuredBadges || [])
+    .filter((id) => earned[id])
+    .slice(0, featuredBadgeSlots(levelFromXp(profile?.xp)))
+    .map((id) => byId.get(id)?.emoji)
+    .filter(Boolean)
 }
 
 async function fetchBadges() {

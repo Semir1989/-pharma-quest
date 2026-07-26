@@ -483,8 +483,79 @@ async function awardBadges(uid) {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Kozmetika: okviri avatara (Etapa 9)
+// Okvir ne nosi NIJEDAN XP niti ijednu prednost u igri — čist status. Dodjeljuje
+// ga isključivo server; klijent iz osvojenih bira samo koji nosi (cosmetics.frame).
+// Katalog id-eva živi u src/data/cosmetics.js — ovdje se id-evi samo sastavljaju.
+// ---------------------------------------------------------------------------
+const SURVIVAL_FRAME_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+const DUEL_WIN_FRAMES = [
+  { wins: 25, id: 'dl-win25' },
+  { wins: 10, id: 'dl-win10' },
+  { wins: 5, id: 'dl-win5' },
+  { wins: 1, id: 'dl-win1' },
+]
+const XP_RACE_SCORE_FRAMES = [
+  { xp: 2000, id: 'xp-2000' },
+  { xp: 1000, id: 'xp-1000' },
+  { xp: 500, id: 'xp-500' },
+]
+
+// Dodaje okvire u cosmetics.owned, bez duplikata. Vraća SAMO stvarno nove —
+// klijent na osnovu toga može javiti igraču da je nešto otključao.
+async function awardCosmetics(uid, ids) {
+  const trazeni = (ids || []).filter(Boolean)
+  if (trazeni.length === 0) return []
+  const ref = db.doc(`users/${uid}`)
+  let dodani = []
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(ref)
+    if (!s.exists) return
+    const owned = s.data().cosmetics?.owned || []
+    dodani = trazeni.filter((id) => !owned.includes(id))
+    if (dodani.length === 0) return
+    tx.update(ref, { 'cosmetics.owned': [...owned, ...dodani] })
+  })
+  return dodani
+}
+
+// Brojači koji se ne daju izvesti iz jednog eventa (ukupne pobjede u duelima,
+// broj osvojenih turnira i trka). Drže se na profilu pod cosmeticStats.
+async function bumpCosmeticStat(uid, field, by = 1) {
+  const ref = db.doc(`users/${uid}`)
+  let value = 0
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(ref)
+    if (!s.exists) return
+    value = (s.data().cosmeticStats?.[field] || 0) + by
+    tx.update(ref, { [`cosmeticStats.${field}`]: value })
+  })
+  return value
+}
+
 // Pomoćne funkcije: leaderboard (RTDB)
 // ---------------------------------------------------------------------------
+
+// Igrači skriveni s ljestvica (users/{uid}.hideFromBoards). Služi test/admin
+// nalozima: XP im se i dalje normalno sabira, jer bez toga ne mogu testirati
+// ništa što ovisi o levelu — samo ih niko ne vidi u poretku.
+// Pokriva sva četiri poretka: globalni, sedmični, XP trka i Preživljavanje.
+function isHidden(profile) {
+  return profile?.hideFromBoards === true
+}
+
+// Uklanja igrača sa SVIH ljestvica — zove se kad se skrivanje uključi, da
+// zatečeni unosi ne ostanu visjeti do sljedećeg upisa.
+async function purgeFromBoards(uid) {
+  const updates = { [`leaderboard/global/${uid}`]: null }
+  updates[`leaderboard/weekly/${weeklyKey()}/${uid}`] = null
+  updates[`survival/${survivalWeekKey()}/${uid}`] = null
+  const cfg = await getTournamentConfig()
+  if (cfg?.key) updates[`tournament/${cfg.key}/${uid}`] = null
+  await rtdb.ref().update(updates)
+}
+
 function leaderboardEntry(profile, level) {
   return {
     name: profile.displayName || 'Farmaceut',
@@ -495,6 +566,7 @@ function leaderboardEntry(profile, level) {
 }
 
 async function syncLeaderboard(uid, profile, totalXp, weeklyDelta, level) {
+  if (isHidden(profile)) return
   const updates = {}
   updates[`leaderboard/global/${uid}`] = { ...leaderboardEntry(profile, level), xp: totalXp }
   await rtdb.ref().update(updates)
@@ -882,11 +954,13 @@ async function addWeekendXp(uid, delta) {
   if ((cfg.openAt && now < cfg.openAt) || (cfg.closeAt && now > cfg.closeAt)) return
   const us = await db.doc(`users/${uid}`).get()
   const p = us.exists ? us.data() : {}
-  await rtdb.ref(`tournament/${cfg.key}/${uid}`).transaction((cur) => ({
-    name: p.displayName || 'Farmaceut',
-    avatar: p.avatar || 'a1',
-    xp: (cur?.xp || 0) + delta,
-  }))
+  if (!isHidden(p)) {
+    await rtdb.ref(`tournament/${cfg.key}/${uid}`).transaction((cur) => ({
+      name: p.displayName || 'Farmaceut',
+      avatar: p.avatar || 'a1',
+      xp: (cur?.xp || 0) + delta,
+    }))
+  }
   // Questovi vezani za turnir (metric 'tournamentXp') prate isti prozor.
   await applyProgress(uid, { tournamentXp: delta })
 }
@@ -916,7 +990,42 @@ async function finalizeXpRace(tid) {
       })
     }
   }
+  await awardXpRaceFrames(tid, rows)
   await db.doc(`xpRaces/${tid}`).set({ finalized: true, top, finalizedAt: FieldValue.serverTimestamp() })
+}
+
+// Okviri XP trke. Podijum ide iz `top3` (već poredanog), a pragovi osvojenog
+// XP-a se dijele SVIM učesnicima — zato se ovdje čita cijeli čvor, ne samo
+// prva tri. 'xp-nova' traži tri osvojene trke, pa ide preko brojača.
+async function awardXpRaceFrames(tid, top3) {
+  const snap = await rtdb.ref(`tournament/${tid}`).get()
+  const svi = Object.entries(snap.val() || {})
+    .map(([uid, row]) => ({ uid, xp: row?.xp || 0 }))
+    .filter((r) => r.xp > 0)
+    .sort((a, b) => b.xp - a.xp)
+  const PODIJUM = ['xp-1', 'xp-2', 'xp-3']
+
+  for (const { uid, xp } of svi) {
+    const ids = ['xp-run']
+    const prag = XP_RACE_SCORE_FRAMES.find((p) => xp >= p.xp)
+    if (prag) ids.push(prag.id)
+    await awardCosmetics(uid, ids)
+    // 'Serija' — treća odigrana trka, bez obzira na plasman.
+    const trka = await bumpCosmeticStat(uid, 'xpRaceRuns')
+    if (trka >= 3) await awardCosmetics(uid, ['xp-hat3'])
+  }
+
+  // 'Kometa' — najbolji odmah iza podijuma; nagrada za trud bez trofeja.
+  if (svi.length > PODIJUM.length) await awardCosmetics(svi[PODIJUM.length].uid, ['xp-comet'])
+
+  for (let i = 0; i < Math.min(top3.length, PODIJUM.length); i++) {
+    const uid = top3[i].uid
+    await awardCosmetics(uid, [PODIJUM[i]])
+    if (i === 0) {
+      const pobjeda = await bumpCosmeticStat(uid, 'xpRaceWins')
+      if (pobjeda >= 3) await awardCosmetics(uid, ['xp-nova'])
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1066,6 +1175,51 @@ async function finalizeTournament(tid, rounds) {
       if (!s.exists) return
       tx.update(uRef, { xp: (s.data().xp || 0) + DUEL_WINNER_BONUS, [`badges.turnir-sampion`]: FieldValue.serverTimestamp() })
     })
+  }
+  await awardDuelFrames(tid, rounds, winner)
+}
+
+// Okviri duel turnira. Sve se izvodi iz mečeva jednog turnira, pa nema potrebe
+// za praćenjem po rundi: učešće, polufinale, finale, titula i ukupne pobjede.
+async function awardDuelFrames(tid, rounds, winner) {
+  const [pSnap, mSnap] = await Promise.all([
+    db.collection(`tournaments/${tid}/participants`).get(),
+    db.collection(`tournaments/${tid}/matches`).get(),
+  ])
+  const mecevi = mSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+
+  // Učešće — svima koji su bili u bracketu.
+  for (const d of pSnap.docs) await awardCosmetics(d.id, ['dl-part'])
+
+  // Finale i polufinale: id meča je r{runda}s{slot}.
+  const finale = mecevi.find((m) => m.id === `r${rounds}s0`)
+  if (finale) {
+    for (const uid of [finale.p1, finale.p2].filter(Boolean)) {
+      await awardCosmetics(uid, ['dl-final'])
+    }
+    // Puni skor u finalu je jedini "neporažen" koji nešto znači — u
+    // single-elimination bracketu pobjednik po definiciji nema poraza.
+    const puni =
+      finale.p1Score === DUEL_QUESTIONS ? finale.p1 : finale.p2Score === DUEL_QUESTIONS ? finale.p2 : null
+    if (winner && puni === winner) await awardCosmetics(winner, ['dl-unbeaten'])
+  }
+  for (const m of mecevi.filter((x) => x.id.startsWith(`r${rounds - 1}s`))) {
+    for (const uid of [m.p1, m.p2].filter(Boolean)) await awardCosmetics(uid, ['dl-semi'])
+  }
+
+  // Ukupne pobjede kroz sve turnire — brojač se uvećava za pobjede u OVOM.
+  const pobjedePo = {}
+  for (const m of mecevi) if (m.winner) pobjedePo[m.winner] = (pobjedePo[m.winner] || 0) + 1
+  for (const [uid, n] of Object.entries(pobjedePo)) {
+    const ukupno = await bumpCosmeticStat(uid, 'duelWins', n)
+    const prag = DUEL_WIN_FRAMES.find((p) => ukupno >= p.wins)
+    if (prag) await awardCosmetics(uid, [prag.id])
+  }
+
+  if (winner) {
+    await awardCosmetics(winner, ['dl-champ'])
+    const titule = await bumpCosmeticStat(winner, 'duelTitles')
+    if (titule >= 3) await awardCosmetics(winner, ['dl-champ3'])
   }
 }
 
@@ -1219,6 +1373,7 @@ async function pickSurvivalQuestion(seen) {
 async function writeSurvivalLeaderboard(uid, week, streak) {
   const us = await db.doc(`users/${uid}`).get()
   const p = us.exists ? us.data() : {}
+  if (isHidden(p)) return
   await rtdb.ref(`survival/${week}/${uid}`).set({
     name: p.displayName || 'Farmaceut',
     avatar: p.avatar || 'a1',
@@ -1373,6 +1528,10 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   })
   await writeSurvivalLeaderboard(uid, week, newStreak)
   const newBadges = await awardBadges(uid)
+  // Okvir na svakom 10. koraku niza — isti pragovi kao kovčezi.
+  const newFrames = SURVIVAL_FRAME_STEPS.includes(newStreak)
+    ? await awardCosmetics(uid, [`sv-${newStreak}`])
+    : []
 
   const remaining = (await getActiveQuestions()).length - (run.seen || []).length
   return {
@@ -1387,7 +1546,303 @@ export const submitSurvivalAnswer = onCall(async (request) => {
     chestReward, // > 0 kad je ovim odgovorom otključan kovčeg na ljestvici
     levelBonus,
     newBadges,
+    newFrames, // id-evi tek osvojenih okvira avatara
   }
+})
+
+// ---------------------------------------------------------------------------
+// ADMIN alati (Etapa 9) — sve traže custom claim admin:true.
+// Namjerno rade SAMO nad vlastitim nalogom osim gdje je izričito drugačije:
+// admin panel je alat za testiranje i gašenje požara, ne za mijenjanje tuđih
+// rezultata. Svaki poziv se upisuje u adminLog radi traga.
+// ---------------------------------------------------------------------------
+function requireAdmin(request) {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  if (request.auth?.token?.admin !== true) {
+    throw new HttpsError('permission-denied', 'Samo za administratore.')
+  }
+  return uid
+}
+
+async function adminLog(uid, action, detalji = {}) {
+  await db
+    .collection('adminLog')
+    .add({ uid, action, detalji, at: FieldValue.serverTimestamp() })
+    .catch(() => {})
+}
+
+// Reset sedmičnog pokušaja Preživljavanja — isto što radi scripts/reset-survival.js,
+// samo iz panela i uvijek nad SOBOM.
+export const adminResetSurvival = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const week = survivalWeekKey()
+  await db.doc(`survivalRuns/${uid}`).delete()
+  await rtdb.ref(`survival/${week}/${uid}`).remove()
+  await db.doc(`users/${uid}`).update({
+    'eventStatus.survival': true,
+    'taskProgress.daily.picked': null,
+    survivalChest: null, // da se animacije kovčega mogu ponovo vidjeti
+  })
+  await adminLog(uid, 'resetSurvival', { week })
+  return { ok: true, week }
+})
+
+// Postavljanje vlastitog XP-a — jedini način da se testira sve što ovisi o
+// levelu (istaknuti bedževi na 10/20/30, rangovi, XP bar).
+export const adminSetXp = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const xp = Math.max(0, Math.round(Number(request.data?.xp)))
+  if (!Number.isFinite(xp)) throw new HttpsError('invalid-argument', 'XP mora biti broj.')
+  await db.doc(`users/${uid}`).update({ xp })
+  await adminLog(uid, 'setXp', { xp })
+  return { ok: true, xp }
+})
+
+// Skrivanje s ljestvica. Uključivanje odmah briše zatečene unose sa sve četiri.
+export const adminSetHidden = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const hidden = request.data?.hidden === true
+  await db.doc(`users/${uid}`).update({ hideFromBoards: hidden })
+  if (hidden) await purgeFromBoards(uid)
+  await adminLog(uid, 'setHidden', { hidden })
+  return { ok: true, hidden }
+})
+
+// Dodjela/oduzimanje okvira sebi — za provjeru izgleda bez čekanja eventa.
+export const adminSetCosmetic = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { frameId, grant } = request.data || {}
+  if (typeof frameId !== 'string' || !frameId) {
+    throw new HttpsError('invalid-argument', 'Nedostaje frameId.')
+  }
+  const ref = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(ref)
+    if (!s.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const c = s.data().cosmetics || {}
+    const owned = c.owned || []
+    const next = grant === false ? owned.filter((x) => x !== frameId) : [...new Set([...owned, frameId])]
+    const patch = { 'cosmetics.owned': next }
+    // Ako se skida okvir koji je trenutno na avataru, mora se i skinuti.
+    if (grant === false && c.frame === frameId) patch['cosmetics.frame'] = null
+    tx.update(ref, patch)
+  })
+  await adminLog(uid, 'setCosmetic', { frameId, grant: grant !== false })
+  return { ok: true }
+})
+
+// Sve okvire odjednom (i skidanje svih) — najbrži put do pregleda kolekcije.
+export const adminGrantAllCosmetics = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const ids = Array.isArray(request.data?.ids) ? request.data.ids.filter((x) => typeof x === 'string') : []
+  const clear = request.data?.clear === true
+  if (clear) {
+    await db.doc(`users/${uid}`).update({ 'cosmetics.owned': [], 'cosmetics.frame': null })
+    await adminLog(uid, 'clearCosmetics')
+    return { ok: true, owned: 0 }
+  }
+  if (ids.length === 0) throw new HttpsError('invalid-argument', 'Nema id-eva.')
+  await db.doc(`users/${uid}`).update({ 'cosmetics.owned': ids })
+  await adminLog(uid, 'grantAllCosmetics', { count: ids.length })
+  return { ok: true, owned: ids.length }
+})
+
+// ---------------------------------------------------------------------------
+// ADMIN — kontrola eventa (Prioritet 1).
+// Vikend eventi su jedino što ima ROK: ako nešto zapne u subotu uveče, ovo su
+// poluge da se popravi bez skripte s računara. Oba configa server keširaju 30 s,
+// pa izmjena stupa na snagu najkasnije za pola minute.
+// ---------------------------------------------------------------------------
+
+// Prozor mora biti smislen, inače se event zaglavi na način koji se teško
+// dijagnostikuje: prijave prije igre, igra poslije prijava, sve rastuće.
+function validirajTurnirProzor({ regOpenAt, regCloseAt, openAt, closeAt }) {
+  const t = [regOpenAt, regCloseAt, openAt, closeAt]
+  if (t.some((x) => !Number.isFinite(x) || x <= 0)) {
+    throw new HttpsError('invalid-argument', 'Svi termini moraju biti brojevi (ms).')
+  }
+  if (regOpenAt >= regCloseAt) {
+    throw new HttpsError('invalid-argument', 'Prijave se moraju zatvoriti poslije otvaranja.')
+  }
+  if (regCloseAt > openAt) {
+    throw new HttpsError('invalid-argument', 'Igra ne smije početi prije zatvaranja prijava.')
+  }
+  if (openAt >= closeAt) {
+    throw new HttpsError('invalid-argument', 'Igra se mora završiti poslije početka.')
+  }
+}
+
+// Prozor turnira (config/tournament) — zamjenjuje scripts/postavi-turnir-config.js.
+export const adminSetTournamentConfig = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const d = request.data || {}
+  const key = typeof d.key === 'string' && d.key.trim() ? d.key.trim() : null
+  if (!key) throw new HttpsError('invalid-argument', 'Nedostaje ključ eventa.')
+  const prozor = {
+    regOpenAt: Number(d.regOpenAt),
+    regCloseAt: Number(d.regCloseAt),
+    openAt: Number(d.openAt),
+    closeAt: Number(d.closeAt),
+  }
+  validirajTurnirProzor(prozor)
+
+  const prije = await db.doc('config/tournament').get()
+  const stariKljuc = prije.exists ? prije.data().key : null
+  // Promjena ključa pravi NOVI event: bracket, prijave i XP trka žive pod
+  // ključem, pa se stari podaci ne miješaju s novim. Zato se posebno bilježi.
+  await db.doc('config/tournament').set({
+    enabled: d.enabled !== false,
+    ...prozor,
+    key,
+    label: typeof d.label === 'string' && d.label.trim() ? d.label.trim() : 'Vikend turnir',
+    updatedAt: FieldValue.serverTimestamp(),
+  })
+  tournamentConfigCache = null // ne čekaj 30 s na vlastitoj instanci
+  await adminLog(uid, 'setTournamentConfig', { ...prozor, key, noviKljuc: stariKljuc !== key })
+  return { ok: true, key, noviKljuc: stariKljuc !== key }
+})
+
+// Prozor Preživljavanja (config/survival).
+export const adminSetSurvivalConfig = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const openAt = Number(request.data?.openAt)
+  const closeAt = Number(request.data?.closeAt)
+  if (!Number.isFinite(openAt) || !Number.isFinite(closeAt) || openAt >= closeAt) {
+    throw new HttpsError('invalid-argument', 'Prozor mora biti rastući par termina.')
+  }
+  await db.doc('config/survival').set({
+    enabled: request.data?.enabled !== false,
+    openAt,
+    closeAt,
+    label: 'Sedmični izazov preživljavanja',
+    updatedAt: FieldValue.serverTimestamp(),
+  })
+  survivalConfigCache = null
+  await adminLog(uid, 'setSurvivalConfig', { openAt, closeAt })
+  return { ok: true }
+})
+
+// Prisilno zatvaranje tekuće runde. tournamentTick ide svakih 30 min — ovo je
+// poluga kad se runda zaglavi ili kad se ne čeka na raspored.
+export const adminForceResolveRound = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const snap = await db.doc(`tournaments/${cfg.key}`).get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Bracket još nije napravljen.')
+  const t = snap.data()
+  if (t.status !== 'active') {
+    throw new HttpsError('failed-precondition', `Turnir nije aktivan (status: ${t.status}).`)
+  }
+  const runda = t.currentRound
+  await resolveRound(cfg.key, t)
+  await adminLog(uid, 'forceResolveRound', { tid: cfg.key, runda })
+  return { ok: true, runda }
+})
+
+// Ponovna izgradnja bracketa iz trenutnih prijava. Briše mečeve i turnir doc,
+// pa gradi nanovo — za slučaj da je bracket napravljen s pogrešnim sastavom.
+// Prijave (participants) ostaju netaknute.
+export const adminRebuildBracket = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const tid = cfg.key
+  const mecevi = await db.collection(`tournaments/${tid}/matches`).get()
+  const batch = db.batch()
+  for (const d of mecevi.docs) batch.delete(d.ref)
+  batch.delete(db.doc(`tournaments/${tid}`))
+  await batch.commit()
+  await buildBracket(tid, cfg)
+  const novi = await db.doc(`tournaments/${tid}`).get()
+  await adminLog(uid, 'rebuildBracket', { tid, obrisanoMeceva: mecevi.size })
+  return { ok: true, ucesnika: novi.exists ? novi.data().participantCount || 0 : 0 }
+})
+
+// Otkazivanje turnira: gasi config i označava bracket kao otkazan.
+// `clearParticipants` uz to briše i prijave — koristi kad se event pomjera, da
+// se ljudi prijave nanovo i ne misle da su još u igri.
+export const adminCancelTournament = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const tid = cfg.key
+  await db.doc('config/tournament').set({ enabled: false }, { merge: true })
+  tournamentConfigCache = null
+  await db
+    .doc(`tournaments/${tid}`)
+    .set({ status: 'finished', cancelled: true, cancelledAt: FieldValue.serverTimestamp() }, { merge: true })
+
+  let obrisanePrijave = 0
+  if (request.data?.clearParticipants === true) {
+    const ps = await db.collection(`tournaments/${tid}/participants`).get()
+    const batch = db.batch()
+    for (const d of ps.docs) batch.delete(d.ref)
+    await batch.commit()
+    obrisanePrijave = ps.size
+  }
+  await adminLog(uid, 'cancelTournament', { tid, obrisanePrijave })
+  return { ok: true, obrisanePrijave }
+})
+
+// Finalizacija XP trke ODMAH, ne čekajući closeAt i tick. Ne radi ništa ako je
+// već finalizovana — dvostruka isplata nagrada ide samo preko poništavanja.
+export const adminFinalizeXpRaceNow = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const xr = await db.doc(`xpRaces/${cfg.key}`).get()
+  if (xr.exists && xr.data().finalized) {
+    throw new HttpsError('failed-precondition', 'XP trka je već finalizovana.')
+  }
+  await finalizeXpRace(cfg.key)
+  await adminLog(uid, 'finalizeXpRaceNow', { tid: cfg.key })
+  return { ok: true }
+})
+
+// Poništavanje finalizacije XP trke.
+// PAŽNJA: sljedeća finalizacija isplaćuje nagrade PONOVO — 500/300/150 XP
+// odlazi drugi put. Zato traži izričitu potvrdu i uvijek se loguje.
+export const adminUnfinalizeXpRace = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  if (request.data?.confirmDoublePay !== true) {
+    throw new HttpsError('failed-precondition', 'Potrebna je izričita potvrda dvostruke isplate.')
+  }
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  await db.doc(`xpRaces/${cfg.key}`).delete()
+  await adminLog(uid, 'unfinalizeXpRace', { tid: cfg.key })
+  return { ok: true }
+})
+
+// Trenutno stanje eventa za panel — jedan poziv umjesto pet čitanja s klijenta.
+export const adminEventStatus = onCall(async (request) => {
+  requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  const sur = await getSurvivalConfig()
+  let turnir = null
+  let prijava = 0
+  let xpTrka = null
+  if (cfg?.key) {
+    const [tSnap, pSnap, xSnap] = await Promise.all([
+      db.doc(`tournaments/${cfg.key}`).get(),
+      db.collection(`tournaments/${cfg.key}/participants`).count().get(),
+      db.doc(`xpRaces/${cfg.key}`).get(),
+    ])
+    turnir = tSnap.exists
+      ? {
+          status: tSnap.data().status,
+          currentRound: tSnap.data().currentRound || 0,
+          rounds: tSnap.data().rounds || 0,
+          cancelled: !!tSnap.data().cancelled,
+          roundDeadlines: tSnap.data().roundDeadlines || [],
+        }
+      : null
+    prijava = pSnap.data().count
+    xpTrka = xSnap.exists ? { finalized: !!xSnap.data().finalized } : null
+  }
+  return { tournament: cfg || null, survival: sur || null, turnir, prijava, xpTrka, now: Date.now() }
 })
 
 // ---------------------------------------------------------------------------
@@ -1398,6 +1853,12 @@ export const syncProfileToLeaderboard = onDocumentWritten('users/{uid}', async (
   const after = event.data?.after
   if (!after?.exists) return // profil obrisan — ništa
   const profile = after.data()
+  // Skriveni igrač se ne upisuje, nego BRIŠE — inače bi zatečeni unos ostao
+  // na ljestvici zauvijek poslije uključivanja skrivanja.
+  if (isHidden(profile)) {
+    await rtdb.ref(`leaderboard/global/${event.params.uid}`).remove()
+    return
+  }
   const cfg = await getLevelConfig()
   const totalXp = profile.xp || 0
   await rtdb.ref(`leaderboard/global/${event.params.uid}`).set({

@@ -13,6 +13,7 @@ import Home from './pages/Home'
 import Kviz from './pages/Kviz'
 import Questovi from './pages/Questovi'
 import Arena from './pages/Arena'
+import Okviri from './pages/Okviri'
 import Prezivljavanje from './pages/Prezivljavanje'
 import Turnir from './pages/Turnir'
 import Duel from './pages/Duel'
@@ -67,6 +68,7 @@ function App() {
               <Route path="/kviz" element={<Kviz />} />
               <Route path="/questovi" element={<Questovi />} />
               <Route path="/arena" element={<Arena />} />
+              <Route path="/okviri" element={<Okviri />} />
               <Route path="/prezivljavanje" element={<Prezivljavanje />} />
               <Route path="/turnir" element={<Turnir />} />
               <Route path="/duel" element={<Duel />} />

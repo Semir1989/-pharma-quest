@@ -18,6 +18,12 @@ export async function getTournamentConfig() {
   return configCache
 }
 
+// Admin panel je zove poslije izmjene prozora — bez toga bi admin do reloada
+// gledao stari config i mislio da izmjena nije prošla.
+export function invalidateTournamentConfig() {
+  configCache = null
+}
+
 // Jesam li prijavljen za duel turnir — jedan read vlastitog dokumenta
 // (ne cijele kolekcije učesnika, koja treba samo ekranu /turnir).
 export async function isRegisteredForDuel(tid, uid) {

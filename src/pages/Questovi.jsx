@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTasks, progressForType, taskValue, claimTask, dailyTasksFor } from '../services/tasks'
 import { levelFromXp, rankFromLevel } from '../utils/levels'
@@ -19,6 +20,7 @@ import CircleProgress from '../components/CircleProgress'
 // jedan od njih je vezan za taj event (izbor pravi i zamrzne server).
 export default function Questovi() {
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
   const [dailyPicks, setDailyPicks] = useState(null) // 3 današnja dnevna questa
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
@@ -92,8 +94,20 @@ export default function Questovi() {
     )
   }
 
+  // Questovi više nisu tab u donjoj navigaciji (zamijenila ih je Arena), pa
+  // ekran mora imati vlastiti izlaz. Nazad kroz historiju kad je ima, inače na
+  // početnu — da deep link ili reload ne izbace igrača iz aplikacije.
+  function nazad() {
+    if (window.history.state?.idx > 0) navigate(-1)
+    else navigate('/')
+  }
+
   return (
     <div className="p-4">
+      <button onClick={nazad} className="-ml-1 mb-2 font-bold text-teal-700 active:opacity-70">
+        ← Nazad
+      </button>
+
       {/* Naslov + level */}
       <div className="flex items-center justify-between">
         <h1 className="font-title text-3xl font-extrabold text-slate-900">Questovi</h1>

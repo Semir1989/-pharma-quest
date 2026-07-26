@@ -15,7 +15,7 @@ export default function Arena() {
   // undefined = još učitavam, null = nema configa. Bez te razlike bi prazno
   // stanje bljesnulo na svakom ulasku prije nego config stigne.
   const [cfg, setCfg] = useState(undefined)
-  const { signals, markSeen } = useArenaAlert()
+  const { signals } = useArenaAlert()
 
   useEffect(() => {
     let alive = true
@@ -26,13 +26,6 @@ export default function Arena() {
       alive = false
     }
   }, [])
-
-  // Posjeta gasi signal u navigaciji do sutra (ili do novog eventa).
-  const signalKey = signals.join(',')
-  useEffect(() => {
-    if (signalKey) markSeen()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signalKey])
 
   const weekendLive = !!cfg?.enabled && !!cfg?.key
   const cfgLoaded = cfg !== undefined

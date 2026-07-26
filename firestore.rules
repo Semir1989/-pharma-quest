@@ -10,22 +10,62 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.admin == true;
     }
 
-    // 'users' dokumenti
+    // -----------------------------------------------------------------------
+    // 'users' — profil igrača.
+    //
+    // XP, statistika, taskovi, bedževi i osvojena kozmetika su ISKLJUČIVO
+    // serverski. Klijentu je otvoreno tačno pet polja, i svako od njih je
+    // kozmetika bez ijednog XP-a:
+    //
+    //   displayName, avatar   — osnovni podaci profila
+    //   survivalChest         — "animaciju kovčega sam vidio". Bonus isplaćuje
+    //                           server čim niz dostigne prag; falsifikovanje
+    //                           ove oznake ne donosi ništa.
+    //   featuredBadges        — koji se od OSVOJENIH bedževa vide na avataru
+    //   cosmetics.frame       — koji se od OSVOJENIH okvira nosi
+    // -----------------------------------------------------------------------
     match /users/{userId} {
-      // Svaki prijavljen korisnik može čitati profile (za leaderboard/javne profile).
+
+      // Istaknuti bedževi smiju biti samo stvarno osvojeni (users/{uid}.badges
+      // upisuje server) i najviše tri — koliko nosi najviši nivo otključavanja
+      // (level 30). Tačan broj mjesta po levelu drži UI (utils/levels.js): level
+      // se računa iz XP krive u config/levels, koju pravila ne mogu čitati.
+      // Najgore što se može izvući je da igrač na nižem levelu pokaže tri VEĆ
+      // OSVOJENA bedža — čista kozmetika.
+      function validFeaturedBadges() {
+        return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['featuredBadges'])
+               || (request.resource.data.featuredBadges is list
+                   && request.resource.data.featuredBadges.size() <= 3
+                   && request.resource.data.featuredBadges
+                        .hasOnly(resource.data.get('badges', {}).keys()));
+      }
+
+      // Kozmetika: mijenja se SAMO cosmetics.frame, i to na okvir koji igrač
+      // stvarno posjeduje. Lista osvojenih (cosmetics.owned) mora ostati
+      // identična — inače bi si igrač sam dodijelio sve okvire.
+      function validCosmetics() {
+        return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['cosmetics'])
+               || (request.resource.data.cosmetics.get('owned', [])
+                     == resource.data.get('cosmetics', {}).get('owned', [])
+                   && (request.resource.data.cosmetics.get('frame', null) == null
+                       || request.resource.data.cosmetics.get('frame', null)
+                            in request.resource.data.cosmetics.get('owned', [])));
+      }
+
+      // Čitanje: svaki prijavljen korisnik (leaderboard i javni profili).
       allow read: if request.auth != null;
+
       // Kreiranje: samo vlastiti profil, i XP mora krenuti od nule.
       allow create: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.xp == 0;
-      // Izmjena: samo vlastiti profil, i SAMO ime/avatar — XP, statistika,
-      // taskovi i sve ostalo su rezervisani za server.
-      // Izuzetak: survivalChest (zadnji kovčeg koji je igrač OTVORIO na
-      // ljestvici Preživljavanja, uz sedmicu). To nije XP polje — bonus
-      // isplaćuje server čim niz dostigne prag (submitSurvivalAnswer); ovo je
-      // samo oznaka "animaciju sam vidio", pa falsifikovanje ne donosi ništa.
+
       allow update: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['displayName', 'avatar', 'survivalChest']);
+                         .hasOnly(['displayName', 'avatar', 'survivalChest',
+                                   'featuredBadges', 'cosmetics'])
+                    && validFeaturedBadges()
+                    && validCosmetics();
+
       allow delete: if false;
     }
 
@@ -38,8 +78,13 @@ service cloud.firestore {
       allow write: if isAdmin(); // admin panel; inače uvoz preko Admin SDK-a
     }
 
-    // 'config' — konfiguracija igre (XP kriva, survival prozor...).
-    // Čitanje za prijavljene; piše admin (panel) ili Admin SDK.
+    // 'config' — konfiguracija igre (XP kriva, prozori turnira i Preživljavanja).
+    // Čitanje za prijavljene (kartice eventa čitaju prozor).
+    // Pisanje: admin. NAPOMENA — admin panel prozore mijenja preko Cloud
+    // Functiona (adminSetTournamentConfig), koji provjerava da je prozor
+    // rastuć i loguje izmjenu. Direktan upis s klijenta te provjere zaobilazi;
+    // ako se ikad poželi zatvoriti, ovdje se stavi `false` i sve ide kroz
+    // funkcije (Admin SDK u skriptama ionako zaobilazi pravila).
     match /config/{docId} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -102,6 +147,13 @@ service cloud.firestore {
     // piše samo server (finalizacija u tournamentTick).
     match /xpRaces/{key} {
       allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // 'adminLog' — trag svake radnje iz admin panela. Piše ISKLJUČIVO server
+    // (Admin SDK); admin ga smije čitati da vidi šta je i kada mijenjano.
+    match /adminLog/{entryId} {
+      allow read: if isAdmin();
       allow write: if false;
     }
   }
