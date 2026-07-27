@@ -1,6 +1,7 @@
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '../firebase'
+import { kesiranoUzVerziju } from '../utils/kesSadrzaja'
 
 // Indeks banke (bank/index) je ono iz čega server bira pitanja. Svaka izmjena
 // pitanja mora ga obnoviti, inače nova pitanja ne uđu u kviz. Gradi ga server.
@@ -15,11 +16,34 @@ export async function rebuildBankIndex() {
 // korisniku s custom claimom admin:true.
 
 // Sva pitanja (javni dio), sortirana po kategoriji pa tekstu.
+//
+// Panel radi pretragu po TEKSTU kroz cijelu banku — to je njegova glavna svrha
+// (naći pitanje na koje se tester požalio). Firestore ne zna pretragu po
+// podnizu, pa paginacija s limit()/startAfter tu ne pomaže: ili se povuče sve,
+// ili se izgubi pretraga.
+//
+// Zato: povuci sve JEDNOM i zapamti u localStorage, a svježinu potvrdi
+// verzijom iz bank/index (1 čitanje). Svaki admin snimak diže tu verziju
+// (rebuildBankIndex), pa keš pada tačno kad treba. Ranije je svako otvaranje
+// panela koštalo 642 čitanja.
 export async function getAllQuestions() {
-  const snap = await getDocs(collection(db, 'questions'))
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.text || '').localeCompare(b.text || ''))
+  let verzija = ''
+  try {
+    const idx = await getDoc(doc(db, 'bank', 'index'))
+    verzija = idx.exists() ? String(idx.data().version ?? '') : ''
+  } catch {
+    verzija = '' // bez verzije se keš preskače i čita se iz baze
+  }
+  return kesiranoUzVerziju('admin.questions', verzija, async () => {
+    const snap = await getDocs(collection(db, 'questions'))
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort(
+        (a, b) =>
+          (a.category || '').localeCompare(b.category || '') ||
+          (a.text || '').localeCompare(b.text || '')
+      )
+  })
 }
 
 // Tajni dio jednog pitanja (tačan odgovor + objašnjenje).

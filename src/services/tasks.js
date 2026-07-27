@@ -1,6 +1,7 @@
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { periodKey } from '../utils/periods'
+import { kesirano } from '../utils/kesSadrzaja'
 import { claimTaskReward, ensureDailyQuests } from './quizApi'
 
 // Servis za task sistem (Modul 6).
@@ -25,7 +26,13 @@ export function getTasks() {
   return tasksPromise
 }
 
-async function fetchTasks() {
+// Keširano u localStorage uz config/content.version — questovi se renderuju
+// odmah pri otvaranju aplikacije, bez čekanja mreže (ranije 33 čitanja).
+function fetchTasks() {
+  return kesirano('tasks', dovuciTaskove)
+}
+
+async function dovuciTaskove() {
   const snap = await getDocs(query(collection(db, 'tasks'), where('active', '==', true)))
   const grouped = { daily: [], weekly: [], monthly: [] }
   for (const d of snap.docs) {

@@ -86,10 +86,15 @@ service cloud.firestore {
 
     // 'bank' — izvedeni indeks banke pitanja (bank/index): metapodaci svih
     // aktivnih pitanja u jednom dokumentu, iz kojeg server bira pitanja umjesto
-    // da skenira cijelu kolekciju. Piše ga i čita ISKLJUČIVO server (Admin SDK
-    // zaobilazi pravila); klijentu nije potreban nizašta.
+    // da skenira cijelu kolekciju. Piše ga ISKLJUČIVO server (Admin SDK
+    // zaobilazi pravila, callable adminRebuildBankIndex).
+    //
+    // Čitanje je otvoreno samo adminu: panel njime provjerava je li njegov
+    // localStorage keš banke još svjež. Obični igrač ga ne treba — pitanja mu
+    // servira Cloud Function. Ne sadrži tačne odgovore, samo id/points/category.
     match /bank/{docId} {
-      allow read, write: if false;
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // 'config' — konfiguracija igre (XP kriva, prozori turnira i Preživljavanja).

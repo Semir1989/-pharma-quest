@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -8,6 +8,8 @@ import {
   subscribeTournament,
   subscribeParticipants,
   subscribeMatches,
+  isRegisteredForDuel,
+  countDuelParticipants,
 } from '../services/tournament'
 import { registerForDuel } from '../services/quizApi'
 import { track } from '../services/analytics'
@@ -26,6 +28,8 @@ export default function Turnir() {
   const [registering, setRegistering] = useState(false)
   const [regError, setRegError] = useState('')
   const [xpRace, setXpRace] = useState(null)
+  const [amRegistered, setAmRegistered] = useState(false)
+  const [participantCount, setParticipantCount] = useState(0)
 
   useEffect(() => {
     getTournamentConfig().then(setCfg).catch(() => setCfg(null))
@@ -40,16 +44,38 @@ export default function Turnir() {
     if (!cfg?.key) return
     const u1 = subscribeTournamentLeaderboard(cfg.key, setRows)
     const u2 = subscribeTournament(cfg.key, setTour)
-    const u3 = subscribeParticipants(cfg.key, setParticipants)
-    const u4 = subscribeMatches(cfg.key, setMatches)
-    return () => { u1(); u2(); u3(); u4() }
+    const u3 = subscribeMatches(cfg.key, setMatches)
+    return () => { u1(); u2(); u3() }
   }, [cfg?.key])
+
+  // Imena i avatari učesnika trebaju SAMO bracketu. Dok se bracket ne napravi
+  // (a to je većina sedmice), kolekcija se uopšte ne čita — ranije ju je svaki
+  // ulazak na /turnir povlačio cijelu.
+  const bracketPostoji = matches.length > 0
+  useEffect(() => {
+    if (!cfg?.key || !bracketPostoji) return
+    return subscribeParticipants(cfg.key, setParticipants)
+  }, [cfg?.key, bracketPostoji])
+
+  // "Jesam li prijavljen" i broj prijavljenih: jedan vlastiti dokument +
+  // agregacija (getCountFromServer), umjesto cijele kolekcije učesnika.
+  const osvjeziPrijavu = useCallback(async () => {
+    if (!cfg?.key || !user?.uid) return
+    const [prijavljen, broj] = await Promise.all([
+      isRegisteredForDuel(cfg.key, user.uid),
+      countDuelParticipants(cfg.key),
+    ])
+    setAmRegistered(prijavljen)
+    setParticipantCount(broj)
+  }, [cfg?.key, user?.uid])
+
+  useEffect(() => {
+    osvjeziPrijavu()
+  }, [osvjeziPrijavu])
 
   const now = Date.now()
   const playState = !cfg || !cfg.enabled ? 'off' : now < cfg.openAt ? 'soon' : now > cfg.closeAt ? 'ended' : 'live'
   const regState = !cfg ? 'off' : now < cfg.regOpenAt ? 'soon' : now > cfg.regCloseAt ? 'closed' : 'open'
-  const amRegistered = !!(user && participants[user.uid])
-  const participantCount = Object.keys(participants).length
   const rewardMap = Object.fromEntries((xpRace?.top || []).map((t) => [t.uid, t.reward]))
 
   async function register() {
@@ -58,6 +84,7 @@ export default function Turnir() {
     try {
       await registerForDuel()
       track('tournament_register')
+      await osvjeziPrijavu() // bez ovoga bi ekran ostao na "nisi prijavljen"
     } catch (e) {
       setRegError(e?.message || 'Greška pri prijavi.')
     } finally {

@@ -51,6 +51,7 @@ const BADGES = [
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })
 const db = getFirestore()
+const { oznaciIzmjenuSadrzaja } = await import('./_verzija-sadrzaja.js')
 
 const batch = db.batch()
 for (const { id, ...badge } of BADGES) {
@@ -60,4 +61,5 @@ await batch.commit()
 
 console.log(`✓ Upisano ${BADGES.length} bedževa u 'badges' kolekciju:`)
 for (const b of BADGES) console.log(`  ${b.emoji} ${b.name} — ${b.description}`)
+await oznaciIzmjenuSadrzaja(db)
 process.exit(0)

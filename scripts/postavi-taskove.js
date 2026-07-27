@@ -80,6 +80,7 @@ const DEACTIVATE = ['daily-kviz', 'daily-tacnih-7', 'daily-xp-80', 'weekly-kvizo
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })
 const db = getFirestore()
+const { oznaciIzmjenuSadrzaja } = await import('./_verzija-sadrzaja.js')
 
 const batch = db.batch()
 for (const { id, ...task } of TASKS) {
@@ -96,4 +97,5 @@ for (const t of TASKS) {
   console.log(`  [${t.type}] ${t.title}${tag} → +${t.reward} XP`)
 }
 console.log(`\n✓ Deaktivirano ${DEACTIVATE.length} starih taskova: ${DEACTIVATE.join(', ')}`)
+await oznaciIzmjenuSadrzaja(db)
 process.exit(0)

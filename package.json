@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "uvoz-pitanja": "node scripts/import-questions.js",
     "izgradi-indeks": "node scripts/izgradi-indeks-banke.js",
+    "oznaci-sadrzaj": "node scripts/oznaci-sadrzaj.js",
     "postavi-levele": "node scripts/postavi-level-config.js",
     "postavi-taskove": "node scripts/postavi-taskove.js",
     "postavi-bedzeve": "node scripts/postavi-bedzeve.js",

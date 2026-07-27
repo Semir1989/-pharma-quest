@@ -586,6 +586,8 @@ async function purgeFromBoards(uid) {
   await rtdb.ref().update(updates)
 }
 
+// NAPOMENA: polja koja se ovdje koriste odlučuju kada syncProfileToLeaderboard
+// smije preskočiti upis. Dodaš li polje ovdje, dodaj ga i u filter tamo.
 function leaderboardEntry(profile, level) {
   return {
     name: profile.displayName || 'Farmaceut',
@@ -2177,6 +2179,26 @@ export const syncProfileToLeaderboard = onDocumentWritten('users/{uid}', async (
   const after = event.data?.after
   if (!after?.exists) return // profil obrisan — ništa
   const profile = after.data()
+
+  // Filter: profil se piše mnogo češće nego što se ljestvica mijenja —
+  // taskProgress, quizLimit, lastQuizAt, eventStatus, survivalChest i sve
+  // ostalo okidaju ovaj trigger, a na ljestvici ne znače ništa. Bez ovoga je
+  // to ~1.500 uzaludnih invokacija i isto toliko RTDB upisa dnevno.
+  //
+  // Poredi se SAMO ono od čega unos zavisi (vidi leaderboardEntry i isHidden).
+  // Level se ne poredi jer je čista funkcija XP-a. AKO SE leaderboardEntry
+  // IKAD PROŠIRI NOVIM POLJEM, DODATI GA I OVDJE — inače ljestvica tiho
+  // zastari na tom polju.
+  const naLjestvici = (p) =>
+    JSON.stringify([
+      p.displayName || 'Farmaceut',
+      p.avatar || 'a1',
+      p.streak || 0,
+      p.xp || 0,
+      p.hideFromBoards === true,
+    ])
+  const prije = event.data?.before?.exists ? event.data.before.data() : null
+  if (prije && naLjestvici(prije) === naLjestvici(profile)) return
   // Skriveni igrač se ne upisuje, nego BRIŠE — inače bi zatečeni unos ostao
   // na ljestvici zauvijek poslije uključivanja skrivanja.
   if (isHidden(profile)) {

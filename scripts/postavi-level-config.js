@@ -31,9 +31,11 @@ const LEVEL_CONFIG = {
 
 initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })
 const db = getFirestore()
+const { oznaciIzmjenuSadrzaja } = await import('./_verzija-sadrzaja.js')
 
 await db.doc('config/levels').set({ ...LEVEL_CONFIG, updatedAt: new Date() })
 
 console.log('✓ XP kriva upisana u config/levels:')
 console.log(`  Level 2: ${LEVEL_CONFIG.baseXp} XP, svaki sljedeći +${LEVEL_CONFIG.stepXp} skuplji, max level ${LEVEL_CONFIG.maxLevel}`)
+await oznaciIzmjenuSadrzaja(db)
 process.exit(0)

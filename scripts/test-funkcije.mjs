@@ -78,15 +78,23 @@ const profile = (await db.doc(`users/${uid}`).get()).data()
 console.log(`✓ Profil poslije kviza: xp=${profile.xp}, dnevni kvizovi=${profile.taskProgress?.daily?.quizzes}, tačnih=${profile.taskProgress?.daily?.correct}`)
 if (profile.xp !== lastResult.summary.earnedXp) throw new Error('XP se ne slaže s rezultatom!')
 
-// 6. Pokušaj preuzeti nagradu za "Odigraj 1 kviz" (ispunjen) i "20 kvizova" (nije)
-const claim = await call('claimTask', { taskId: 'daily-kviz' })
-console.log(`✓ claimTask daily-kviz: +${claim.reward} XP`)
+// 6. Nagrade. Dnevni questovi se ROTIRAJU — server prima samo zadatak iz
+// zamrznutog izbora (taskProgress.daily.picked), pa test taj izbor postavlja
+// sam umjesto da se oslanja na nasumičnu rotaciju.
+const ISPUNJEN = 'daily-kviz-1' // cilj: 1 kviz — odigran gore
+const NEISPUNJEN = 'daily-xp-250' // cilj: 250 XP — jedan kviz ih ne donosi
+await db.doc(`users/${uid}`).update({
+  'taskProgress.daily.picked': [ISPUNJEN, NEISPUNJEN, 'daily-tacnih-12'],
+})
+
+const claim = await call('claimTask', { taskId: ISPUNJEN })
+console.log(`✓ claimTask ${ISPUNJEN}: +${claim.reward} XP`)
 const profile2 = (await db.doc(`users/${uid}`).get()).data()
 if (profile2.xp !== profile.xp + claim.reward) throw new Error('Nagrada nije upisana!')
 
 let blocked = false
 try {
-  await call('claimTask', { taskId: 'monthly-kvizovi-20' })
+  await call('claimTask', { taskId: NEISPUNJEN })
 } catch {
   blocked = true
 }
@@ -96,7 +104,7 @@ if (!blocked) throw new Error('Server dozvolio preuzimanje neispunjenog taska!')
 // 7. Dupli claim mora biti odbijen
 let doubleBlocked = false
 try {
-  await call('claimTask', { taskId: 'daily-kviz' })
+  await call('claimTask', { taskId: ISPUNJEN })
 } catch {
   doubleBlocked = true
 }

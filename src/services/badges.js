@@ -1,6 +1,7 @@
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { featuredBadgeSlots, levelFromXp } from '../utils/levels'
+import { kesirano } from '../utils/kesSadrzaja'
 
 // Servis za bedževe (achievements).
 // Definicije žive u Firestore 'badges' kolekciji (admin skripta postavi-bedzeve.js),
@@ -36,7 +37,13 @@ export function featuredBadgeEmojis(profile, badges) {
     .filter(Boolean)
 }
 
-async function fetchBadges() {
+// Keširano u localStorage uz config/content.version (ranije 14 čitanja po
+// otvaranju aplikacije).
+function fetchBadges() {
+  return kesirano('badges', dovuciBedzeve)
+}
+
+async function dovuciBedzeve() {
   const snap = await getDocs(query(collection(db, 'badges'), where('active', '==', true)))
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
