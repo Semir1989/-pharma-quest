@@ -56,7 +56,7 @@ export default function NotifikacijePostavke({ uid, profile }) {
         <div>
           <h2 className="text-lg font-bold text-slate-800">Notifikacije</h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            Najviše jedna poruka dnevno. Nikad noću.
+            Ujutro u 9 i uveče u 20. Ako si taj dan igrao — ništa ne stiže.
           </p>
         </div>
         {(stanje === 'iskljuceno' || ukljuceno) && (

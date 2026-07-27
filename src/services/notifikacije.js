@@ -24,10 +24,11 @@ const SW_URL = '/push-sw.js'
 const SW_SCOPE = '/push-scope'
 
 export const TIPOVI = {
+  dnevni: { label: 'Dnevni kviz', opis: 'Ujutro i uveče, ako taj dan nisi igrao' },
   streak: { label: 'Niz u opasnosti', opis: 'Kad ti niz ističe, a nisi igrao' },
   survival: { label: 'Preživljavanje', opis: 'Novi sedmični pokušaj (srijeda)' },
   turnir: { label: 'Turniri', opis: 'Otvaranje prijava i početak duela' },
-  energija: { label: 'Podsjetnik', opis: 'Ako te nema par dana' },
+  energija: { label: 'Povratak', opis: 'Ako te nema nekoliko dana' },
 }
 
 export const PODRAZUMIJEVANE_POSTAVKE = Object.fromEntries(

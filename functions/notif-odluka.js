@@ -4,11 +4,21 @@
 // što se najlakše pokvari, a ovako se mogu testirati bez emulatora i bez
 // slanja ijedne prave notifikacije (vidi scripts/test-notifikacije.mjs).
 
-// Manji broj = viši prioritet. Kad su dva razloga aktivna istovremeno, ide
-// samo jedan — onaj koji igraču znači više.
-export const NOTIF_PRIORITET = { streak: 1, survival: 2, turnir: 3, energija: 4 }
+// Manji broj = viši prioritet. Kad je više razloga aktivno istovremeno, ide
+// samo jedan — onaj koji igraču znači više. `dnevni` je namjerno zadnji: to je
+// zamjenska poruka koja ide kad nema ničeg konkretnijeg za reći.
+export const NOTIF_PRIORITET = {
+  streak: 1,
+  survival: 2,
+  turnir: 3,
+  energija: 4,
+  dnevni: 5,
+}
 
-export const NOTIF_RAZMAK = 20 * 60 * 60 * 1000 // najviše jedna poruka u 20h
+// Dva termina dnevno (9h i 20h) su 11 sati razmaknuta. Brana od 8h ne dira taj
+// raspored, nego sprječava dvije poruke u istom terminu ako tick ikad ponovi
+// izvršavanje (Cloud Scheduler garantuje "bar jednom", ne "tačno jednom").
+export const NOTIF_RAZMAK = 8 * 60 * 60 * 1000
 
 export function notifUkljucen(profile, tip) {
   return profile?.notifPrefs?.[tip] !== false // podrazumijevano UKLJUČENO
@@ -29,7 +39,7 @@ export function turnirskaPoruka(cfg, sada, sat) {
       url: '/turnir',
     }
   }
-  if (sat === 14 && tekPocelo(cfg.openAt)) {
+  if (sat === 20 && tekPocelo(cfg.openAt)) {
     return {
       tip: 'turnir',
       title: 'Duel turnir počinje 🏆',
@@ -49,7 +59,7 @@ export function kandidatiZaNotifikaciju(profile, kontekst) {
 
   // 1. NIZ U OPASNOSTI — najjača poruka, jer je vezana za nešto što igrač već
   // ima i ne želi izgubiti. Samo uveče i samo ako niz stvarno postoji.
-  if (sat === 19 && !igraoDanas && (profile.streak || 0) >= 2) {
+  if (sat === 20 && !igraoDanas && (profile.streak || 0) >= 2) {
     kandidati.push({
       tip: 'streak',
       title: `Niz od ${profile.streak} dana ističe u ponoć 🔥`,
@@ -71,11 +81,11 @@ export function kandidatiZaNotifikaciju(profile, kontekst) {
   // 3. TURNIR
   if (turnir) kandidati.push(turnir)
 
-  // 4. PODSJETNIK — igrača nema 3+ dana. Namjerno NIJE "energija ti je puna":
-  // onome ko igra svaki dan je to šum, a onome koga nema je nebitno.
+  // 4. POVRATAK — igrača nema 3+ dana. Ide ujutro, jer je to poruka za nekoga
+  // ko je ispao iz rutine pa mu treba cijeli dan da se vrati.
   // Gornja granica od 14 dana: ko je otišao prije dvije sedmice se ovime ne
   // vraća, a poruka bi mu samo smetala.
-  if (sat === 14 && !igraoDanas) {
+  if (sat === 9 && !igraoDanas) {
     const zadnji = profile.lastPlayDay ? Date.parse(profile.lastPlayDay) : NaN
     const danaBez = Number.isNaN(zadnji) ? null : Math.floor((sada - zadnji) / 86400000)
     if (danaBez !== null && danaBez >= 3 && danaBez <= 14) {
@@ -86,6 +96,34 @@ export function kandidatiZaNotifikaciju(profile, kontekst) {
         url: '/',
       })
     }
+  }
+
+  // 5. DNEVNI KVIZ — zamjenska poruka kad nema ničeg konkretnijeg.
+  //
+  // Uslov `!igraoDanas` je ono što je čini podnošljivom: ko je već odigrao
+  // danas ne dobija ništa. Bez toga bi ovo bilo obavještenje bez informacije,
+  // a to je najbrži način da igrač ugasi notifikacije zauvijek.
+  //
+  // Energija se puni na 3 svaki novi dan (vidi quizEnergyState), pa je jutarnja
+  // tvrdnja o punom spremniku tačna. Oba termina (9h i 20h po BiH) padaju u
+  // isti UTC dan kao i lokalni, pa se `lastPlayDay` (UTC ključ) i ovdje
+  // poklapa s onim što igrač smatra "danas".
+  if (!igraoDanas) {
+    kandidati.push(
+      sat === 9
+        ? {
+            tip: 'dnevni',
+            title: 'Energija je puna ⚡',
+            body: 'Tri kviza te čekaju danas.',
+            url: '/kviz',
+          }
+        : {
+            tip: 'dnevni',
+            title: 'Dnevni kviz te još čeka 📚',
+            body: 'Ima vremena do ponoći — deset pitanja, pet minuta.',
+            url: '/kviz',
+          }
+    )
   }
 
   return kandidati

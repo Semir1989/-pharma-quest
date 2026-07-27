@@ -2225,10 +2225,12 @@ export const syncProfileToLeaderboard = onDocumentWritten('users/{uid}', async (
 // Cilj je povratak igrača, a ne obavještavanje po svaku cijenu. Zato su brane
 // ugrađene u sam raspored, ne dopisane naknadno:
 //
-//   - tick ide SAMO tri puta dnevno po BiH vremenu (9, 14, 19h). Time nema
-//     noćnih poruka po konstrukciji, i čitanja su ~3x26 dnevno umjesto 48x26
-//     koliko bi bilo na pola sata — inače bi ovaj posao pojeo uštede iz P1-P6.
-//   - najviše JEDNA poruka dnevno po igraču (users.lastNotifAt)
+//   - tick ide SAMO dva puta dnevno po BiH vremenu (9 i 20h). Time nema
+//     noćnih poruka po konstrukciji, i čitanja su 2x(broj pretplaćenih) dnevno
+//     umjesto 48x svi igrači — inače bi ovaj posao pojeo uštede iz P1-P6.
+//   - dakle najviše DVIJE poruke dnevno, i to samo igraču koji taj dan NIJE
+//     igrao; ko je odigrao kviz ne dobija ništa (users.lastNotifAt + provjera
+//     lastPlayDay u notif-odluka.js)
 //   - svaki tip se može ugasiti zasebno (users.notifPrefs.<tip>)
 //   - kad su dva razloga aktivna istovremeno, šalje se onaj višeg prioriteta
 //
@@ -2286,7 +2288,7 @@ async function posaljiNotifikaciju(uid, tokeni, poruka) {
 }
 
 export const notifTick = onSchedule(
-  { schedule: '0 9,14,19 * * *', timeZone: BIH_TZ },
+  { schedule: '0 9,20 * * *', timeZone: BIH_TZ },
   async () => {
     const { hh: sat } = bihParts()
     const sada = Date.now()
