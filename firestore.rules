@@ -84,6 +84,14 @@ service cloud.firestore {
       allow write: if isAdmin(); // admin panel; inače uvoz preko Admin SDK-a
     }
 
+    // 'bank' — izvedeni indeks banke pitanja (bank/index): metapodaci svih
+    // aktivnih pitanja u jednom dokumentu, iz kojeg server bira pitanja umjesto
+    // da skenira cijelu kolekciju. Piše ga i čita ISKLJUČIVO server (Admin SDK
+    // zaobilazi pravila); klijentu nije potreban nizašta.
+    match /bank/{docId} {
+      allow read, write: if false;
+    }
+
     // 'config' — konfiguracija igre (XP kriva, prozori turnira i Preživljavanja).
     // Čitanje za prijavljene (kartice eventa čitaju prozor).
     // Pisanje: admin. NAPOMENA — admin panel prozore mijenja preko Cloud

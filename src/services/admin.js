@@ -1,5 +1,14 @@
 import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore'
-import { db } from '../firebase'
+import { httpsCallable } from 'firebase/functions'
+import { db, functions } from '../firebase'
+
+// Indeks banke (bank/index) je ono iz čega server bira pitanja. Svaka izmjena
+// pitanja mora ga obnoviti, inače nova pitanja ne uđu u kviz. Gradi ga server.
+const rebuildBankIndexFn = httpsCallable(functions, 'adminRebuildBankIndex')
+export async function rebuildBankIndex() {
+  const res = await rebuildBankIndexFn()
+  return res.data?.count ?? 0
+}
 
 // Admin servis (Etapa 8) — puni pristup banci pitanja za administratore.
 // Pravila (firestore.rules) dozvoljavaju write na questions/questionSecrets samo
@@ -19,10 +28,13 @@ export async function getQuestionSecret(id) {
   return s.exists() ? s.data() : { correctIndex: 0, explanation: '' }
 }
 
-// Spremi izmjene: javni dio u questions/{id}, tajni u questionSecrets/{id}.
+// Spremi izmjene: javni dio u questions/{id}, tajni u questionSecrets/{id},
+// pa obnovi indeks. Greška u obnovi se NE guta — bolje da admin ponovi
+// snimanje (idempotentno je) nego da izmjena tiho ostane van izbora pitanja.
 export async function saveQuestion(id, pub, secret) {
   await updateDoc(doc(db, 'questions', id), { ...pub, updatedAt: new Date() })
   await setDoc(doc(db, 'questionSecrets', id), secret, { merge: true })
+  await rebuildBankIndex()
 }
 
 // ID pitanja = hash teksta (isto kao import skripta) → isti tekst = isti dokument
@@ -37,5 +49,6 @@ export async function createQuestion(pub, secret) {
   const id = await sha1Id(pub.text)
   await setDoc(doc(db, 'questions', id), { ...pub, active: pub.active !== false, updatedAt: new Date() })
   await setDoc(doc(db, 'questionSecrets', id), secret)
+  await rebuildBankIndex()
   return id
 }

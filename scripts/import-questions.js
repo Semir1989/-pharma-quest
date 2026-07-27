@@ -122,4 +122,21 @@ for (let i = 0; i < questions.length; i += 250) {
 const total = (await col.count().get()).data().count
 console.log(`\n✓ Uvezeno ${written} pitanja iz "${jsonPath}".`)
 console.log(`✓ Ukupno pitanja u bazi: ${total}`)
+
+// ---- 5. Indeks banke (bank/index) ----
+// Cloud Functions biraju pitanja iz OVOG dokumenta, ne skeniranjem kolekcije.
+// Bez ovog koraka nova pitanja ne bi ušla u izbor. Držati na kraju uvoza.
+const snap = await col.where('active', '==', true).get()
+const items = snap.docs.map((d) => ({
+  id: d.id,
+  points: d.data().points,
+  category: d.data().category,
+}))
+await db.doc('bank/index').set({
+  version: Date.now(), // promjena verzije obara keš na instancama funkcija
+  count: items.length,
+  items,
+  updatedAt: new Date(),
+})
+console.log(`✓ Indeks banke izgrađen: ${items.length} aktivnih pitanja (bank/index)`)
 process.exit(0)

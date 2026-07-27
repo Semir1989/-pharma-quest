@@ -624,22 +624,85 @@ function publicQuestion(id, data, index, seconds = QUESTION_SECONDS) {
 
 // ---------------------------------------------------------------------------
 // Keš sadržaja (u memoriji instance) — ključno za smanjenje Firestore reads.
-// Bez ovoga startQuiz i SVAKI survival odgovor skeniraju cijelu banku (302 reads).
-// Keš se osvježi najviše jednom u CONTENT_TTL po instanci; admin izmjene se
-// vide poslije isteka TTL-a (do 10 min).
+//
+// Izbor pitanja treba SAMO metapodatke (id, points, category), a ne tekst i
+// opcije. Zato metapodaci svih aktivnih pitanja stoje u JEDNOM dokumentu
+// bank/index: { version, count, items: [{id, points, category}] }.
+// Cijena starta kviza / survival koraka je time 1 čitanje umjesto onoliko
+// koliko banka ima pitanja (642 na 26.07.2026, i raste sa svakim poglavljem).
+//
+// Tijela pitanja (tekst + opcije) se dovlače LIJENO, po id-u, samo za pitanje
+// koje se stvarno servira, i keširaju se vezano za `version` indeksa — ne po
+// vremenu. Dok se banka ne promijeni, isto pitanje se čita najviše jednom po
+// instanci; kad admin nešto snimi, version se promijeni i keš tijela pada.
+//
+// Indeks se osvježi najviše jednom u CONTENT_TTL po instanci, pa se admin
+// izmjene i dalje vide u roku od 10 minuta — isto kao ranije.
 // ---------------------------------------------------------------------------
 const CONTENT_TTL = 10 * 60 * 1000 // 10 min
-let questionsCache = null
-let questionsCacheAt = 0
+const BANK_INDEX_DOC = 'bank/index'
+
+let bankIndex = null // { version, items }
+let bankIndexAt = 0
+const questionBodies = new Map() // id -> puni dokument pitanja (ili null ako ga nema)
+
+// Metapodaci svih aktivnih pitanja. Vraća listu { id, points, category }.
 async function getActiveQuestions() {
-  if (questionsCache && Date.now() - questionsCacheAt < CONTENT_TTL) return questionsCache
-  const snap = await db.collection('questions').where('active', '==', true).get()
-  questionsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-  questionsCacheAt = Date.now()
-  return questionsCache
+  if (bankIndex && Date.now() - bankIndexAt < CONTENT_TTL) return bankIndex.items
+
+  const snap = await db.doc(BANK_INDEX_DOC).get()
+  const data = snap.exists ? snap.data() : null
+
+  if (data && Array.isArray(data.items) && data.items.length > 0) {
+    // Banka se promijenila od zadnjeg čitanja → tijela u kešu su možda stara.
+    if (bankIndex && bankIndex.version !== data.version) questionBodies.clear()
+    bankIndex = { version: data.version ?? null, items: data.items }
+    bankIndexAt = Date.now()
+    return bankIndex.items
+  }
+
+  // Indeks još nije izgrađen (prvi deploy prije uvoza, ili neuspio rebuild) →
+  // stari puni scan, da igra radi i bez njega. Scan je ionako povukao cijele
+  // dokumente, pa usput napuni i keš tijela.
+  const qs = await db.collection('questions').where('active', '==', true).get()
+  questionBodies.clear()
+  const items = qs.docs.map((d) => {
+    const q = d.data()
+    questionBodies.set(d.id, { id: d.id, ...q })
+    return { id: d.id, points: q.points, category: q.category }
+  })
+  bankIndex = { version: null, items }
+  bankIndexAt = Date.now()
+  return items
 }
+
+// Puni dokument pitanja. Vraća null ako pitanje ne postoji ili nije aktivno —
+// isto kao ranije, kad se tražilo u listi aktivnih.
 async function getQuestionById(id) {
-  return (await getActiveQuestions()).find((q) => q.id === id) || null
+  if (questionBodies.has(id)) return questionBodies.get(id)
+  const snap = await db.doc(`questions/${id}`).get()
+  const data = snap.exists ? snap.data() : null
+  const q = data && data.active === true ? { id, ...data } : null
+  questionBodies.set(id, q) // keširaj i promašaj — da se ne čita opet
+  return q
+}
+
+// Ponovna izgradnja bank/index iz kolekcije questions. Jedini pisac indeksa na
+// serveru; skripta za uvoz radi isto (scripts/import-questions.js).
+async function rebuildBankIndex() {
+  const snap = await db.collection('questions').where('active', '==', true).get()
+  const items = snap.docs.map((d) => ({
+    id: d.id,
+    points: d.data().points,
+    category: d.data().category,
+  }))
+  await db.doc(BANK_INDEX_DOC).set({
+    version: Date.now(), // svaka izmjena obara keš tijela na instancama
+    count: items.length,
+    items,
+    updatedAt: FieldValue.serverTimestamp(),
+  })
+  return items.length
 }
 
 // Tajni odgovori — keširani po id-u (TTL). questionSecrets/{id} ili fallback
@@ -764,6 +827,11 @@ export const startQuiz = onCall(async (request) => {
   }
   const chosen = all.slice(0, QUESTIONS_PER_QUIZ)
 
+  // Tekst prvog pitanja se dovlači PRIJE trošenja energije — da promašaj u
+  // banci ne pojede pokušaj.
+  const firstData = await getQuestionById(chosen[0].id)
+  if (!firstData) throw new HttpsError('internal', 'Pitanje nije dostupno, pokušaj ponovo.')
+
   const session = {
     uid,
     questions: chosen.map((q) => ({ id: q.id, points: q.points, category: q.category })),
@@ -796,7 +864,7 @@ export const startQuiz = onCall(async (request) => {
     used: QUIZ_ENERGY_MAX - poslije.energy,
     energy: poslije.energy,
     regenAt: poslije.regenAt,
-    question: publicQuestion(chosen[0].id, chosen[0], 0),
+    question: publicQuestion(chosen[0].id, firstData, 0),
   }
 })
 
@@ -1427,10 +1495,22 @@ async function survivalWindowClosed() {
 }
 
 // Nasumično aktivno pitanje koje NIJE u 'seen' listi (bez ponavljanja u run-u).
+// Bira se nad indeksom (metapodaci), pa se dovuče tekst samo za izabrano.
+// Vraća null kad je banka iscrpljena.
 async function pickSurvivalQuestion(seen) {
   const pool = (await getActiveQuestions()).filter((q) => !seen.includes(q.id))
   if (pool.length === 0) return null
-  return pool[Math.floor(Math.random() * pool.length)]
+  // Ako je indeks zastario pa izabrano pitanje više nije aktivno, probaj drugo.
+  // Bez ovoga bi jedno ugašeno pitanje vratilo null, a to gore znači "banka
+  // iscrpljena" i zatvorilo bi igraču run.
+  const preostalo = [...pool]
+  for (let poku = 0; poku < 5 && preostalo.length > 0; poku++) {
+    const i = Math.floor(Math.random() * preostalo.length)
+    const data = await getQuestionById(preostalo[i].id)
+    if (data) return data
+    preostalo.splice(i, 1)
+  }
+  return null
 }
 
 // Upis trenutnog niza u survival leaderboard (RTDB) — živo penjanje liste.
@@ -1794,6 +1874,17 @@ async function adminLog(uid, action, detalji = {}) {
     .add({ uid, action, detalji, at: FieldValue.serverTimestamp() })
     .catch(() => {})
 }
+
+// Ponovna izgradnja indeksa banke pitanja (bank/index). Zove je admin panel
+// poslije svakog snimanja pitanja — bez toga novo/izmijenjeno pitanje ne bi
+// ušlo u izbor. Skupa je koliko i jedan stari scan banke, ali se dešava samo
+// kad admin nešto snimi, a ne pri svakom kvizu.
+export const adminRebuildBankIndex = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const count = await rebuildBankIndex()
+  await adminLog(uid, 'rebuildBankIndex', { count })
+  return { count }
+})
 
 // Reset sedmičnog pokušaja Preživljavanja — isto što radi scripts/reset-survival.js,
 // samo iz panela i uvijek nad SOBOM.
