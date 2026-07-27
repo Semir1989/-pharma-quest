@@ -188,6 +188,14 @@ export async function adminEventStatus() {
   return (await adminEventStatusFn({})).data
 }
 
+// Objava svim igračima. NAMJERNO bez retryja iz omotača poziv(): ponovljena
+// objava svima je tačno ona greška koju ne smijemo napraviti. Server dodatno
+// odbija drugu objavu unutar 30 sekundi.
+const adminBroadcastFn = httpsCallable(functions, 'adminBroadcast')
+export async function adminBroadcast({ naslov, tekst, url, test = false }) {
+  return (await adminBroadcastFn({ naslov, tekst, url, test })).data
+}
+
 export async function adminSetTournamentConfig(cfg) {
   return (await adminSetTournamentConfigFn(cfg)).data
 }

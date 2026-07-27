@@ -1894,6 +1894,104 @@ export const adminRebuildBankIndex = onCall(async (request) => {
   return { count }
 })
 
+// ---------------------------------------------------------------------------
+// adminBroadcast — objava svim igračima, tekst piše admin.
+//
+// Za razliku od ostalih admin alata (koji rade samo nad vlastitim nalogom),
+// ovo dira SVE i NE MOŽE se povući kad ode. Zato tri brane:
+//   1. `test: true` šalje samo na admin-ove uređaje — da vidi kako izgleda
+//      prije nego ode svima;
+//   2. razmak od 30s između dvije objave, da dvostruki klik ili ponovljeni
+//      poziv ne pošalju istu objavu dvaput;
+//   3. igrači koji su ugasili tip 'najave' se preskaču — "ugasi notifikacije"
+//      mora vrijediti i za objave, inače je prekidač lažan.
+//
+// Objava NE gleda je li igrač danas igrao (nije podsjetnik na kviz) i ne pada
+// na branu od 8h, ali JESTE postavlja lastNotifAt — da automatska poruka ne
+// stigne minutu poslije objave.
+// ---------------------------------------------------------------------------
+const BROADCAST_RAZMAK = 30 * 1000
+const BROADCAST_MAX_NASLOV = 60
+const BROADCAST_MAX_TEKST = 160
+
+export const adminBroadcast = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { naslov, tekst, url, test } = request.data || {}
+
+  const t = String(naslov || '').trim()
+  const b = String(tekst || '').trim()
+  if (t.length < 3) throw new HttpsError('invalid-argument', 'Naslov je prekratak.')
+  if (t.length > BROADCAST_MAX_NASLOV)
+    throw new HttpsError('invalid-argument', `Naslov može imati najviše ${BROADCAST_MAX_NASLOV} znakova.`)
+  if (b.length < 3) throw new HttpsError('invalid-argument', 'Tekst je prekratak.')
+  if (b.length > BROADCAST_MAX_TEKST)
+    throw new HttpsError('invalid-argument', `Tekst može imati najviše ${BROADCAST_MAX_TEKST} znakova.`)
+
+  // Samo interne rute — objava ne smije voditi van aplikacije.
+  const cilj = typeof url === 'string' && /^\/[a-zA-Z0-9\-/]*$/.test(url) ? url : '/'
+
+  const poruka = {
+    title: t,
+    body: b,
+    url: cilj,
+    tip: 'najave',
+    tag: `najava-${Date.now()}`, // svaka objava stoji zasebno na ekranu
+  }
+
+  // --- Probno slanje: samo na vlastite uređaje ---
+  if (test) {
+    const meSnap = await db.doc(`users/${uid}`).get()
+    const mojiTokeni = meSnap.exists ? meSnap.data().fcmTokens || [] : []
+    if (mojiTokeni.length === 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Nemaš nijedan uređaj s uključenim notifikacijama. Uključi ih na Profilu pa probaj opet.'
+      )
+    }
+    const ok = await posaljiNotifikaciju(uid, mojiTokeni, poruka)
+    return { test: true, uredjaja: mojiTokeni.length, poslano: ok }
+  }
+
+  // --- Prava objava ---
+  const branaRef = db.doc('config/broadcast')
+  const branaSnap = await branaRef.get()
+  const zadnjaObjava = branaSnap.exists ? branaSnap.data().lastAt || 0 : 0
+  if (Date.now() - zadnjaObjava < BROADCAST_RAZMAK) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Prethodna objava je poslana prije manje od 30 sekundi. Sačekaj pa pokušaj ponovo.'
+    )
+  }
+  await branaRef.set({ lastAt: Date.now(), uid, naslov: t }, { merge: true })
+
+  const snap = await db.collection('users').where('notifOn', '==', true).get()
+  const sada = Date.now()
+  let primalaca = 0
+  let uredjaja = 0
+  let odjavljenih = 0
+
+  for (const d of snap.docs) {
+    const p = d.data()
+    if (p.notifPrefs?.najave === false) {
+      odjavljenih++
+      continue
+    }
+    const tokeni = p.fcmTokens || []
+    if (tokeni.length === 0) continue
+
+    const ok = await posaljiNotifikaciju(d.id, tokeni, poruka)
+    if (ok) {
+      primalaca++
+      uredjaja += tokeni.length
+      await d.ref.update({ lastNotifAt: sada, lastNotifTip: 'najave' }).catch(() => {})
+    }
+  }
+
+  await adminLog(uid, 'broadcast', { naslov: t, tekst: b, url: cilj, primalaca })
+  console.log(`adminBroadcast: "${t}" → ${primalaca} igrača / ${uredjaja} uređaja`)
+  return { primalaca, uredjaja, odjavljenih, pretplacenih: snap.size }
+})
+
 // Reset sedmičnog pokušaja Preživljavanja — isto što radi scripts/reset-survival.js,
 // samo iz panela i uvijek nad SOBOM.
 export const adminResetSurvival = onCall(async (request) => {
@@ -2254,6 +2352,10 @@ async function posaljiNotifikaciju(uid, tokeni, poruka) {
       body: poruka.body,
       url: poruka.url || '/',
       tip: poruka.tip,
+      // tag određuje hoće li nova poruka ZAMIJENITI staru na ekranu. Automatske
+      // poruke dijele tag po tipu (nema smisla gomilati tri podsjetnika na
+      // kviz), a objave dobiju svoj pa se ne brišu međusobno.
+      tag: poruka.tag || poruka.tip,
     },
     webpush: { headers: { Urgency: 'normal', TTL: '86400' } },
   })

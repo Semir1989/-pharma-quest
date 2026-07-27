@@ -24,6 +24,7 @@ const SW_URL = '/push-sw.js'
 const SW_SCOPE = '/push-scope'
 
 export const TIPOVI = {
+  najave: { label: 'Objave', opis: 'Poruke od administratora igre' },
   dnevni: { label: 'Dnevni kviz', opis: 'Ujutro i uveče, ako taj dan nisi igrao' },
   streak: { label: 'Niz u opasnosti', opis: 'Kad ti niz ističe, a nisi igrao' },
   survival: { label: 'Preživljavanje', opis: 'Novi sedmični pokušaj (srijeda)' },

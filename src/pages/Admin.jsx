@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import AdminObjava from '../components/AdminObjava'
 import { useAuth } from '../context/AuthContext'
 import { getAllQuestions, getQuestionSecret, saveQuestion, createQuestion } from '../services/admin'
 import {
@@ -98,6 +99,8 @@ export default function Admin() {
       </p>
 
       <EventKontrola />
+
+      <AdminObjava />
 
       <TestAlati profile={profile} />
 

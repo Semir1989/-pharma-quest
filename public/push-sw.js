@@ -38,8 +38,9 @@ self.addEventListener('push', (event) => {
       body: payload.body || '',
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
-      // tag po tipu → nova poruka istog tipa zamijeni staru umjesto da se gomila
-      tag: payload.tip || 'pharma-quest',
+      // Nova poruka istog taga zamijeni staru umjesto da se gomila. Automatske
+      // poruke dijele tag po tipu; admin objave dobiju svoj (server ga šalje).
+      tag: payload.tag || payload.tip || 'pharma-quest',
       renotify: true,
       data: { url, tip: payload.tip || '' },
     })
