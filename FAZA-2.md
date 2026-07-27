@@ -36,6 +36,33 @@ povratak, klanovi dolaze kad ima koga svrstavati.
 **Dvije stavke iz Etape 8 su još otvorene** i ulaze u ovaj plan jer gađaju isti
 problem: bedž "Pionir" i onboarding.
 
+### Šta je pregledano u `Desktop/EPC igrica/` (27.07.2026)
+
+Pročitan je **svaki** fajl u folderu. **Master plan "v1" na koji se vodič poziva
+nije tamo** — ne treba ga više tražiti. Sadržaj foldera:
+
+| Fajl | Šta je |
+|---|---|
+| `Pharma_Quest_Vodic_Za_Izradu.pdf` (10 str) | vodič, Etape 0–9; `guide_extract.txt` je vjerna ekstrakcija |
+| `instrukcija claude code.docx` | upute za Firebase audit — izvor optimizacijskog izvještaja |
+| `Ispravke.docx` | feedback testera (vidi ispod) |
+| `specifikacije-slika.txt` | specifikacije grafike → poglavlje F2.8 |
+| ostalo | banke pitanja, dizajn mockupi, ključevi |
+
+Iz `Ispravke.docx` su izvučene **dvije stvari koje ulaze u ovaj plan** (F2.7 i
+F2.8) i jedna provjera koja je zatvorena:
+
+> **Sedam prijava "označim tačno a kaže netačno" — podaci su ISPRAVNI.**
+> Provjerena su svih sedam pitanja u produkciji (27.07.2026): u **svakom**
+> slučaju je tačan odgovor u `questionSecrets` upravo onaj koji tester navodi
+> (denosumab, sertralin, insomnija=C, levotiroksin=D, superoksidni anion,
+> cink oksid, crna katranasta stolica). Banka nije kriva. To potvrđuje raniju
+> hipotezu da je uzrok bio **serverski tajmer** — popravljeno 24.07.
+> (`GRACE_SECONDS` 6→15, commit `7f77813`), istog dana kad je `Ispravke.docx`
+> nastao. **Provjeriti s testerima je li se ponovilo POSLIJE 24.07.**; ako
+> jeste, tajmer nije uzrok i treba logovati razliku klijentskog i serverskog
+> sata pri svakom odgovoru.
+
 ---
 
 ## F2.1 — Bedž "Pionir" (beta učesnici)
@@ -278,6 +305,78 @@ broja tačnih odgovora sedmično prije nego se broj fiksira.
 
 ---
 
+## F2.7 — Kozmetika koja se otključava XP-om (iz `Ispravke.docx`)
+
+> Tester, `Ispravke.docx`, prva stavka: *"Razmisliti da se dodaju sitni pokloni
+> koji se otključaju sa skupljanjem bodova? Npr za avatar naočare, šešir,
+> majica, lude frizure, promena boje pozadine i slično."*
+
+**Ovo je dijelom već izgrađeno, i to je dobra vijest.** `src/data/cosmetics.js`
+ima **30 ukrasa u tri nezavisna slota**:
+
+| Slot | Šta je | Odakle se osvaja |
+|---|---|---|
+| `ring` | okvir oko avatara | 1v1 dueli |
+| `background` | pozadina unutar kruga | Preživljavanje |
+| `aura` | sjaj izvan avatara | XP trka |
+
+Sve je CSS (bez slika), nosi ga `Avatar.jsx`, bira se na `/okviri`, dodjeljuje
+`awardCosmetics`. "Promjena boje pozadine" iz testerove liste **već postoji**.
+
+**Prava rupa je uslov otključavanja.** Sva tri izvora su **eventi**. Igrač koji
+ne igra Preživljavanje, duel ni XP trku ne može dobiti **nijedan** ukras. A po
+izmjerenom stanju to je većina: 21 survival run i 7 igrača sa streakom ≥ 3 na
+26 igrača. Drugim riječima — sistem nagrađivanja postoji, ali ga medijanski
+igrač nikad ne vidi.
+
+**Prijedlog:**
+
+1. **Nivo 1 (jeftino, veliki efekat):** dodati **XP/level pragove** kao četvrti
+   izvor za dio postojećih 30 ukrasa. Nijedna nova grafika ne treba — samo novi
+   `source: 'level'` u katalogu i provjera u `awardCosmetics` pozvana iz istog
+   mjesta gdje već ide `awardLevelMilestones`. Igrač na levelu 5 dobija prvi
+   okvir i odmah ima šta da nosi.
+2. **Nivo 2 (traži grafiku):** avatar **dodaci** — naočare, šešir, majica,
+   frizura. Ovo je novi sloj iznad avatara i **traži prave slike**, pa zavisi
+   od F2.8. Novi slot `accessory` u istom modelu (`cosmetics.owned` + pravila
+   koja već postoje).
+
+Nivo 1 preporučujem odmah — jeftin je i direktno gađa isti problem povratka kao
+notifikacije. Nivo 2 čeka grafiku.
+
+**Kontrolna tačka:** igrač koji nikad nije igrao event, a stigao je do levela 5,
+ima bar jedan ukras koji može obući.
+
+**Rizik:** nizak (nivo 1) — kozmetika ne nosi nikakvu prednost u igri, pravila
+za `cosmetics` već postoje i testirana su.
+
+---
+
+## F2.8 — Vizuelni upgrade (iz `specifikacije-slika.txt`)
+
+Dokument od 24.07.2026. već ima **kompletne specifikacije**: dimenzije, formate,
+imena fajlova i foldere. Ništa se ne treba dogovarati — samo napraviti slike.
+
+| # | Šta | Izvor | Folder | Stanje |
+|---|---|---|---|---|
+| 1 | 6 avatara | 512×512 WebP | `public/avatars/` | avatari su **trenutno emoji** |
+| 2 | 14 bedževa | 256×256 | `public/badges/` | trenutno emoji |
+| 3 | UI ikonice | SVG | `public/icons/` | trenutno emoji/inline SVG |
+| 4 | Hero ilustracije | 512×512 | `public/illustrations/` | nema |
+| 5 | PWA ikone / logo | vidi dokument | `public/` | postoje |
+
+Redoslijed po efektu (iz samog dokumenta): **avatari → bedževi → ikonice →
+ilustracije → logo**.
+
+**Ovo je jedina stavka u Fazi 2 koja ne zavisi od koda nego od tebe** — dok
+slike ne postoje, nema se šta implementirati. Kad ubaciš fajlove po tim
+imenima, posao na strani koda je mali: `Avatar.jsx` da koristi slike uz emoji
+fallback, i zamjena emoji bedževa slikama.
+
+**Rizik:** nizak. Emoji fallback znači da djelimično isporučen set ne kvari ništa.
+
+---
+
 ## Redoslijed i zavisnosti
 
 ```
@@ -295,11 +394,17 @@ F2.6 Boss ────────► (nezavisno, ali kalibracija traži podatke
 | # | Stavka | Rizik | Zavisi od |
 |---|---|---|---|
 | 1 | Pionir bedž | nizak | — |
-| 2 | Push notifikacije | srednji | — |
-| 3 | Onboarding | nizak | ide uz #2 (iOS) |
-| 4 | P2 (jedna transakcija) | **visok** | — |
-| 5 | Klanovi | **visok** | #4 |
-| 6 | Boss | srednji | podaci za kalibraciju |
+| 2 | Kozmetika po levelu (F2.7 nivo 1) | nizak | — |
+| 3 | Push notifikacije | srednji | — |
+| 4 | Onboarding | nizak | ide uz #3 (iOS) |
+| 5 | P2 (jedna transakcija) | **visok** | — |
+| 6 | Klanovi | **visok** | #5 |
+| 7 | Boss | srednji | podaci za kalibraciju |
+| — | Vizuelni upgrade (F2.8) | nizak | **tvoja grafika**, ide paralelno |
+| — | Avatar dodaci (F2.7 nivo 2) | nizak | F2.8 |
+
+Stavke 1 i 2 su obje jeftine i obje gađaju povratak igrača, pa idu prve —
+igrač dobija nešto vidljivo prije nego uopšte krenu notifikacije.
 
 ---
 
@@ -312,3 +417,8 @@ F2.6 Boss ────────► (nezavisno, ali kalibracija traži podatke
 4. **Boss** — ulazi li u Fazu 2 ili čeka Fazu 3?
 5. **Beta gate** — kolika je stvarna D7 retencija u GA4? Vodič traži ≥ 35%
    prije nego se ide na klanove i launch.
+6. **Kozmetika po levelu** — koji pragovi (prijedlog: prvi ukras na levelu 5,
+   pa svakih 10 levela) i koliko od postojećih 30 ukrasa premjestiti na taj
+   izvor, a koliko ostaviti ekskluzivno za evente?
+7. **Bug s bodovanjem** — javlja li iko od testera "tačno a kaže netačno"
+   **poslije 24.07.**? Ako da, tajmer nije uzrok i treba dublja dijagnostika.
