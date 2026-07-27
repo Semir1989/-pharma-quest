@@ -38,6 +38,10 @@ export default defineConfig({
       workbox: {
         // Keširaj build fajlove + Google fontove (offline shell).
         globPatterns: ['**/*.{js,css,html,svg,png}'],
+        // push-sw.js je DRUGI service worker (notifikacije, scope '/push-scope').
+        // Ne smije u precache: keširan service worker ostaje zamrznut na staroj
+        // verziji i ne može se ažurirati.
+        globIgnores: ['push-sw.js'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {

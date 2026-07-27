@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
+import NotifikacijePostavke from '../components/NotifikacijePostavke'
 import { getBadges, featuredBadgeEmojis } from '../services/badges'
 import { updateFeaturedBadges } from '../services/userProfile'
 import { equippedCosmetics, COSMETICS } from '../data/cosmetics'
@@ -223,6 +224,8 @@ export default function Profil() {
           </div>
         )}
       </section>
+
+      <NotifikacijePostavke uid={user?.uid} profile={profile} />
 
       {isAdmin && (
         <div className="mx-4 mt-4">

@@ -14,6 +14,12 @@ import { setGlobalOptions } from 'firebase-functions/v2'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getDatabase } from 'firebase-admin/database'
+import { getMessaging } from 'firebase-admin/messaging'
+import {
+  kandidatiZaNotifikaciju,
+  turnirskaPoruka,
+  smijePrimiti,
+} from './notif-odluka.js'
 
 setGlobalOptions({ region: 'europe-west1', maxInstances: 10 })
 
@@ -2212,3 +2218,114 @@ export const syncProfileToLeaderboard = onDocumentWritten('users/{uid}', async (
     xp: totalXp,
   })
 })
+
+// ===========================================================================
+// PUSH NOTIFIKACIJE (Faza 2, F2.2)
+//
+// Cilj je povratak igrača, a ne obavještavanje po svaku cijenu. Zato su brane
+// ugrađene u sam raspored, ne dopisane naknadno:
+//
+//   - tick ide SAMO tri puta dnevno po BiH vremenu (9, 14, 19h). Time nema
+//     noćnih poruka po konstrukciji, i čitanja su ~3x26 dnevno umjesto 48x26
+//     koliko bi bilo na pola sata — inače bi ovaj posao pojeo uštede iz P1-P6.
+//   - najviše JEDNA poruka dnevno po igraču (users.lastNotifAt)
+//   - svaki tip se može ugasiti zasebno (users.notifPrefs.<tip>)
+//   - kad su dva razloga aktivna istovremeno, šalje se onaj višeg prioriteta
+//
+// Poruke su DATA-ONLY — notifikaciju sastavlja public/push-sw.js, pa je format
+// pod našom kontrolom (vidi komentar u tom fajlu).
+// ===========================================================================
+
+// Pravila o tome KOME i KADA ide poruka žive u notif-odluka.js kao čiste
+// funkcije — testiraju se bez emulatora i bez slanja ijedne prave notifikacije
+// (scripts/test-notifikacije.mjs). Ovdje ostaje samo ono što dira Firebase.
+
+// Pošalji na sve uređaje igrača i očisti tokene koje je FCM odbio.
+// Vraća true ako je bar jedan uređaj primio poruku.
+async function posaljiNotifikaciju(uid, tokeni, poruka) {
+  if (!tokeni || tokeni.length === 0) return false
+
+  const odgovor = await getMessaging().sendEachForMulticast({
+    tokens: tokeni,
+    data: {
+      title: poruka.title,
+      body: poruka.body,
+      url: poruka.url || '/',
+      tip: poruka.tip,
+    },
+    webpush: { headers: { Urgency: 'normal', TTL: '86400' } },
+  })
+
+  // Mrtvi tokeni (deinstalirana aplikacija, obrisan keš) inače ostaju zauvijek
+  // i svaki sljedeći tick pokušava slanje na njih.
+  const mrtvi = []
+  odgovor.responses.forEach((r, i) => {
+    const kod = r.error?.code || ''
+    if (
+      kod.includes('registration-token-not-registered') ||
+      kod.includes('invalid-argument') ||
+      kod.includes('invalid-registration-token')
+    ) {
+      mrtvi.push(tokeni[i])
+    }
+  })
+  if (mrtvi.length > 0) {
+    const preostali = tokeni.filter((t) => !mrtvi.includes(t))
+    await db
+      .doc(`users/${uid}`)
+      .update({
+        fcmTokens: FieldValue.arrayRemove(...mrtvi),
+        // Nestao zadnji uređaj → skini i zastavicu, da igrač ispadne iz upita
+        // sljedećeg ticka umjesto da se čita zauvijek.
+        ...(preostali.length === 0 ? { notifOn: false } : {}),
+      })
+      .catch(() => {})
+  }
+
+  return odgovor.successCount > 0
+}
+
+export const notifTick = onSchedule(
+  { schedule: '0 9,14,19 * * *', timeZone: BIH_TZ },
+  async () => {
+    const { hh: sat } = bihParts()
+    const sada = Date.now()
+    const danas = utcDayKey()
+    const danUSedmici = new Date().getUTCDay()
+
+    const tcfg = await db.doc('config/tournament').get()
+    const turnir = turnirskaPoruka(tcfg.exists ? tcfg.data() : null, sada, sat)
+
+    // Samo igrači koji su uključili notifikacije. Filtrira se po BOOLEAN polju
+    // notifOn, a ne nejednakošću nad fcmTokens: fcmTokens je niz, a nejednakost
+    // nad nizom Firestore indeksira kao array-contains i ne ponaša se očekivano.
+    // Ovako se čita 3 x (broj pretplaćenih) dokumenata dnevno.
+    const snap = await db.collection('users').where('notifOn', '==', true).get()
+
+    let poslano = 0
+    for (const doc0 of snap.docs) {
+      const profile = doc0.data()
+      const tokeni = profile.fcmTokens || []
+      if (tokeni.length === 0) continue
+      if (!smijePrimiti(profile, sada)) continue
+
+      // Već sortirano po prioritetu i filtrirano po postavkama igrača.
+      const kandidati = kandidatiZaNotifikaciju(profile, {
+        sat,
+        sada,
+        danas,
+        danUSedmici,
+        turnir,
+      })
+      if (kandidati.length === 0) continue
+
+      const uspjeh = await posaljiNotifikaciju(doc0.id, tokeni, kandidati[0])
+      if (uspjeh) {
+        await doc0.ref.update({ lastNotifAt: sada, lastNotifTip: kandidati[0].tip })
+        poslano++
+      }
+    }
+
+    console.log(`notifTick ${sat}h: pregledano ${snap.size}, poslano ${poslano}`)
+  }
+)

@@ -18,6 +18,10 @@ service cloud.firestore {
     // kozmetika bez ijednog XP-a:
     //
     //   displayName, avatar   — osnovni podaci profila
+    //   fcmTokens             — push tokeni uređaja (F2.2). Igrač piše samo u
+    //                           SVOJ dokument, pa najgore što može je da sebi
+    //                           pokvari notifikacije.
+    //   notifOn, notifPrefs   — je li pretplaćen i koje tipove poruka želi
     //   survivalChest         — "animaciju kovčega sam vidio". Bonus isplaćuje
     //                           server čim niz dostigne prag; falsifikovanje
     //                           ove oznake ne donosi ništa.
@@ -68,7 +72,8 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['displayName', 'avatar', 'survivalChest',
-                                   'featuredBadges', 'cosmetics'])
+                                   'featuredBadges', 'cosmetics',
+                                   'fcmTokens', 'notifOn', 'notifPrefs'])
                     && validFeaturedBadges()
                     && validCosmetics();
 
