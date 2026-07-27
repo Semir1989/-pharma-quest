@@ -1,8 +1,49 @@
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '../firebase'
+import { track } from './analytics'
 
 // Kviz preko Cloud Functions (Etapa 6) — server bira pitanja, provjerava
 // odgovore, vodi tajmer i dodjeljuje XP. Klijent samo prikazuje.
+
+// ---------------------------------------------------------------------------
+// Prolazne greške poziva (27.07.2026)
+//
+// Zabilježen slučaj: "Ne mogu pokrenuti izazov" na prvi pritisak, drugi prošao.
+// U logovima Cloud Functions NEMA nijedne invokacije za taj prvi pokušaj —
+// dakle zahtjev nikad nije ni poslan. Firebase SDK prvo dovuče ID token
+// (getIdToken); ako to padne, baci grešku prije slanja i server ne vidi ništa.
+//
+// Zato dvije stvari:
+//   1. kod greške se BILJEŽI (konzola + GA4) — ranije se gutao u catch {} pa
+//      se ovakav slučaj nije mogao ni dijagnosticirati;
+//   2. jedan tihi ponovni pokušaj, ali SAMO za pozive koji su ponovljivi.
+//
+// PAŽNJA: ne ponavljati submitAnswer/submitSurvivalAnswer/claimTask. Ako je
+// prvi poziv uspio a odgovor se izgubio, ponavljanje bi odgovorilo na SLJEDEĆE
+// pitanje istim indeksom ili tražilo nagradu dvaput.
+// ---------------------------------------------------------------------------
+const PROLAZNE = ['internal', 'unavailable', 'deadline-exceeded', 'aborted', 'cancelled']
+
+function kodGreske(e) {
+  return String(e?.code || 'nepoznato').replace(/^functions\//, '')
+}
+
+// Omotač: bilježi grešku i (opciono) jednom ponovi poziv.
+function poziv(ime, fn, { ponovi = false } = {}) {
+  return async (payload = {}) => {
+    try {
+      return (await fn(payload)).data
+    } catch (e) {
+      const kod = kodGreske(e)
+      console.error(`[callable] ${ime} → ${kod}`, e?.message || '')
+      track('callable_error', { fn: ime, code: kod, retried: ponovi && PROLAZNE.includes(kod) })
+      if (!ponovi || !PROLAZNE.includes(kod)) throw e
+      // Kratka pauza pa još jedan pokušaj — token se u međuvremenu osvježi.
+      await new Promise((r) => setTimeout(r, 600))
+      return (await fn(payload)).data
+    }
+  }
+}
 
 const startQuizFn = httpsCallable(functions, 'startQuiz')
 const submitAnswerFn = httpsCallable(functions, 'submitAnswer')
@@ -17,54 +58,67 @@ const submitDuelFn = httpsCallable(functions, 'submitDuelAnswer')
 // → { sessionId, total, question: {...}, used, limit, xpToday, xpCap, resetsAt }
 //   ili { limited: true, used, limit, xpToday, xpCap, resetsAt } kad je
 //   dnevni limit od 3 kviza potrošen.
+// Ponovljiv: nedovršena sesija se nastavlja (limit.sessionId), pa drugi pokušaj
+// ne troši novi kviz nego vraća isto pitanje.
+const startQuizPoziv = poziv('startQuiz', startQuizFn, { ponovi: true })
 export async function startQuizSession() {
-  return (await startQuizFn({})).data
+  return startQuizPoziv({})
 }
 
 // → { correct, correctIndex, explanation, finished, question?, summary?, newBadges? }
+const submitAnswerPoziv = poziv('submitAnswer', submitAnswerFn)
 export async function submitQuizAnswer(sessionId, answerIndex) {
-  return (await submitAnswerFn({ sessionId, answerIndex })).data
+  return submitAnswerPoziv({ sessionId, answerIndex })
 }
 
 // → { reward, newBadges }
+const claimTaskPoziv = poziv('claimTask', claimTaskFn)
 export async function claimTaskReward(taskId) {
-  return (await claimTaskFn({ taskId })).data
+  return claimTaskPoziv({ taskId })
 }
 
 // Zamrzava (ili vraća) današnji izbor dnevnih questova → { picked, day, resetsAt }
+const ensureDailyQuestsPoziv = poziv('ensureDailyQuests', ensureDailyQuestsFn, { ponovi: true })
 export async function ensureDailyQuests() {
-  return (await ensureDailyQuestsFn({})).data
+  return ensureDailyQuestsPoziv({})
 }
 
 // Preživljavanje (Etapa 8) — endless mod, jedna sedmična "sudbina".
 // Ista funkcija pokreće novi run, nastavlja pauzirani (poslije izlaska) i vraća
 // sljedeće pitanje kad igrač odabere "Nastavi".
 // → { locked, streak, week, resumed?, exhausted?, question? }
+// Ponovljiv: stanje run-a je u survivalRuns/{uid}, pa drugi pokušaj vraća isto
+// pitanje sa svježim tajmerom — ovo je poziv koji je 27.07. pao na prvi pritisak.
+const startSurvivalPoziv = poziv('startSurvival', startSurvivalFn, { ponovi: true })
 export async function startSurvival() {
-  return (await startSurvivalFn({})).data
+  return startSurvivalPoziv({})
 }
 
 // → { correct, correctIndex, explanation, finished, canExit?, eliminated?, streak, newBadges }
 //   Tačan odgovor NE vraća sljedeće pitanje — run se pauzira dok igrač ne
 //   odabere "Nastavi" (tada se zove startSurvival). Tako izlazak nikad ne
 //   ostavlja neodgovoreno pitanje otvorenim.
+const submitSurvivalPoziv = poziv('submitSurvivalAnswer', submitSurvivalFn)
 export async function submitSurvivalAnswer(answerIndex) {
-  return (await submitSurvivalFn({ answerIndex })).data
+  return submitSurvivalPoziv({ answerIndex })
 }
 
 // Duel turnir (Faza 2, korak C).
+const registerForDuelPoziv = poziv('registerForDuel', registerForDuelFn)
 export async function registerForDuel() {
-  return (await registerForDuelFn({})).data
+  return registerForDuelPoziv({})
 }
 
 // → { noMatch? , alreadyPlayed?, score?, matchId?, total?, question? }
+const startDuelPoziv = poziv('startDuel', startDuelFn, { ponovi: true })
 export async function startDuel() {
-  return (await startDuelFn({})).data
+  return startDuelPoziv({})
 }
 
 // → { correct, correctIndex, explanation, finished, question?, myScore?, total? }
+const submitDuelPoziv = poziv('submitDuelAnswer', submitDuelFn)
 export async function submitDuelAnswer(answerIndex) {
-  return (await submitDuelFn({ answerIndex })).data
+  return submitDuelPoziv({ answerIndex })
 }
 
 // Otvaranje kovčega za level → { level, preostalo }
