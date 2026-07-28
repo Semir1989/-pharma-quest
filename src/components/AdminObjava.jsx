@@ -40,7 +40,17 @@ export default function AdminObjava() {
     try {
       const r = await adminBroadcast({ naslov, tekst, url, test })
       if (test) {
-        setPoruka({ ok: true, tekst: `Poslano na tvoje uređaje (${r.uredjaja}). Provjeri telefon.` })
+        // r.poslano === false znači da je FCM odbio SVE tokene. Bez ovoga bi
+        // ekran javio uspjeh dok na telefon ne stiže ništa — a upravo to je
+        // slučaj koji se testom traži.
+        setPoruka(
+          r.poslano
+            ? { ok: true, tekst: `Poslano na tvoje uređaje (${r.uredjaja}). Provjeri telefon.` }
+            : {
+                ok: false,
+                tekst: `FCM je odbio sve tokene (${r.uredjaja}). Isključi pa ponovo uključi notifikacije na Profilu.`,
+              }
+        )
       } else {
         setPoruka({
           ok: true,

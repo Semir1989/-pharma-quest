@@ -6,6 +6,7 @@ import {
   iskljuci,
   postaviTip,
   postavkeIzProfila,
+  sinhronizuj,
 } from '../services/notifikacije'
 
 // Postavke push notifikacija na Profilu (F2.2).
@@ -20,9 +21,25 @@ export default function NotifikacijePostavke({ uid, profile }) {
   const [greska, setGreska] = useState('')
   const postavke = postavkeIzProfila(profile)
 
+  // Ovisnost je izvedena iz sadržaja, ne iz objekta profila — profile stiže iz
+  // Firestore snapshota i mijenja identitet pri svakoj promjeni XP-a, pa bi se
+  // inače getToken() vrtio bez potrebe.
+  const potpisPretplate = `${profile?.notifOn}|${(profile?.fcmTokens || []).join(',')}`
+
+  // Prvo tiha popravka (token je mogao ispasti iz baze), pa tek onda čitanje
+  // stanja — inače bi ekran načas pokazao "isključeno" na ispravnom uređaju.
   useEffect(() => {
-    stanjeNotifikacija().then(setStanje)
-  }, [])
+    let ziv = true
+    ;(async () => {
+      await sinhronizuj(uid, profile).catch(() => {})
+      const s = await stanjeNotifikacija(profile).catch(() => 'iskljuceno')
+      if (ziv) setStanje(s)
+    })()
+    return () => {
+      ziv = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, potpisPretplate])
 
   // Dok se ne zna stanje, ne treperi praznom karticom.
   if (stanje === null) return null
@@ -36,11 +53,15 @@ export default function NotifikacijePostavke({ uid, profile }) {
     try {
       if (stanje === 'ukljuceno') {
         await iskljuci(uid)
+        setStanje('iskljuceno')
       } else {
         const ok = await ukljuci(uid)
+        // Stanje se ne čita ponovo iz stanjeNotifikacija(profile): profile je
+        // props i još drži staru listu tokena, pa bi svjež token ispao kao
+        // "nije povezan". Rezultat ukljuci() je mjerodavan.
+        setStanje(ok ? 'ukljuceno' : 'iskljuceno')
         if (!ok) setGreska('Dozvola nije data. Provjeri postavke browsera.')
       }
-      setStanje(await stanjeNotifikacija())
     } catch {
       setGreska('Nešto nije prošlo. Pokušaj ponovo.')
     } finally {

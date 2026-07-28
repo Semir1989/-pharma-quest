@@ -49,22 +49,74 @@ const instaliranaKaoPWA = () =>
  *   'ios-nije-instalirana' — iPhone/iPad, ali aplikacija nije na početnom ekranu
  *   'nepodrzano'           — browser nema push (stari Android browser, itd.)
  *   'blokirano'            — korisnik je odbio dozvolu (mora ručno u postavkama)
- *   'iskljuceno'           — sve radi, samo još nije uključeno
- *   'ukljuceno'            — dozvola data
+ *   'iskljuceno'           — sve radi, samo ovaj uređaj još nije povezan
+ *   'ukljuceno'            — dozvola data I token ovog uređaja je spremljen
+ *
+ * 'ukljuceno' NAMJERNO ne znači samo "dozvola je data". Dozvola ostaje u
+ * browseru i poslije isključivanja, pa bi ekran pokazivao da je sve uključeno
+ * dok se poruke stvarno ne šalju nikome — a dugme bi nudilo samo "Isključi", i
+ * uređaj se ne bi imao kako vratiti. Mjerodavno je ono što stoji u bazi.
  */
-export async function stanje() {
+export async function stanje(profile) {
   if (!VAPID) return 'nema-kljuca'
   if (jeIOS() && !instaliranaKaoPWA()) return 'ios-nije-instalirana'
   if (!('Notification' in window) || !(await isSupported().catch(() => false))) return 'nepodrzano'
   if (Notification.permission === 'denied') return 'blokirano'
-  if (Notification.permission === 'granted') return 'ukljuceno'
-  return 'iskljuceno'
+  if (Notification.permission !== 'granted') return 'iskljuceno'
+
+  if (profile?.notifOn !== true) return 'iskljuceno'
+  const token = await tokenOvogUredjaja()
+  return token && (profile.fcmTokens || []).includes(token) ? 'ukljuceno' : 'iskljuceno'
+}
+
+/**
+ * Tiha popravka pri otvaranju ekrana: ako je nalog pretplaćen, a token ovog
+ * uređaja fali u bazi (FCM ga s vremenom rotira, a i stari pokvareni tokeni
+ * ispadnu kad se pretplata veže za ispravan service worker), vrati ga.
+ * Kad je notifOn false, ovdje se NIŠTA ne dira — to je izričito gašenje.
+ */
+export async function sinhronizuj(uid, profile) {
+  if (!uid || profile?.notifOn !== true) return false
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false
+  if (!(await nadjiPushRegistraciju())) return false
+
+  const token = await tokenOvogUredjaja()
+  if (!token || (profile.fcmTokens || []).includes(token)) return false
+
+  await updateDoc(doc(db, 'users', uid), { fcmTokens: arrayUnion(token) }).catch(() => {})
+  return true
+}
+
+// PAŽNJA: NE koristiti navigator.serviceWorker.getRegistration(SW_SCOPE).
+// Taj poziv ne traži registraciju s TAČNO tim scope-om nego onu čiji scope
+// POKRIVA dati URL — a PWA service worker na '/' pokriva i '/push-scope'. Zbog
+// toga je vraćao workbox SW, push-sw.js se nikad nije registrovao, a getToken()
+// je pretplatu vezao za service worker koji nema 'push' handler: token valjan,
+// FCM javlja uspjeh, poruka stigne na uređaj i nestane bez prikaza.
+const punScope = () => new URL(SW_SCOPE, self.location.origin).href
+
+async function nadjiPushRegistraciju() {
+  const sve = await navigator.serviceWorker.getRegistrations()
+  return sve.find((r) => r.scope === punScope() || r.scope === punScope() + '/') || null
 }
 
 async function registrujSW() {
-  const postojeca = await navigator.serviceWorker.getRegistration(SW_SCOPE)
+  const postojeca = await nadjiPushRegistraciju()
   if (postojeca) return postojeca
   return navigator.serviceWorker.register(SW_URL, { scope: SW_SCOPE })
+}
+
+// Token OVOG uređaja, bez traženja dozvole i bez ikakvog upisa. null ako uređaj
+// nije (ispravno) povezan.
+async function tokenOvogUredjaja() {
+  if (!VAPID || typeof Notification === 'undefined') return null
+  if (Notification.permission !== 'granted') return null
+  const registracija = await nadjiPushRegistraciju()
+  if (!registracija) return null
+  return getToken(getMessaging(app), {
+    vapidKey: VAPID,
+    serviceWorkerRegistration: registracija,
+  }).catch(() => null)
 }
 
 // Uključi notifikacije na OVOM uređaju. Vraća true ako je token spremljen.
@@ -102,7 +154,7 @@ export async function iskljuci(uid) {
   // Token OVOG uređaja, ako se do njega može doći.
   let token = null
   try {
-    const registracija = await navigator.serviceWorker.getRegistration(SW_SCOPE)
+    const registracija = await nadjiPushRegistraciju()
     if (registracija) {
       token = await getToken(getMessaging(app), {
         vapidKey: VAPID,
