@@ -5,6 +5,8 @@ import { auth } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import Avatar from '../components/Avatar'
 import NotifikacijePostavke from '../components/NotifikacijePostavke'
+import NotifikacijeZvono from '../components/NotifikacijeZvono'
+import useNotifikacije from '../hooks/useNotifikacije'
 import { getBadges, featuredBadgeEmojis } from '../services/badges'
 import { updateFeaturedBadges } from '../services/userProfile'
 import { equippedCosmetics, COSMETICS } from '../data/cosmetics'
@@ -19,6 +21,9 @@ export default function Profil() {
   const { profile, user, isAdmin } = useAuth()
   const [badges, setBadges] = useState([])
   const [saving, setSaving] = useState(false)
+  // Jedno stanje za oba prekidača (zvono u zaglavlju i sekcija ispod), da ne
+  // znaju različitu istinu i ne zovu getToken() dvaput.
+  const notif = useNotifikacije(user?.uid, profile)
 
   useEffect(() => {
     getBadges()
@@ -79,14 +84,17 @@ export default function Profil() {
             Lvl {level}
           </span>
         </div>
-        <div>
-          <h1 className="font-title text-2xl font-extrabold">
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate font-title text-2xl font-extrabold">
             {profile.displayName}
           </h1>
           <div className="mt-1 inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-sm">
             🛡️ {rank}
           </div>
         </div>
+        {/* Prekidač notifikacija je ovdje, a ne samo u sekciji ispod: dok je
+            stajao na dnu ekrana, igrači ga nisu nalazili. */}
+        <NotifikacijeZvono notif={notif} tamno />
       </div>
 
       {/* Statistika: streak, tačnost, klan */}
@@ -95,6 +103,10 @@ export default function Profil() {
         <Stat icon="🎯" label="Tačnost" value={accuracyOverall(profile)} />
         <Stat icon="🛡️" label="Klan" value={profile.clan || '—'} />
       </div>
+
+      {/* Notifikacije odmah ispod avatara i statistike — prije bedževa i
+          kategorija, gdje su se ranije gubile. */}
+      <NotifikacijePostavke uid={user?.uid} profile={profile} notif={notif} />
 
       {/* Bedževi */}
       <section className="mx-4 mt-4 rounded-2xl bg-white p-4 shadow-sm">
@@ -224,8 +236,6 @@ export default function Profil() {
           </div>
         )}
       </section>
-
-      <NotifikacijePostavke uid={user?.uid} profile={profile} />
 
       {isAdmin && (
         <div className="mx-4 mt-4">

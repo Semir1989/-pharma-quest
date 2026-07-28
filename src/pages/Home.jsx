@@ -7,6 +7,8 @@ import InstallBanner from '../components/InstallBanner'
 import LevelChests from '../components/LevelChests'
 import QuestProgress from '../components/QuestProgress'
 import QuizEnergy from '../components/QuizEnergy'
+import NotifikacijeZvono from '../components/NotifikacijeZvono'
+import useNotifikacije from '../hooks/useNotifikacije'
 import { levelFromXp, xpProgress } from '../utils/levels'
 import {
   getTasks,
@@ -27,7 +29,8 @@ function greeting() {
 // danas. Vikend dueli, XP trka i Preživljavanje žive u Areni (tab u donjoj
 // navigaciji) — prije su trošili ~40% prvog ekrana, a aktivni su par dana.
 export default function Home() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
+  const notif = useNotifikacije(user?.uid, profile)
   // Taskovi se učitavaju JEDNOM ovdje, pa se dijele kartici dnevnih zadataka i
   // banneru napretka — inače bi oba zvala dailyTasksFor, a on zna otići na
   // server po današnji izbor.
@@ -67,9 +70,12 @@ export default function Home() {
             ⭐ Lvl {level}
           </span>
         </div>
-        <span className="flex items-center gap-1 rounded-xl bg-white px-3 py-1 text-sm font-bold text-orange-500 shadow-sm">
-          🔥 {profile.streak || 0}
-        </span>
+        <div className="flex items-center gap-2">
+          <NotifikacijeZvono notif={notif} kompaktno />
+          <span className="flex items-center gap-1 rounded-xl bg-white px-3 py-1 text-sm font-bold text-orange-500 shadow-sm">
+            🔥 {profile.streak || 0}
+          </span>
+        </div>
       </div>
 
       {/* Pozdrav + XP bar */}
