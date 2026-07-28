@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { adminBroadcast } from '../services/quizApi'
+import { adminBroadcast, adminListPlayers } from '../services/quizApi'
 
 // Slanje objave (push notifikacije) svim igračima — admin panel.
 //
@@ -29,16 +29,42 @@ export default function AdminObjava() {
   const [radi, setRadi] = useState('')
   const [poruka, setPoruka] = useState(null) // { ok, tekst }
   const [potvrda, setPotvrda] = useState(false)
+  const [igraci, setIgraci] = useState(null) // null = popis još nije tražen
+  const [komu, setKomu] = useState('') // '' = svi igrači
 
   const spremno = naslov.trim().length >= 3 && tekst.trim().length >= 3
   const predugo = naslov.length > MAX_NASLOV || tekst.length > MAX_TEKST
+  const izabrani = igraci?.find((i) => i.uid === komu) || null
+
+  // Popis se čita tek na zahtjev — to je čitanje cijele kolekcije users.
+  async function ucitajIgrace() {
+    if (igraci || radi) return
+    setRadi('popis')
+    try {
+      const r = await adminListPlayers()
+      setIgraci(r.igraci || [])
+    } catch (e) {
+      setPoruka({ ok: false, tekst: 'Popis igrača nije učitan: ' + (e?.message || '') })
+    } finally {
+      setRadi('')
+    }
+  }
 
   async function posalji(test) {
     if (radi) return
-    setRadi(test ? 'test' : 'svima')
+    setRadi(test ? 'test' : komu ? 'igracu' : 'svima')
     setPoruka(null)
     try {
-      const r = await adminBroadcast({ naslov, tekst, url, test })
+      const r = await adminBroadcast({ naslov, tekst, url, test, komu: test ? null : komu || null })
+      if (!test && komu) {
+        setPoruka(
+          r.poslano
+            ? { ok: true, tekst: `Poslano igraču ${r.ime} (${r.uredjaja} uređaj/a).` }
+            : { ok: false, tekst: `FCM je odbio sve uređaje igrača ${r.ime}.` }
+        )
+        setPotvrda(false)
+        return // radi se gasi u finally
+      }
       if (test) {
         // r.poslano === false znači da je FCM odbio SVE tokene. Bez ovoga bi
         // ekran javio uspjeh dok na telefon ne stiže ništa — a upravo to je
@@ -71,9 +97,10 @@ export default function AdminObjava() {
 
   return (
     <section className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
-      <h2 className="font-title text-lg font-extrabold text-red-900">📣 Objava svim igračima</h2>
+      <h2 className="font-title text-lg font-extrabold text-red-900">📣 Objava igračima</h2>
       <p className="mt-0.5 text-xs text-red-700">
-        Stiže kao push notifikacija na telefon. <b>Ne može se povući.</b>
+        Stiže kao push notifikacija na telefon. <b>Ne može se povući.</b> Ide svima
+        ili jednom izabranom igraču.
       </p>
 
       <div className="mt-3 flex flex-col gap-2">
@@ -109,6 +136,48 @@ export default function AdminObjava() {
           >
             {tekst.length}/{MAX_TEKST}
           </p>
+
+          {/* Primalac. Popis se dovlači tek kad admin otvori izbor — čitanje
+              cijele kolekcije users ne treba trošiti pri svakom otvaranju
+              panela. */}
+          <label className="text-xs font-bold text-slate-500">Kome</label>
+          {igraci === null ? (
+            <button
+              onClick={ucitajIgrace}
+              disabled={!!radi}
+              className="mt-1 mb-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-slate-800 disabled:opacity-50"
+            >
+              {radi === 'popis' ? 'Učitavam igrače…' : 'Svi igrači — dodirni za izbor igrača'}
+            </button>
+          ) : (
+            <div className="mb-3">
+              <select
+                value={komu}
+                onChange={(e) => {
+                  setKomu(e.target.value)
+                  setPotvrda(false)
+                }}
+                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-800 outline-none focus:border-teal-500"
+              >
+                <option value="">Svi igrači ({igraci.length})</option>
+                {igraci.map((i) => (
+                  <option key={i.uid} value={i.uid} disabled={!i.notifOn || i.uredjaja === 0}>
+                    {i.ime}
+                    {i.uredjaja === 0 || !i.notifOn
+                      ? ' — bez notifikacija'
+                      : i.najaveUgasene
+                        ? ' — ugasio objave'
+                        : ` — ${i.uredjaja} uređaj/a`}
+                  </option>
+                ))}
+              </select>
+              {izabrani?.najaveUgasene && (
+                <p className="mt-1 text-[11px] font-medium text-red-600">
+                  {izabrani.ime} je isključio objave — server će odbiti slanje.
+                </p>
+              )}
+            </div>
+          )}
 
           <label className="text-xs font-bold text-slate-500">Klik vodi na</label>
           <select
@@ -158,7 +227,18 @@ export default function AdminObjava() {
           {radi === 'test' ? 'Šaljem…' : 'Pošalji sebi (test)'}
         </button>
 
-        {!potvrda ? (
+        {/* Slanje jednom igraču ne traži crvenu dugmad ni potvrdu u dva koraka:
+            te brane postoje zbog nepovratne poruke SVIMA, a ovdje je primalac
+            jedan i namjerno izabran. */}
+        {izabrani ? (
+          <button
+            onClick={() => posalji(false)}
+            disabled={!spremno || predugo || !!radi}
+            className="w-full rounded-xl bg-teal-700 py-3 font-title font-extrabold text-white active:bg-teal-800 disabled:opacity-50"
+          >
+            {radi === 'igracu' ? 'Šaljem…' : `Pošalji igraču: ${izabrani.ime}`}
+          </button>
+        ) : !potvrda ? (
           <button
             onClick={() => setPotvrda(true)}
             disabled={!spremno || predugo || !!radi}

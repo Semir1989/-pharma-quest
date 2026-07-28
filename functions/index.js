@@ -1906,6 +1906,8 @@ export const adminRebuildBankIndex = onCall(async (request) => {
 //   3. igrači koji su ugasili tip 'najave' se preskaču — "ugasi notifikacije"
 //      mora vrijediti i za objave, inače je prekidač lažan.
 //
+// `komu: <uid>` šalje poruku SAMO tom igraču (popis daje adminListPlayers).
+//
 // Objava NE gleda je li igrač danas igrao (nije podsjetnik na kviz) i ne pada
 // na branu od 8h, ali JESTE postavlja lastNotifAt — da automatska poruka ne
 // stigne minutu poslije objave.
@@ -1916,7 +1918,7 @@ const BROADCAST_MAX_TEKST = 160
 
 export const adminBroadcast = onCall(async (request) => {
   const uid = requireAdmin(request)
-  const { naslov, tekst, url, test } = request.data || {}
+  const { naslov, tekst, url, test, komu } = request.data || {}
 
   const t = String(naslov || '').trim()
   const b = String(tekst || '').trim()
@@ -1950,6 +1952,37 @@ export const adminBroadcast = onCall(async (request) => {
     }
     const ok = await posaljiNotifikaciju(uid, mojiTokeni, poruka)
     return { test: true, uredjaja: mojiTokeni.length, poslano: ok }
+  }
+
+  // --- Slanje jednom igraču ---
+  // Brana od 30s se NAMJERNO ne dira: ona čuva od ponovljene objave svima, a
+  // poruka jednom igraču ne smije blokirati pravu objavu (ni obrnuto).
+  if (komu) {
+    if (typeof komu !== 'string' || !komu.trim())
+      throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+
+    const meta = await db.doc(`users/${komu}`).get()
+    if (!meta.exists) throw new HttpsError('not-found', 'Taj igrač ne postoji.')
+    const p = meta.data()
+    const ime = p.displayName || 'Igrač'
+
+    // Odjava vrijedi i za poruku upućenu samo njemu — inače je prekidač lažan.
+    // Admin dobija izričitu grešku, da slanje ne izgleda kao da je prošlo.
+    if (p.notifPrefs?.najave === false)
+      throw new HttpsError('failed-precondition', `${ime} je isključio objave.`)
+
+    const tokeni = p.fcmTokens || []
+    if (tokeni.length === 0)
+      throw new HttpsError(
+        'failed-precondition',
+        `${ime} nema nijedan uređaj s uključenim notifikacijama.`
+      )
+
+    const ok = await posaljiNotifikaciju(komu, tokeni, poruka)
+    if (ok) await meta.ref.update({ lastNotifAt: Date.now(), lastNotifTip: 'najave' }).catch(() => {})
+    await adminLog(uid, 'notifyUser', { komu, ime, naslov: t, tekst: b, url: cilj, poslano: ok })
+    console.log(`adminBroadcast → ${ime} (${komu}): "${t}", poslano=${ok}`)
+    return { komu, ime, uredjaja: tokeni.length, poslano: ok }
   }
 
   // --- Prava objava ---
@@ -1990,6 +2023,32 @@ export const adminBroadcast = onCall(async (request) => {
   await adminLog(uid, 'broadcast', { naslov: t, tekst: b, url: cilj, primalaca })
   console.log(`adminBroadcast: "${t}" → ${primalaca} igrača / ${uredjaja} uređaja`)
   return { primalaca, uredjaja, odjavljenih, pretplacenih: snap.size }
+})
+
+// Popis igrača za biranje primaoca u admin panelu. Vraća i stanje pretplate, da
+// admin odmah vidi kome poruka uopšte može stići umjesto da to sazna tek iz
+// greške poslije slanja.
+//
+// Čita cijelu kolekciju users, pa se NE zove pri otvaranju panela nego tek kad
+// admin otvori izbor primaoca (vidi AdminObjava.jsx).
+export const adminListPlayers = onCall(async (request) => {
+  requireAdmin(request)
+
+  const snap = await db.collection('users').get()
+  const igraci = snap.docs
+    .map((d) => {
+      const p = d.data()
+      return {
+        uid: d.id,
+        ime: p.displayName || '(bez imena)',
+        uredjaja: (p.fcmTokens || []).length,
+        notifOn: p.notifOn === true,
+        najaveUgasene: p.notifPrefs?.najave === false,
+      }
+    })
+    .sort((a, b) => a.ime.localeCompare(b.ime, 'bs'))
+
+  return { igraci }
 })
 
 // Reset sedmičnog pokušaja Preživljavanja — isto što radi scripts/reset-survival.js,

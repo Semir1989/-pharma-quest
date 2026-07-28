@@ -191,9 +191,16 @@ export async function adminEventStatus() {
 // Objava svim igračima. NAMJERNO bez retryja iz omotača poziv(): ponovljena
 // objava svima je tačno ona greška koju ne smijemo napraviti. Server dodatno
 // odbija drugu objavu unutar 30 sekundi.
+// `komu` (uid) šalje samo tom igraču; bez njega ide svima.
 const adminBroadcastFn = httpsCallable(functions, 'adminBroadcast')
-export async function adminBroadcast({ naslov, tekst, url, test = false }) {
-  return (await adminBroadcastFn({ naslov, tekst, url, test })).data
+export async function adminBroadcast({ naslov, tekst, url, test = false, komu = null }) {
+  return (await adminBroadcastFn({ naslov, tekst, url, test, komu })).data
+}
+
+// Popis igrača sa stanjem pretplate — za biranje primaoca objave.
+const adminListPlayersFn = httpsCallable(functions, 'adminListPlayers')
+export async function adminListPlayers() {
+  return (await adminListPlayersFn({})).data
 }
 
 export async function adminSetTournamentConfig(cfg) {
