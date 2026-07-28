@@ -29,6 +29,7 @@ export const TIPOVI = {
   streak: { label: 'Niz u opasnosti', opis: 'Kad ti niz ističe, a nisi igrao' },
   survival: { label: 'Preživljavanje', opis: 'Novi sedmični pokušaj (srijeda)' },
   turnir: { label: 'Turniri', opis: 'Otvaranje prijava i početak duela' },
+  klan: { label: 'Klan', opis: 'Novi članovi, promjena vodstva, takmičenje' },
   energija: { label: 'Povratak', opis: 'Ako te nema nekoliko dana' },
 }
 

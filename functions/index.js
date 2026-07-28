@@ -19,7 +19,30 @@ import {
   kandidatiZaNotifikaciju,
   turnirskaPoruka,
   smijePrimiti,
+  notifUkljucen,
 } from './notif-odluka.js'
+import {
+  MAX_CLANOVA,
+  MAX_SAVJETNIKA,
+  MIN_LEVEL_OSNIVANJE,
+  NEAKTIVNOST_DANA,
+  kljucImena,
+  validirajIme,
+  validirajTag,
+  ulogaU,
+  smijeUpravljati,
+  smijeRaspustiti,
+  smijeMijenjatiSavjetnike,
+  smijePrijavitiNaTakmicenje,
+  smijeIzbaciti,
+  mozeOsnovati,
+  imaMjesta,
+  mozeJosSavjetnika,
+  izaberiNasljednika,
+  jeNeaktivan,
+  registracijaOtvorena,
+  weekIdZaRegistraciju,
+} from './klan-pravila.js'
 
 setGlobalOptions({ region: 'europe-west1', maxInstances: 10 })
 
@@ -2490,5 +2513,712 @@ export const notifTick = onSchedule(
     }
 
     console.log(`notifTick ${sat}h: pregledano ${snap.size}, poslano ${poslano}`)
+  }
+)
+
+// ===========================================================================
+// KLANOVI
+//
+// Model:
+//   clans/{clanId}              ime, tag, founderId, advisorIds, memberIds,
+//                               pendingRequests, clanLevel, clanXP,
+//                               founderLastActiveAt, disbandedAt
+//   clanMembers/{uid}           { clanId, role, joinedAt } — denormalizovan
+//                               lookup "u kojem sam klanu"; mjerodavan je ipak
+//                               dokument klana, ovo je keš za brz upit
+//   clanNames/{ime}             rezervacija jedinstvenog imena
+//   clanCompetitions/{weekId}/registrations/{clanId}
+//
+// users/{uid}.clan i dalje drži IME klana, ne id — to polje postoji od Etape 1
+// i Profil ga ispisuje direktno. Id je u clanMembers/{uid}.clanId.
+//
+// Sva pravila (level, limiti, uloge, prozori) provjeravaju se OVDJE: klijent po
+// firestore.rules ne može pisati ni u jednu klansku kolekciju. Sama pravila su
+// čiste funkcije u klan-pravila.js i testiraju se s `npm run test-klanovi`.
+// ===========================================================================
+
+const clanRef = (clanId) => db.doc(`clans/${clanId}`)
+const clanMemberRef = (uid) => db.doc(`clanMembers/${uid}`)
+
+function requireAuth(request) {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijava je obavezna.')
+  return uid
+}
+
+// Klan pozivaoca + njegova uloga. Baca ako igrač nije ni u jednom klanu.
+async function mojKlan(uid) {
+  const m = await clanMemberRef(uid).get()
+  const clanId = m.exists ? m.data().clanId : null
+  if (!clanId) throw new HttpsError('failed-precondition', 'Nisi član nijednog klana.')
+  const snap = await clanRef(clanId).get()
+  if (!snap.exists || snap.data().disbandedAt) throw new HttpsError('not-found', 'Klan ne postoji.')
+  const clan = { id: snap.id, ...snap.data() }
+  return { clan, uloga: ulogaU(clan, uid) }
+}
+
+// Javni podaci članova za ekran klana. Čita se najviše 10 profila.
+async function clanoviSaProfilima(clan) {
+  const ids = clan.memberIds || []
+  if (ids.length === 0) return []
+  const cfg = await getLevelConfig()
+  const snaps = await db.getAll(...ids.map((id) => db.doc(`users/${id}`)))
+  return snaps
+    .filter((s) => s.exists)
+    .map((s) => {
+      const p = s.data()
+      return {
+        uid: s.id,
+        ime: p.displayName || 'Farmaceut',
+        avatar: p.avatar || 'a1',
+        xp: p.xp || 0,
+        level: levelFromXp(p.xp || 0, cfg),
+        uloga: ulogaU(clan, s.id),
+        lastPlayDay: p.lastPlayDay || null,
+      }
+    })
+    .sort((a, b) => (b.xp || 0) - (a.xp || 0))
+}
+
+// In-app obavijest + push. Obavijest se upisuje na profil (clanNotice) jer push
+// nestane s ekrana, a promjenu vodstva igrač mora vidjeti i kad je propustio
+// notifikaciju. Push poštuje notifPrefs.klan — kao i svaka druga vrsta poruke.
+async function obavijestiClan(clan, { naslov, tekst }, osimUid = null) {
+  const ids = (clan.memberIds || []).filter((id) => id !== osimUid)
+  if (ids.length === 0) return
+  const snaps = await db.getAll(...ids.map((id) => db.doc(`users/${id}`)))
+  const sada = Date.now()
+
+  for (const s of snaps) {
+    if (!s.exists) continue
+    const p = s.data()
+    await s.ref.update({ clanNotice: { naslov, tekst, at: sada } }).catch(() => {})
+    const tokeni = p.fcmTokens || []
+    if (tokeni.length === 0 || p.notifOn !== true) continue
+    if (!notifUkljucen(p, 'klan')) continue
+    const ok = await posaljiNotifikaciju(s.id, tokeni, {
+      title: naslov,
+      body: tekst,
+      url: '/klan',
+      tip: 'klan',
+      tag: 'klan',
+    })
+    if (ok) await s.ref.update({ lastNotifAt: sada, lastNotifTip: 'klan' }).catch(() => {})
+  }
+}
+
+// Osnivanje klana. Level se računa iz XP-a — polje users.level ne diraju sve
+// putanje bodovanja, pa nije mjerodavno.
+export const createClan = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { name, tag } = request.data || {}
+
+  const imeCheck = validirajIme(name)
+  if (!imeCheck.ok) throw new HttpsError('invalid-argument', imeCheck.greska)
+  const tagCheck = validirajTag(tag)
+  if (!tagCheck.ok) throw new HttpsError('invalid-argument', tagCheck.greska)
+
+  const cfg = await getLevelConfig()
+  const kljuc = kljucImena(imeCheck.vrijednost)
+  const noviRef = db.collection('clans').doc()
+
+  await db.runTransaction(async (tx) => {
+    const [me, clanstvo, imeDoc] = await Promise.all([
+      tx.get(db.doc(`users/${uid}`)),
+      tx.get(clanMemberRef(uid)),
+      tx.get(db.doc(`clanNames/${kljuc}`)),
+    ])
+    if (!me.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+
+    const level = levelFromXp(me.data().xp || 0, cfg)
+    if (!mozeOsnovati(level))
+      throw new HttpsError(
+        'failed-precondition',
+        `Klan može osnovati igrač od levela ${MIN_LEVEL_OSNIVANJE}. Ti si na levelu ${level}.`
+      )
+    if (clanstvo.exists && clanstvo.data().clanId)
+      throw new HttpsError('failed-precondition', 'Već si član klana.')
+    if (imeDoc.exists) throw new HttpsError('already-exists', 'Klan s tim imenom već postoji.')
+
+    tx.set(noviRef, {
+      name: imeCheck.vrijednost,
+      tag: tagCheck.vrijednost,
+      founderId: uid,
+      advisorIds: [],
+      memberIds: [uid],
+      pendingRequests: [],
+      createdAt: FieldValue.serverTimestamp(),
+      createdDay: utcDayKey(),
+      clanLevel: 1,
+      clanXP: 0,
+      founderLastActiveAt: FieldValue.serverTimestamp(),
+      disbandedAt: null,
+    })
+    tx.set(db.doc(`clanNames/${kljuc}`), {
+      clanId: noviRef.id,
+      createdAt: FieldValue.serverTimestamp(),
+    })
+    tx.set(clanMemberRef(uid), {
+      clanId: noviRef.id,
+      role: 'founder',
+      joinedAt: FieldValue.serverTimestamp(),
+    })
+    tx.update(db.doc(`users/${uid}`), { clan: imeCheck.vrijednost })
+  })
+
+  return { clanId: noviRef.id, name: imeCheck.vrijednost, tag: tagCheck.vrijednost }
+})
+
+// Zahtjev za ulazak. Bez ograničenja po levelu — pridruživanje je mehanizam
+// povratka igrača, svaka prepreka tu radi protiv cilja.
+export const requestJoinClan = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { clanId } = request.data || {}
+  if (typeof clanId !== 'string' || !clanId)
+    throw new HttpsError('invalid-argument', 'Nedostaje klan.')
+
+  await db.runTransaction(async (tx) => {
+    const [clanstvo, snap] = await Promise.all([tx.get(clanMemberRef(uid)), tx.get(clanRef(clanId))])
+    if (clanstvo.exists && clanstvo.data().clanId)
+      throw new HttpsError('failed-precondition', 'Već si član klana. Prvo izađi iz njega.')
+    if (!snap.exists || snap.data().disbandedAt)
+      throw new HttpsError('not-found', 'Taj klan ne postoji.')
+
+    const clan = snap.data()
+    if ((clan.memberIds || []).includes(uid))
+      throw new HttpsError('failed-precondition', 'Već si u tom klanu.')
+    if ((clan.pendingRequests || []).includes(uid))
+      throw new HttpsError('already-exists', 'Zahtjev je već poslan.')
+    // Popunjen klan namjerno ne prima ni zahtjeve — inače se skupi red koji
+    // niko ne može odobriti, a igrač čeka bez ikakvog znaka da nema šanse.
+    if (!imaMjesta(clan)) throw new HttpsError('failed-precondition', 'Klan je popunjen.')
+
+    tx.update(clanRef(clanId), { pendingRequests: FieldValue.arrayUnion(uid) })
+  })
+
+  return { ok: true }
+})
+
+// Odobravanje zahtjeva — osnivač i savjetnici.
+export const approveJoinRequest = onCall(async (request) => {
+  const odobrava = requireAuth(request)
+  const { uid } = request.data || {}
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+
+  const { clan } = await mojKlan(odobrava)
+  let ime = 'Farmaceut'
+
+  await db.runTransaction(async (tx) => {
+    const [snap, kandidat, kandidatProfil] = await Promise.all([
+      tx.get(clanRef(clan.id)),
+      tx.get(clanMemberRef(uid)),
+      tx.get(db.doc(`users/${uid}`)),
+    ])
+    if (!snap.exists || snap.data().disbandedAt) throw new HttpsError('not-found', 'Klan ne postoji.')
+    const svjez = { id: snap.id, ...snap.data() }
+
+    if (!smijeUpravljati(ulogaU(svjez, odobrava)))
+      throw new HttpsError('permission-denied', 'Samo osnivač i savjetnici odobravaju zahtjeve.')
+    if (!(svjez.pendingRequests || []).includes(uid))
+      throw new HttpsError('not-found', 'Taj zahtjev više ne postoji.')
+    // Limit se provjerava nad SVJEŽIM dokumentom unutar transakcije: dva
+    // savjetnika mogu odobravati istovremeno, i bez ovoga bi klan prešao limit.
+    if (!imaMjesta(svjez))
+      throw new HttpsError('failed-precondition', `Klan je popunjen (${MAX_CLANOVA} članova).`)
+    if (kandidat.exists && kandidat.data().clanId)
+      throw new HttpsError('failed-precondition', 'Igrač je u međuvremenu ušao u drugi klan.')
+
+    ime = kandidatProfil.exists ? kandidatProfil.data().displayName || 'Farmaceut' : 'Farmaceut'
+
+    tx.update(clanRef(clan.id), {
+      memberIds: FieldValue.arrayUnion(uid),
+      pendingRequests: FieldValue.arrayRemove(uid),
+    })
+    tx.set(clanMemberRef(uid), {
+      clanId: clan.id,
+      role: 'member',
+      joinedAt: FieldValue.serverTimestamp(),
+    })
+    if (kandidatProfil.exists) tx.update(db.doc(`users/${uid}`), { clan: svjez.name })
+  })
+
+  const svjez = await clanRef(clan.id).get()
+  await obavijestiClan(
+    { id: clan.id, ...svjez.data() },
+    { naslov: 'Novi član klana', tekst: `${ime} se pridružio klanu ${clan.name}.` },
+    odobrava
+  )
+
+  return { ok: true, ime }
+})
+
+export const rejectJoinRequest = onCall(async (request) => {
+  const odbija = requireAuth(request)
+  const { uid } = request.data || {}
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+
+  const { clan, uloga } = await mojKlan(odbija)
+  if (!smijeUpravljati(uloga))
+    throw new HttpsError('permission-denied', 'Samo osnivač i savjetnici odbijaju zahtjeve.')
+
+  await clanRef(clan.id).update({ pendingRequests: FieldValue.arrayRemove(uid) })
+  return { ok: true }
+})
+
+// Skidanje igrača s članstva — zajednička putanja za "izađi sam" i "izbačen".
+// Kad ode osnivač, vodstvo se prenosi ODMAH, a ne tek sljedećom dnevnom
+// provjerom: klan bez osnivača ne može odobravati zahtjeve ni prijaviti se na
+// takmičenje, pa bi čekanje do 24h bilo tiho gašenje klana.
+async function ukloniClana(clanId, uid) {
+  let ishod = { raspusten: false, noviFounder: null, ime: 'Farmaceut' }
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(clanRef(clanId))
+    if (!snap.exists || snap.data().disbandedAt) throw new HttpsError('not-found', 'Klan ne postoji.')
+    const clan = { id: snap.id, ...snap.data() }
+
+    const profil = await tx.get(db.doc(`users/${uid}`))
+    if (profil.exists) ishod.ime = profil.data().displayName || 'Farmaceut'
+
+    const preostali = (clan.memberIds || []).filter((id) => id !== uid)
+    const noviSavjetnici = (clan.advisorIds || []).filter((id) => id !== uid)
+
+    // Zadnji član je otišao → klan se gasi. Dokument ostaje radi istorije, ali
+    // se rezervacija imena BRIŠE — inače bi ime ostalo zauzeto zauvijek i niko
+    // ga ne bi mogao ponovo uzeti.
+    if (preostali.length === 0) {
+      tx.update(clanRef(clanId), {
+        memberIds: [],
+        advisorIds: [],
+        pendingRequests: [],
+        disbandedAt: FieldValue.serverTimestamp(),
+      })
+      tx.delete(db.doc(`clanNames/${kljucImena(clan.name)}`))
+      tx.set(clanMemberRef(uid), { clanId: null, role: null, joinedAt: null })
+      if (profil.exists) tx.update(db.doc(`users/${uid}`), { clan: null })
+      ishod.raspusten = true
+      return
+    }
+
+    const izmjene = {
+      memberIds: preostali,
+      advisorIds: noviSavjetnici,
+      pendingRequests: FieldValue.arrayRemove(uid),
+    }
+
+    if (clan.founderId === uid) {
+      const profili = await tx.getAll(...preostali.map((id) => db.doc(`users/${id}`)))
+      const nasljednik = izaberiNasljednika(
+        profili.filter((p) => p.exists).map((p) => ({ uid: p.id, xp: p.data().xp || 0 }))
+      )
+      if (nasljednik) {
+        izmjene.founderId = nasljednik
+        // Novi osnivač prestaje biti savjetnik — inače bi držao dvije uloge i
+        // zauzimao jedno od dva savjetnička mjesta bez potrebe.
+        izmjene.advisorIds = noviSavjetnici.filter((id) => id !== nasljednik)
+        izmjene.founderLastActiveAt = FieldValue.serverTimestamp()
+        tx.set(
+          clanMemberRef(nasljednik),
+          { clanId, role: 'founder', joinedAt: FieldValue.serverTimestamp() },
+          { merge: true }
+        )
+        ishod.noviFounder = nasljednik
+      }
+    }
+
+    tx.update(clanRef(clanId), izmjene)
+    tx.set(clanMemberRef(uid), { clanId: null, role: null, joinedAt: null })
+    if (profil.exists) tx.update(db.doc(`users/${uid}`), { clan: null })
+  })
+
+  return ishod
+}
+
+export const leaveClan = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { clan } = await mojKlan(uid)
+
+  const ishod = await ukloniClana(clan.id, uid)
+
+  if (!ishod.raspusten) {
+    const svjez = await clanRef(clan.id).get()
+    const podaci = { id: clan.id, ...svjez.data() }
+    if (ishod.noviFounder) {
+      const novi = await db.doc(`users/${ishod.noviFounder}`).get()
+      const imeNovog = novi.exists ? novi.data().displayName || 'Farmaceut' : 'Farmaceut'
+      await obavijestiClan(podaci, {
+        naslov: 'Novi vođa klana',
+        tekst: `${ishod.ime} je napustio klan. Vodstvo preuzima ${imeNovog}.`,
+      })
+    } else {
+      await obavijestiClan(podaci, {
+        naslov: 'Član je napustio klan',
+        tekst: `${ishod.ime} više nije u klanu ${clan.name}.`,
+      })
+    }
+  }
+
+  return { ok: true, raspusten: ishod.raspusten, noviFounder: ishod.noviFounder }
+})
+
+export const kickMember = onCall(async (request) => {
+  const izvrsilac = requireAuth(request)
+  const { uid } = request.data || {}
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+  if (uid === izvrsilac) throw new HttpsError('invalid-argument', 'Sebe ne možeš izbaciti — koristi izlazak iz klana.')
+
+  const { clan, uloga } = await mojKlan(izvrsilac)
+  const ciljUloga = ulogaU(clan, uid)
+  if (!ciljUloga) throw new HttpsError('not-found', 'Taj igrač nije u tvom klanu.')
+  if (!smijeIzbaciti(uloga, ciljUloga))
+    throw new HttpsError(
+      'permission-denied',
+      ciljUloga === 'founder'
+        ? 'Osnivač se ne može izbaciti.'
+        : 'Savjetnik ne može izbaciti drugog savjetnika.'
+    )
+
+  const ishod = await ukloniClana(clan.id, uid)
+  const svjez = await clanRef(clan.id).get()
+  if (!ishod.raspusten) {
+    await obavijestiClan({ id: clan.id, ...svjez.data() }, {
+      naslov: 'Član izbačen',
+      tekst: `${ishod.ime} je uklonjen iz klana ${clan.name}.`,
+    })
+  }
+
+  return { ok: true }
+})
+
+export const assignAdvisor = onCall(async (request) => {
+  const izvrsilac = requireAuth(request)
+  const { uid } = request.data || {}
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+
+  const { clan } = await mojKlan(izvrsilac)
+  let ime = 'Farmaceut'
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(clanRef(clan.id))
+    if (!snap.exists || snap.data().disbandedAt) throw new HttpsError('not-found', 'Klan ne postoji.')
+    const svjez = { id: snap.id, ...snap.data() }
+
+    if (!smijeMijenjatiSavjetnike(ulogaU(svjez, izvrsilac)))
+      throw new HttpsError('permission-denied', 'Savjetnike imenuje samo osnivač.')
+    const ciljUloga = ulogaU(svjez, uid)
+    if (!ciljUloga) throw new HttpsError('not-found', 'Taj igrač nije u klanu.')
+    if (ciljUloga !== 'member') throw new HttpsError('failed-precondition', 'Igrač već ima ulogu.')
+    if (!mozeJosSavjetnika(svjez))
+      throw new HttpsError('failed-precondition', `Klan već ima ${MAX_SAVJETNIKA} savjetnika.`)
+
+    const profil = await tx.get(db.doc(`users/${uid}`))
+    if (profil.exists) ime = profil.data().displayName || 'Farmaceut'
+
+    tx.update(clanRef(clan.id), { advisorIds: FieldValue.arrayUnion(uid) })
+    tx.set(clanMemberRef(uid), { role: 'advisor' }, { merge: true })
+  })
+
+  const svjez = await clanRef(clan.id).get()
+  await obavijestiClan({ id: clan.id, ...svjez.data() }, {
+    naslov: 'Novi savjetnik',
+    tekst: `${ime} je postao savjetnik klana ${clan.name}.`,
+  })
+
+  return { ok: true }
+})
+
+export const removeAdvisor = onCall(async (request) => {
+  const izvrsilac = requireAuth(request)
+  const { uid } = request.data || {}
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+
+  const { clan, uloga } = await mojKlan(izvrsilac)
+  if (!smijeMijenjatiSavjetnike(uloga))
+    throw new HttpsError('permission-denied', 'Savjetnike smjenjuje samo osnivač.')
+  if (!(clan.advisorIds || []).includes(uid))
+    throw new HttpsError('not-found', 'Taj igrač nije savjetnik.')
+
+  await clanRef(clan.id).update({ advisorIds: FieldValue.arrayRemove(uid) })
+  await clanMemberRef(uid).set({ role: 'member' }, { merge: true })
+  return { ok: true }
+})
+
+// Raspuštanje — samo osnivač. Dokument klana OSTAJE (disbandedAt), da istorija
+// takmičenja ne izgubi ime klana koji je učestvovao.
+export const disbandClan = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { clan, uloga } = await mojKlan(uid)
+  if (!smijeRaspustiti(uloga))
+    throw new HttpsError('permission-denied', 'Klan može raspustiti samo osnivač.')
+
+  const clanovi = clan.memberIds || []
+
+  // Obavijest ide PRIJE brisanja članstva — poslije toga se više ne zna kome.
+  await obavijestiClan(clan, {
+    naslov: 'Klan je raspušten',
+    tekst: `Klan ${clan.name} je raspustio osnivač.`,
+  }, uid)
+
+  const batch = db.batch()
+  batch.update(clanRef(clan.id), {
+    disbandedAt: FieldValue.serverTimestamp(),
+    memberIds: [],
+    advisorIds: [],
+    pendingRequests: [],
+  })
+  for (const id of clanovi) {
+    batch.set(clanMemberRef(id), { clanId: null, role: null, joinedAt: null })
+    batch.update(db.doc(`users/${id}`), { clan: null })
+  }
+  batch.delete(db.doc(`clanNames/${kljucImena(clan.name)}`))
+  await batch.commit()
+
+  return { ok: true, oslobodjeno: clanovi.length }
+})
+
+// Prijava na sedmično takmičenje. Prozor: subota cijeli dan i nedjelja do
+// 20:00 po BiH vremenu. UI dugme se gasi izvan prozora, ali provjera koja
+// stvarno vrijedi je ova.
+export const registerForCompetition = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { clan, uloga } = await mojKlan(uid)
+  if (!smijePrijavitiNaTakmicenje(uloga))
+    throw new HttpsError('permission-denied', 'Klan prijavljuje osnivač ili savjetnik.')
+
+  const p = bihParts()
+  if (!registracijaOtvorena(p))
+    throw new HttpsError(
+      'failed-precondition',
+      'Prijave su otvorene subotom i nedjeljom do 20:00.'
+    )
+
+  const weekId = weekIdZaRegistraciju(p)
+  const ref = db.doc(`clanCompetitions/${weekId}/registrations/${clan.id}`)
+  const postoji = await ref.get()
+  if (postoji.exists) throw new HttpsError('already-exists', 'Klan je već prijavljen za tu sedmicu.')
+
+  await ref.set({
+    clanId: clan.id,
+    name: clan.name,
+    tag: clan.tag || null,
+    memberIds: clan.memberIds || [],
+    memberCount: (clan.memberIds || []).length,
+    registeredBy: uid,
+    registeredAt: FieldValue.serverTimestamp(),
+  })
+  await db.doc(`clanCompetitions/${weekId}`).set(
+    {
+      weekId,
+      pocetak: `${weekId}T08:00 Europe/Sarajevo`,
+      kraj: 'petak 18:00 Europe/Sarajevo',
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  )
+
+  return { ok: true, weekId }
+})
+
+// Podaci klana za ekrane "Moj klan" i "Upravljanje klanom".
+// Detalje o igračima (XP, level, najbolji rezultat u Preživljavanju) dobijaju
+// SAMO osnivač i savjetnici — običnom članu se vraća lista imena i uloga.
+export const getClanOverview = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const m = await clanMemberRef(uid).get()
+  const clanId = m.exists ? m.data().clanId : null
+  if (!clanId) return { clan: null }
+
+  const snap = await clanRef(clanId).get()
+  if (!snap.exists || snap.data().disbandedAt) return { clan: null }
+  const clan = { id: snap.id, ...snap.data() }
+  const uloga = ulogaU(clan, uid)
+  const clanovi = await clanoviSaProfilima(clan)
+
+  let zahtjevi = []
+  if (smijeUpravljati(uloga) && (clan.pendingRequests || []).length > 0) {
+    const cfg = await getLevelConfig()
+    const [snaps, stablo] = await Promise.all([
+      db.getAll(...clan.pendingRequests.map((id) => db.doc(`users/${id}`))),
+      survivalStablo(),
+    ])
+    zahtjevi = snaps
+      .filter((s) => s.exists)
+      .map((s) => {
+        const p = s.data()
+        return {
+          uid: s.id,
+          ime: p.displayName || 'Farmaceut',
+          avatar: p.avatar || 'a1',
+          xp: p.xp || 0,
+          level: levelFromXp(p.xp || 0, cfg),
+          survival: najboljiSurvivalIz(stablo, s.id),
+        }
+      })
+  }
+
+  const p = bihParts()
+  const weekId = weekIdZaRegistraciju(p)
+  return {
+    clan: {
+      id: clan.id,
+      name: clan.name,
+      tag: clan.tag || null,
+      founderId: clan.founderId,
+      advisorIds: clan.advisorIds || [],
+      clanLevel: clan.clanLevel || 1,
+      clanXP: clan.clanXP || 0,
+      memberCount: (clan.memberIds || []).length,
+      maxClanova: MAX_CLANOVA,
+    },
+    uloga,
+    clanovi,
+    zahtjevi,
+    takmicenje: {
+      registracijaOtvorena: registracijaOtvorena(p),
+      weekId,
+      prijavljen: await jePrijavljen(clan.id, weekId),
+    },
+  }
+})
+
+async function jePrijavljen(clanId, weekId) {
+  const s = await db.doc(`clanCompetitions/${weekId}/registrations/${clanId}`).get()
+  return s.exists
+}
+
+// Najbolji rezultat u Preživljavanju: niz i sedmica u kojoj je postignut.
+// Čita se iz RTDB-a (survival/{week}/{uid}), gdje već stoji po sedmicama —
+// profil taj podatak ne nosi, a dodavati ga na vrući put bodovanja zbog ekrana
+// koji otvara osnivač ne bi bilo pošteno prema trošku.
+//
+// Stablo se čita JEDNOM po pozivu i pretražuje u memoriji: pozvati ovo po
+// svakom igraču značilo bi isto stablo povučeno deset puta.
+async function survivalStablo() {
+  const snap = await rtdb.ref('survival').get()
+  return snap.exists() ? snap.val() || {} : {}
+}
+
+function najboljiSurvivalIz(stablo, uid) {
+  let najbolji = null
+  for (const [week, igraci] of Object.entries(stablo)) {
+    const zapis = igraci?.[uid]
+    if (!zapis) continue
+    const streak = zapis.streak || 0
+    if (!najbolji || streak > najbolji.streak) najbolji = { week, streak }
+  }
+  return najbolji
+}
+
+// Detaljan profil jednog igrača — za ekran "Upravljanje klanom".
+// Vidljiv osnivaču i savjetnicima, i to samo za igrače iz VLASTITOG klana ili
+// one koji su poslali zahtjev; inače bi ovo bio otvoren pregled tuđih profila.
+export const getClanPlayerDetails = onCall(async (request) => {
+  const trazi = requireAuth(request)
+  const { uid } = request.data || {}
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+
+  const { clan, uloga } = await mojKlan(trazi)
+  if (!smijeUpravljati(uloga))
+    throw new HttpsError('permission-denied', 'Detalje vide osnivač i savjetnici.')
+  const dozvoljen =
+    (clan.memberIds || []).includes(uid) || (clan.pendingRequests || []).includes(uid)
+  if (!dozvoljen) throw new HttpsError('permission-denied', 'Taj igrač nije vezan za tvoj klan.')
+
+  const s = await db.doc(`users/${uid}`).get()
+  if (!s.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+  const p = s.data()
+  const cfg = await getLevelConfig()
+
+  return {
+    uid,
+    ime: p.displayName || 'Farmaceut',
+    avatar: p.avatar || 'a1',
+    xp: p.xp || 0,
+    level: levelFromXp(p.xp || 0, cfg),
+    streak: p.streak || 0,
+    lastPlayDay: p.lastPlayDay || null,
+    uloga: ulogaU(clan, uid),
+    survival: najboljiSurvivalIz(await survivalStablo(), uid),
+  }
+})
+
+// Dnevna provjera neaktivnih osnivača.
+//
+// Neaktivnost se mjeri postojećim users.lastPlayDay — server ga već piše pri
+// svakom kvizu, pa provjera ne košta nijedan dodatan upis. Kad osnivač nikad
+// nije igrao, mjeri se od dana osnivanja klana.
+export const checkFounderInactivity = onSchedule(
+  { schedule: '0 5 * * *', timeZone: BIH_TZ },
+  async () => {
+    const danas = utcDayKey()
+    const snap = await db.collection('clans').where('disbandedAt', '==', null).get()
+    let promijenjeno = 0
+    let raspusteno = 0
+
+    for (const d of snap.docs) {
+      const clan = { id: d.id, ...d.data() }
+      const clanovi = clan.memberIds || []
+
+      if (clanovi.length === 0) {
+        await d.ref.update({ disbandedAt: FieldValue.serverTimestamp() })
+        await db.doc(`clanNames/${kljucImena(clan.name)}`).delete().catch(() => {})
+        raspusteno++
+        continue
+      }
+
+      const founderUnutra = clanovi.includes(clan.founderId)
+      let treba = !founderUnutra
+
+      if (founderUnutra) {
+        const f = await db.doc(`users/${clan.founderId}`).get()
+        const lastPlayDay = f.exists ? f.data().lastPlayDay || null : null
+        treba = jeNeaktivan(lastPlayDay, danas, clan.createdDay || null, NEAKTIVNOST_DANA)
+      }
+      if (!treba) continue
+
+      const kandidati = clanovi.filter((id) => id !== clan.founderId)
+      if (kandidati.length === 0) {
+        // Osnivač je jedini član i neaktivan je — klan se ne dira. Raspuštanje
+        // bi mu obrisalo klan dok je samo na godišnjem.
+        continue
+      }
+
+      const profili = await db.getAll(...kandidati.map((id) => db.doc(`users/${id}`)))
+      const nasljednik = izaberiNasljednika(
+        profili.filter((p) => p.exists).map((p) => ({ uid: p.id, xp: p.data().xp || 0 }))
+      )
+      if (!nasljednik) continue
+
+      await d.ref.update({
+        founderId: nasljednik,
+        advisorIds: (clan.advisorIds || []).filter((id) => id !== nasljednik),
+        memberIds: founderUnutra ? clanovi : clanovi.filter((id) => id !== clan.founderId),
+        founderLastActiveAt: FieldValue.serverTimestamp(),
+      })
+      await clanMemberRef(nasljednik).set({ clanId: clan.id, role: 'founder' }, { merge: true })
+      if (!founderUnutra) {
+        await clanMemberRef(clan.founderId)
+          .set({ clanId: null, role: null, joinedAt: null })
+          .catch(() => {})
+      }
+
+      const novi = await db.doc(`users/${nasljednik}`).get()
+      const imeNovog = novi.exists ? novi.data().displayName || 'Farmaceut' : 'Farmaceut'
+      const svjez = await d.ref.get()
+      await obavijestiClan(
+        { id: d.id, ...svjez.data() },
+        {
+          naslov: 'Novi vođa klana',
+          tekst: founderUnutra
+            ? `Osnivač je bio neaktivan ${NEAKTIVNOST_DANA} dana. Vodstvo preuzima ${imeNovog}.`
+            : `Osnivač je napustio klan. Vodstvo preuzima ${imeNovog}.`,
+        }
+      )
+      promijenjeno++
+    }
+
+    console.log(
+      `checkFounderInactivity: pregledano ${snap.size}, novo vodstvo ${promijenjeno}, raspušteno ${raspusteno}`
+    )
   }
 )
