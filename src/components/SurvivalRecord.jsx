@@ -10,7 +10,7 @@ import RecordChestOverlay from './RecordChestOverlay'
 //
 // Za razliku od sedmične ljestvice, ova se ne prazni srijedom. Rekorder ostaje
 // na njoj dok ga neko ne pretekne STROGO većim nizom (izjednačenje ne skida
-// aktuelnog). Ko na njoj sjedi u trenutku sedmičnog restarta, dobija tri
+// aktuelnog). Ko na njoj sjedi u trenutku sedmičnog restarta, dobija pet
 // kovčega — iste žetone kao kod kovčega za level — i otvara ih upravo ovdje.
 //
 // Server drži i rekord (config/survivalRecord) i brojač kovčega
@@ -89,7 +89,8 @@ export default function SurvivalRecord({ profile, uid }) {
           </div>
 
           <p className="mt-3 border-t border-white/25 pt-2 text-xs text-amber-50">
-            Rekorder svake srijede u 08:00 dobija <b>3 kovčega</b>. Pretekni ga većim nizom i
+            {/* Broj prati RECORD_CHESTS u functions/index.js — mijenjati zajedno. */}
+            Rekorder svake srijede u 08:00 dobija <b>5 kovčega</b>. Pretekni ga većim nizom i
             ploča je tvoja.
           </p>
         </div>

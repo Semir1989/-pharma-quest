@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { MIN_LEVEL_OSNIVANJE, IME_MIN, IME_MAX, TAG_MAX } from '../../functions/klan-pravila.js'
 import { pretraziKlanove } from '../services/klanApi'
 
-// Ekran "Pronađi klan" — za igrače bez klana.
+// Popis klanova — vide ga SVI, i članovi i oni bez klana.
+//
+// Za igrača bez klana ovo je ekran "Pronađi klan" (osnivanje + slanje zahtjeva).
+// Članu je to pregled konkurencije: osnivanje i dugme za pridruživanje otpadaju,
+// ali sastav svakog klana ostaje otvoren preko `naOtvori`.
 //
 // Popis se čita direktno iz Firestorea (clans/* je read-only za prijavljene),
 // pa pretraga ne troši nijedan poziv Cloud Functiona.
-export default function PronadjiKlan({ level, mojUid, akcija, radi }) {
+export default function PronadjiKlan({ level, mojUid, akcija, radi, imamKlan, naOtvori }) {
   const [klanovi, setKlanovi] = useState(null)
   const [trazi, setTrazi] = useState('')
   const [otvoriOsnivanje, setOtvoriOsnivanje] = useState(false)
@@ -32,7 +36,8 @@ export default function PronadjiKlan({ level, mojUid, akcija, radi }) {
 
   return (
     <>
-      {/* --- Osnivanje --- */}
+      {/* --- Osnivanje (samo za igrače bez klana) --- */}
+      {!imamKlan && (
       <section className="mx-4 mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-teal-100">
         <h2 className="text-lg font-bold text-slate-800">Osnuj svoj klan</h2>
         {mozeOsnovati ? (
@@ -84,6 +89,7 @@ export default function PronadjiKlan({ level, mojUid, akcija, radi }) {
           </p>
         )}
       </section>
+      )}
 
       {/* --- Popis klanova --- */}
       <section className="mx-4 mt-4 rounded-2xl bg-white p-4 shadow-sm">
@@ -110,7 +116,12 @@ export default function PronadjiKlan({ level, mojUid, akcija, radi }) {
               const pun = k.memberCount >= 10
               return (
                 <div key={k.id} className="flex items-center gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-                  <div className="min-w-0 flex-1">
+                  {/* Cijeli red otvara sastav klana — to je podatak po kojem se
+                      klan zapravo bira, a ranije se nije mogao vidjeti. */}
+                  <button
+                    onClick={() => naOtvori?.(k.id)}
+                    className="min-w-0 flex-1 text-left"
+                  >
                     <p className="truncate text-sm font-bold text-slate-800">
                       {k.tag && (
                         <span className="mr-1.5 rounded bg-teal-700 px-1.5 py-0.5 text-[11px] font-bold text-white">
@@ -120,16 +131,18 @@ export default function PronadjiKlan({ level, mojUid, akcija, radi }) {
                       {k.name}
                     </p>
                     <p className="text-xs text-slate-400">
-                      {k.memberCount}/10 članova · nivo {k.clanLevel}
+                      {k.memberCount}/10 članova · nivo {k.clanLevel} · vidi članove →
                     </p>
-                  </div>
-                  <button
-                    onClick={() => akcija('join', k.id)}
-                    disabled={pun || poslan || !!radi}
-                    className="shrink-0 rounded-xl bg-teal-700 px-3 py-2 text-xs font-bold text-white active:bg-teal-800 disabled:bg-slate-200 disabled:text-slate-500"
-                  >
-                    {poslan ? 'Zahtjev poslan' : pun ? 'Popunjen' : 'Pošalji zahtjev'}
                   </button>
+                  {!imamKlan && (
+                    <button
+                      onClick={() => akcija('join', k.id)}
+                      disabled={pun || poslan || !!radi}
+                      className="shrink-0 rounded-xl bg-teal-700 px-3 py-2 text-xs font-bold text-white active:bg-teal-800 disabled:bg-slate-200 disabled:text-slate-500"
+                    >
+                      {poslan ? 'Zahtjev poslan' : pun ? 'Popunjen' : 'Pošalji zahtjev'}
+                    </button>
+                  )}
                 </div>
               )
             })}

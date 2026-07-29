@@ -1,44 +1,130 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import TimerCircle from './TimerCircle'
 
 const LETTERS = ['A', 'B', 'C', 'D']
+
+// Prekid duži od ovoga znači da aplikacija nije radila (zaključan ekran, poziv,
+// prelazak u drugu aplikaciju), a ne da je vrijeme isteklo. Tajmeri u pozadini
+// se guše ili sasvim staju, pa je razmak između dva otkucaja jedini pouzdan
+// znak da nas nije bilo — `visibilitychange` ne stigne uvijek (dolazni poziv).
+const PAUZA_PRAG_MS = 3000
 
 // Ekran jednog pitanja (Etapa 6 — server verzija).
 // Klijent NE ZNA tačan odgovor: šalje izbor serveru (onSubmit) i prikazuje
 // feedback koji server vrati { correct, correctIndex, explanation }.
 // props: question ({ index, text, options, points, seconds }), total,
-//        onSubmit(selectedIndex|null) => Promise<feedback>, onNext(feedback)
-export default function QuestionScreen({ question, total, onSubmit, onNext }) {
-  const [seconds, setSeconds] = useState(question.seconds || 30)
+//        onSubmit(selectedIndex|null) => Promise<feedback>, onNext(feedback),
+//        onResume() => Promise (opciono — bez njega nema pauze)
+export default function QuestionScreen({ question, total, onSubmit, onNext, onResume }) {
+  const trajanje = question.seconds || 30
+  const [seconds, setSeconds] = useState(trajanje)
   const [selected, setSelected] = useState(undefined) // undefined = još bira
   const [feedback, setFeedback] = useState(null) // odgovor servera
   const [error, setError] = useState(false)
+  const [pauza, setPauza] = useState(false) // vraćen s pozadine, čeka "Nastavi"
+  const rokRef = useRef(Date.now() + trajanje * 1000)
+  const otkucajRef = useRef(Date.now())
 
   const answered = selected !== undefined
   const waiting = answered && !feedback && !error
 
-  // Odbrojavanje — staje kad korisnik odgovori; na 0 šalje "bez odgovora".
-  useEffect(() => {
-    if (answered) return
-    if (seconds === 0) {
-      answer(null)
-      return
-    }
-    const t = setTimeout(() => setSeconds((s) => s - 1), 1000)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seconds, answered])
+  const answer = useCallback(
+    async (index) => {
+      setSelected(index)
+      try {
+        setFeedback(await onSubmit(index))
+      } catch {
+        setError(true)
+      }
+    },
+    [onSubmit]
+  )
 
-  async function answer(index) {
-    setSelected(index)
+  // Odbrojavanje — staje kad korisnik odgovori ili kad se ekran pauzira.
+  //
+  // Rok se drži kao APSOLUTNO vrijeme, ne kao brojač koji se umanjuje: kad
+  // mobilni browser priguši tajmere, brojač zaostane za serverom pa je tačan
+  // odgovor stizao poslije isteka i bio poništen. Ako je razmak između dva
+  // otkucaja veći od praga, aplikacija je bila u pozadini — tad se ide na
+  // PAUZU, nikad na "isteklo vrijeme".
+  useEffect(() => {
+    if (answered || pauza) return
+    otkucajRef.current = Date.now()
+    const t = setInterval(() => {
+      const sad = Date.now()
+      const razmak = sad - otkucajRef.current
+      otkucajRef.current = sad
+      if (razmak > PAUZA_PRAG_MS && onResume) {
+        setPauza(true)
+        return
+      }
+      const ostalo = Math.max(0, Math.ceil((rokRef.current - sad) / 1000))
+      setSeconds(ostalo)
+      if (ostalo === 0) answer(null)
+    }, 250)
+    return () => clearInterval(t)
+  }, [answered, pauza, answer, onResume])
+
+  // Odlazak u pozadinu hvatamo i direktno: kad `visibilitychange` stigne (a
+  // obično stigne), pauza je postavljena PRIJE nego browser zamrzne stranicu,
+  // pa zaostali otkucaj poslije povratka više nema šta poništiti.
+  useEffect(() => {
+    if (!onResume) return
+    function naPromjenu() {
+      if (document.hidden) setPauza(true)
+    }
+    document.addEventListener('visibilitychange', naPromjenu)
+    return () => document.removeEventListener('visibilitychange', naPromjenu)
+  }, [onResume])
+
+  // "Nastavi": server pomjeri rok pitanja, pa i klijent kreće iz početka.
+  const [nastavljam, setNastavljam] = useState(false)
+  const [pauzaGreska, setPauzaGreska] = useState(false)
+  async function nastavi() {
+    if (nastavljam) return
+    setNastavljam(true)
+    setPauzaGreska(false)
     try {
-      setFeedback(await onSubmit(index))
+      await onResume()
+      rokRef.current = Date.now() + trajanje * 1000
+      otkucajRef.current = Date.now()
+      setSeconds(trajanje)
+      setPauza(false)
     } catch {
-      setError(true)
+      setPauzaGreska(true)
+    } finally {
+      setNastavljam(false)
     }
   }
 
   const correct = feedback?.correct
+
+  // Pauza pokriva ekran: bez nje bi se odgovaralo na pitanje kojem je serverski
+  // rok istekao, a to je izgledalo kao da igra ne priznaje tačan odgovor.
+  if (pauza && !answered) {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center p-6 text-center">
+        <span className="text-6xl">⏸️</span>
+        <h1 className="mt-4 font-title text-3xl font-extrabold text-slate-900">Pauza</h1>
+        <p className="mt-2 max-w-xs text-slate-500">
+          Kviz te čeka na {question.index + 1}. pitanju. Vrijeme stoji dok si odsutan/na —
+          nastavi kad budeš spreman/na.
+        </p>
+        <button
+          onClick={nastavi}
+          disabled={nastavljam}
+          className="mt-8 w-full max-w-xs rounded-2xl bg-teal-700 py-4 font-title text-lg font-extrabold text-white shadow-md active:bg-teal-800 disabled:opacity-60"
+        >
+          {nastavljam ? 'Nastavljam…' : 'Nastavi kviz ▶'}
+        </button>
+        {pauzaGreska && (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            Nema konekcije. Pokušaj ponovo.
+          </p>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-svh flex-col p-5 pb-8">
@@ -62,7 +148,7 @@ export default function QuestionScreen({ question, total, onSubmit, onNext }) {
 
       {/* Tajmer */}
       <div className="mt-6 flex justify-center">
-        <TimerCircle seconds={seconds} total={question.seconds || 30} />
+        <TimerCircle seconds={seconds} total={trajanje} />
       </div>
 
       {/* Kartica pitanja */}

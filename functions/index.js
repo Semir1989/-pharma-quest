@@ -43,6 +43,12 @@ import {
   registracijaOtvorena,
   weekIdZaRegistraciju,
 } from './klan-pravila.js'
+import {
+  DUEL_QUESTIONS,
+  DUEL_TOTAL_SECONDS,
+  duelPreostalo,
+  resolveMatch,
+} from './duel-pravila.js'
 
 setGlobalOptions({ region: 'europe-west1', maxInstances: 10 })
 
@@ -1077,6 +1083,43 @@ export const submitAnswer = onCall(async (request) => {
 })
 
 // ---------------------------------------------------------------------------
+// resumeQuiz — nastavak pitanja poslije pauze (zaključan ekran, poziv, prelazak
+// u drugu aplikaciju)
+// ---------------------------------------------------------------------------
+// Server broji vrijeme od askedAt, a klijentski tajmer stoji dok je aplikacija
+// u pozadini. Bez ovoga se igrač vraćao na pitanje kojem je server već istekao
+// rok, pa mu je i TAČAN odgovor bio poništen (effective = null). Ovdje se rok
+// jednostavno pomjeri na sada i pitanje vrati netaknuto.
+//
+// Nije nova rupa: startQuiz od ranije radi isto kad se nedovršena sesija
+// nastavi (askedAt se osvježi), samo je za to trebalo napustiti i ponovo
+// otvoriti ekran kviza. Ovim to radi dugme "Nastavi", bez gubitka odgovora.
+export const resumeQuiz = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+
+  const { sessionId } = request.data || {}
+  if (typeof sessionId !== 'string') throw new HttpsError('invalid-argument', 'Nedostaje sessionId.')
+
+  const ref = db.doc(`quizSessions/${sessionId}`)
+  const snap = await ref.get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Sesija ne postoji.')
+  const session = snap.data()
+  if (session.uid !== uid) throw new HttpsError('permission-denied', 'Ovo nije tvoja sesija.')
+  if (session.finished) throw new HttpsError('failed-precondition', 'Kviz je već završen.')
+
+  const meta = session.questions[session.current]
+  const qData = meta ? await getQuestionById(meta.id) : null
+  if (!qData) throw new HttpsError('internal', 'Pitanje nije dostupno, pokušaj ponovo.')
+
+  await ref.update({ askedAt: Date.now(), pauses: FieldValue.increment(1) })
+  return {
+    total: session.questions.length,
+    question: publicQuestion(meta.id, qData, session.current),
+  }
+})
+
+// ---------------------------------------------------------------------------
 // claimTask — server provjerava uslov i dodjeljuje nagradu
 // ---------------------------------------------------------------------------
 export const claimTask = onCall(async (request) => {
@@ -1239,7 +1282,6 @@ async function awardXpRaceFrames(tid, top3) {
 // tournamentTick (scheduled) zatvara runde: veći skor prolazi, walkover ako
 // protivnik ne odigra. Skor protivnika je skriven do zatvaranja runde.
 // ---------------------------------------------------------------------------
-const DUEL_QUESTIONS = 10
 const DUEL_WINNER_BONUS = 500
 
 function shuffle(arr) {
@@ -1321,19 +1363,6 @@ async function buildBracket(tid, cfg) {
 async function propagate(tid, round, slot, winner) {
   const field = slot % 2 === 0 ? 'p1' : 'p2'
   await db.doc(`tournaments/${tid}/matches/r${round + 1}s${Math.floor(slot / 2)}`).update({ [field]: winner })
-}
-
-// Odredi pobjednika meča (bye/walkover/skor; neriješeno → žrijeb).
-function resolveMatch(m) {
-  if (m.p1 && !m.p2) return m.p1
-  if (m.p2 && !m.p1) return m.p2
-  if (!m.p1 && !m.p2) return null
-  if (m.p1Played && !m.p2Played) return m.p1
-  if (m.p2Played && !m.p1Played) return m.p2
-  if (!m.p1Played && !m.p2Played) return Math.random() < 0.5 ? m.p1 : m.p2
-  if ((m.p1Score || 0) > (m.p2Score || 0)) return m.p1
-  if ((m.p2Score || 0) > (m.p1Score || 0)) return m.p2
-  return Math.random() < 0.5 ? m.p1 : m.p2
 }
 
 // Riješi bye/prazne mečeve u rundi (igrač bez protivnika odmah prolazi).
@@ -1456,7 +1485,34 @@ export const tournamentTick = onSchedule('every 30 minutes', async () => {
   }
 })
 
+// Zatvaranje duela: skor u meč + vrijeme završetka (mjerodavno za neriješeno).
+// Zove se i kad igrač odgovori na zadnje pitanje i kad mu istekne vrijeme, pa je
+// upis na jednom mjestu. Sve što je ostalo neodgovoreno se broji kao netačno.
+async function zavrsiDuel(uid, tid, sRef, session, answers) {
+  const score = answers.filter((a) => a.correct).length
+  const finishedAt = Date.now()
+  await sRef.update({ answers, finished: true, finishedAt })
+
+  const mRef = db.doc(`tournaments/${tid}/matches/${session.matchId}`)
+  await db.runTransaction(async (tx) => {
+    const ms = await tx.get(mRef)
+    if (!ms.exists) return
+    const m = ms.data()
+    if (m.p1 === uid) tx.update(mRef, { p1Score: score, p1Played: true, p1FinishedAt: finishedAt })
+    else if (m.p2 === uid) tx.update(mRef, { p2Score: score, p2Played: true, p2FinishedAt: finishedAt })
+  })
+
+  await applyProgress(uid, { duels: 1 }) // questovi tipa "odigraj duel"
+  await bumpStreak(uid)
+  return { score, total: session.questionIds.length }
+}
+
 // Pokreni/nastavi svoj duel u tekućoj rundi.
+//
+// Za razliku od kviza, ovdje se sat NE resetuje pri povratku: 120 sekundi teče
+// od prvog otvaranja duela. Ko izađe pa se vrati, zatiče isti sat — inače bi
+// izlazak iz aplikacije bio način da se dobije neograničeno vrijeme, a vrijeme
+// je ovdje i kriterij za neriješen rezultat.
 export const startDuel = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
@@ -1472,15 +1528,29 @@ export const startDuel = onCall(async (request) => {
   const m = md.data()
   const isP1 = m.p1 === uid
   if ((isP1 && m.p1Played) || (!isP1 && m.p2Played)) {
-    return { alreadyPlayed: true, score: isP1 ? m.p1Score : m.p2Score }
+    return { alreadyPlayed: true, score: isP1 ? m.p1Score : m.p2Score, total: DUEL_QUESTIONS }
   }
   const sRef = db.doc(`duelSessions/${tid}_${uid}`)
   const sSnap = await sRef.get()
   let session
   if (sSnap.exists && sSnap.data().matchId === md.id && !sSnap.data().finished) {
     session = sSnap.data()
+    // Vrijeme je isteklo dok igrača nije bilo → duel se zatvara s onim što ima.
+    if (duelPreostalo(session.startedAt) <= 0) {
+      const r = await zavrsiDuel(uid, tid, sRef, session, session.answers || [])
+      return { alreadyPlayed: true, score: r.score, total: r.total, isteklo: true }
+    }
   } else {
-    session = { tid, uid, matchId: md.id, questionIds: m.questionIds, answers: [], current: 0, finished: false, askedAt: Date.now() }
+    session = {
+      tid,
+      uid,
+      matchId: md.id,
+      questionIds: m.questionIds,
+      answers: [],
+      current: 0,
+      finished: false,
+      startedAt: Date.now(),
+    }
     await sRef.set(session)
   }
   const qid = session.questionIds[session.current]
@@ -1488,17 +1558,21 @@ export const startDuel = onCall(async (request) => {
   return {
     matchId: md.id,
     total: session.questionIds.length,
-    question: publicQuestion(qid, qDoc, session.current, QUESTION_SECONDS),
+    index: session.current,
+    secondsLeft: duelPreostalo(session.startedAt),
+    totalSeconds: DUEL_TOTAL_SECONDS,
+    question: publicQuestion(qid, qDoc, session.current, duelPreostalo(session.startedAt)),
   }
 })
 
-// Odgovor u duelu; na zadnjem pitanju upisuje skor u meč (skriven protivniku).
+// Odgovor u duelu; poslije svakog odgovora odmah slijedi sljedeće pitanje, a na
+// zadnjem se upisuje skor u meč (skriven protivniku do zatvaranja runde).
 export const submitDuelAnswer = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
   const cfg = await getTournamentConfig()
   const tid = cfg?.key
-  const { answerIndex } = request.data || {}
+  const { answerIndex, kraj } = request.data || {}
   const answer = Number.isInteger(answerIndex) && answerIndex >= 0 && answerIndex <= 3 ? answerIndex : null
   const sRef = db.doc(`duelSessions/${tid}_${uid}`)
   const sSnap = await sRef.get()
@@ -1506,37 +1580,50 @@ export const submitDuelAnswer = onCall(async (request) => {
   const session = sSnap.data()
   if (session.finished) throw new HttpsError('failed-precondition', 'Duel je završen.')
 
-  const elapsed = (Date.now() - (session.askedAt || Date.now())) / 1000
-  const effective = elapsed > QUESTION_SECONDS + GRACE_SECONDS ? null : answer
+  // Jedan sat za svih 10 pitanja. Kad istekne, duel se zatvara odmah — pitanja
+  // na koja se nije stiglo odgovoriti ostaju netačna.
+  //
+  // `kraj` šalje klijent kad njegov tajmer dođe na nulu. Bez toga bi odgovor
+  // stigao unutar GRACE prozora i server bi ga uredno primio, pa bi ekran
+  // pokazivao "isteklo" a duel se nastavljao. Grace ostaje za mrežno kašnjenje
+  // stvarnih odgovora, a ne kao produžetak igre.
+  const proteklo = (Date.now() - (session.startedAt || Date.now())) / 1000
+  if (kraj === true || proteklo > DUEL_TOTAL_SECONDS + GRACE_SECONDS) {
+    const r = await zavrsiDuel(uid, tid, sRef, session, session.answers || [])
+    return { isteklo: true, finished: true, myScore: r.score, total: r.total, secondsLeft: 0 }
+  }
+
   const qid = session.questionIds[session.current]
   const secret = await getSecret(qid)
-  const correct = effective !== null && effective === secret.correctIndex
+  const correct = answer !== null && answer === secret.correctIndex
   const answers = [...session.answers, { correct }]
   const isLast = session.current + 1 >= session.questionIds.length
 
   if (!isLast) {
     const nextQid = session.questionIds[session.current + 1]
     const nextData = await getQuestionById(nextQid)
-    await sRef.update({ answers, current: session.current + 1, askedAt: Date.now() })
+    await sRef.update({ answers, current: session.current + 1 })
+    const preostalo = duelPreostalo(session.startedAt)
     return {
-      correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: false,
-      question: publicQuestion(nextQid, nextData, session.current + 1, QUESTION_SECONDS),
+      correct,
+      correctIndex: secret.correctIndex,
+      explanation: secret.explanation,
+      finished: false,
+      secondsLeft: preostalo,
+      question: publicQuestion(nextQid, nextData, session.current + 1, preostalo),
     }
   }
 
-  const score = answers.filter((a) => a.correct).length
-  await sRef.update({ answers, finished: true })
-  const mRef = db.doc(`tournaments/${tid}/matches/${session.matchId}`)
-  await db.runTransaction(async (tx) => {
-    const ms = await tx.get(mRef)
-    if (!ms.exists) return
-    const m = ms.data()
-    if (m.p1 === uid) tx.update(mRef, { p1Score: score, p1Played: true })
-    else if (m.p2 === uid) tx.update(mRef, { p2Score: score, p2Played: true })
-  })
-  await applyProgress(uid, { duels: 1 }) // questovi tipa "odigraj duel"
-  await bumpStreak(uid)
-  return { correct, correctIndex: secret.correctIndex, explanation: secret.explanation, finished: true, myScore: score, total: session.questionIds.length }
+  const r = await zavrsiDuel(uid, tid, sRef, session, answers)
+  return {
+    correct,
+    correctIndex: secret.correctIndex,
+    explanation: secret.explanation,
+    finished: true,
+    myScore: r.score,
+    total: r.total,
+    secondsLeft: duelPreostalo(session.startedAt),
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -1853,8 +1940,9 @@ export const submitSurvivalAnswer = onCall(async (request) => {
 // svakom pokretanju dodjeljuju iznova, jer su brojač, ne stanje.
 const BATCH_LIMIT = 400 // Firestore dozvoljava 500 operacija po batchu
 
-// Koliko kovčega dobija vlasnik rekorda pri sedmičnom restartu.
-const RECORD_CHESTS = 3
+// Koliko kovčega dobija vlasnik rekorda pri sedmičnom restartu. Rekord se drži
+// cijelu sedmicu i brani se protiv svih, pa nosi više od jednog level kovčega.
+const RECORD_CHESTS = 5
 
 // Nagrada se dodjeljuje PRIJE svega ostalog u restartu — tako je dobija onaj ko
 // je bio prvi u sekundi prije restarta, kako i treba. Kovčezi stoje na profilu
@@ -2000,7 +2088,7 @@ export const claimLevelChest = onCall(async (request) => {
 
 // Otvaranje kovčega za rekord Preživljavanja. Isti bubanj nagrada kao kod
 // kovčega za level — razlika je samo odakle kovčeg dolazi (sedmični restart
-// dodijeli tri vlasniku rekorda) i gdje se otvara (kartica rekorda u
+// dodijeli RECORD_CHESTS vlasniku rekorda) i gdje se otvara (kartica rekorda u
 // Preživljavanju). Brojač: users/{uid}.recordChests.
 export const claimSurvivalRecordChest = onCall(async (request) => {
   const uid = request.auth?.uid
@@ -3310,6 +3398,46 @@ export const getClanOverview = onCall(async (request) => {
       registracijaOtvorena: registracijaOtvorena(p),
       weekId,
       prijavljen: await jePrijavljen(clan.id, weekId),
+    },
+  }
+})
+
+// Javni prikaz BILO KOJEG klana — otvoren svim prijavljenim igračima, i onima
+// koji su već u nekom klanu.
+//
+// Sastav klana je glavni podatak pri odluci kojem se pridružiti, a ranije se
+// nije mogao vidjeti ni prije ulaska (popis je nudio samo ime i broj članova)
+// ni poslije (ekran "Pronađi klan" se skrivao članovima). Ovdje se vraća isto
+// što i vlastiti klan vidi o sebi, MINUS ono što je unutrašnja stvar kluba:
+// zahtjevi za učlanjenje i datum posljednje aktivnosti osnivača.
+export const getClanDetails = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { clanId } = request.data || {}
+  if (typeof clanId !== 'string') throw new HttpsError('invalid-argument', 'Nedostaje clanId.')
+
+  const snap = await clanRef(clanId).get()
+  if (!snap.exists || snap.data().disbandedAt) throw new HttpsError('not-found', 'Klan ne postoji.')
+  const clan = { id: snap.id, ...snap.data() }
+
+  return {
+    clan: {
+      id: clan.id,
+      name: clan.name,
+      tag: clan.tag || null,
+      founderId: clan.founderId,
+      advisorIds: clan.advisorIds || [],
+      clanLevel: clan.clanLevel || 1,
+      clanXP: clan.clanXP || 0,
+      memberCount: (clan.memberIds || []).length,
+      maxClanova: MAX_CLANOVA,
+      createdAt: clan.createdAt?.toMillis?.() || null,
+    },
+    clanovi: await clanoviSaProfilima(clan),
+    // Da ekran zna ponuditi pravo dugme: član gleda tuđi klan, svoj, ili je bez
+    // klana. Zahtjev je već poslan ako stoji u pendingRequests.
+    jaSam: {
+      clan: (clan.memberIds || []).includes(uid),
+      zahtjevPoslan: (clan.pendingRequests || []).includes(uid),
     },
   }
 })

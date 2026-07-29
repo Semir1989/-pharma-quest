@@ -57,6 +57,17 @@ if (leak.includes('correctIndex') || leak.includes('explanation')) {
 }
 console.log('✓ Nema curenja tačnog odgovora u startQuiz')
 
+// 3b. resumeQuiz — pauza (zaključan ekran, poziv) ne smije pojesti pitanje.
+// Vraća se ISTO pitanje, sa svježim rokom, i nijedan odgovor se ne gubi.
+const resume = await call('resumeQuiz', { sessionId: start.sessionId })
+if (resume.question.index !== start.question.index) {
+  throw new Error(`resumeQuiz je pomjerio pitanje: ${start.question.index} → ${resume.question.index}`)
+}
+if (JSON.stringify(resume.question).includes('correctIndex')) {
+  throw new Error('CURENJE u resumeQuiz!')
+}
+console.log(`✓ resumeQuiz: pauza vraća isto pitanje (${resume.question.index + 1}/${resume.total})`)
+
 // 4. Odgovori na svih 10 pitanja (uvijek opcija 0)
 let finished = false
 let lastResult = null

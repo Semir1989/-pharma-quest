@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { levelFromXp } from '../utils/levels'
 import MojKlan from '../components/MojKlan'
 import PronadjiKlan from '../components/PronadjiKlan'
+import KlanDetalji from '../components/KlanDetalji'
 import UpravljanjeKlanom from '../components/UpravljanjeKlanom'
 import TakmicenjeBanner from '../components/TakmicenjeBanner'
 import {
@@ -32,7 +33,8 @@ export default function Klan() {
   const [radi, setRadi] = useState('')
   const [greska, setGreska] = useState('')
   const [poruka, setPoruka] = useState('')
-  const [tab, setTab] = useState('moj')
+  const [tab, setTab] = useState('moj') // moj | klanovi | upravljanje
+  const [otvorenKlan, setOtvorenKlan] = useState(null) // clanId tuđeg klana
 
   const ucitaj = useCallback(async () => {
     try {
@@ -111,6 +113,24 @@ export default function Klan() {
   const mozeUpravljati = uloga === 'founder' || uloga === 'advisor'
   const brojZahtjeva = (stanje.zahtjevi || []).length
 
+  // Sastav tuđeg klana pokriva cijeli ekran — nema ga smisla gurati u karticu
+  // ispod tabova kad je to jedino što igrač u tom trenutku gleda.
+  if (otvorenKlan) {
+    return (
+      <KlanDetalji
+        clanId={otvorenKlan}
+        mojUid={user?.uid}
+        imamKlan={imamKlan}
+        akcija={async (sta, arg) => {
+          await akcija(sta, arg)
+          if (sta === 'join') setOtvorenKlan(null)
+        }}
+        radi={radi}
+        naNazad={() => setOtvorenKlan(null)}
+      />
+    )
+  }
+
   return (
     <div className="pb-6">
       <div className="px-4 pt-4">
@@ -152,6 +172,8 @@ export default function Klan() {
           mojUid={user?.uid}
           akcija={akcija}
           radi={radi}
+          imamKlan={false}
+          naOtvori={setOtvorenKlan}
         />
       ) : (
         <>
@@ -162,16 +184,26 @@ export default function Klan() {
             radi={radi === 'prijava'}
           />
 
-          {mozeUpravljati && (
-            <div className="mx-4 mt-4 flex gap-2 rounded-xl bg-slate-100 p-1">
-              <button
-                onClick={() => setTab('moj')}
-                className={`flex-1 rounded-lg py-2 text-sm font-bold ${
-                  tab === 'moj' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'
-                }`}
-              >
-                Moj klan
-              </button>
+          {/* Tab "Klanovi" ide i članovima: sastav drugih klanova je javan
+              podatak i članu treba jednako kao onome ko tek bira klan. */}
+          <div className="mx-4 mt-4 flex gap-2 rounded-xl bg-slate-100 p-1">
+            <button
+              onClick={() => setTab('moj')}
+              className={`flex-1 rounded-lg py-2 text-sm font-bold ${
+                tab === 'moj' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              Moj klan
+            </button>
+            <button
+              onClick={() => setTab('klanovi')}
+              className={`flex-1 rounded-lg py-2 text-sm font-bold ${
+                tab === 'klanovi' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              Klanovi
+            </button>
+            {mozeUpravljati && (
               <button
                 onClick={() => setTab('upravljanje')}
                 className={`flex-1 rounded-lg py-2 text-sm font-bold ${
@@ -185,10 +217,19 @@ export default function Klan() {
                   </span>
                 )}
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
-          {tab === 'upravljanje' && mozeUpravljati ? (
+          {tab === 'klanovi' ? (
+            <PronadjiKlan
+              level={levelFromXp(profile.xp || 0)}
+              mojUid={user?.uid}
+              akcija={akcija}
+              radi={radi}
+              imamKlan
+              naOtvori={setOtvorenKlan}
+            />
+          ) : tab === 'upravljanje' && mozeUpravljati ? (
             <UpravljanjeKlanom
               clan={stanje.clan}
               uloga={uloga}

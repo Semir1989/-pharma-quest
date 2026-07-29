@@ -13,6 +13,7 @@
     "oznaci-sadrzaj": "node scripts/oznaci-sadrzaj.js",
     "test-notifikacije": "node scripts/test-notifikacije.mjs",
     "test-klanovi": "node scripts/test-klanovi.mjs",
+    "test-duel": "node scripts/test-duel.mjs",
     "postavi-levele": "node scripts/postavi-level-config.js",
     "postavi-taskove": "node scripts/postavi-taskove.js",
     "postavi-bedzeve": "node scripts/postavi-bedzeve.js",

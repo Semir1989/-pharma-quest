@@ -47,6 +47,7 @@ function poziv(ime, fn, { ponovi = false } = {}) {
 
 const startQuizFn = httpsCallable(functions, 'startQuiz')
 const submitAnswerFn = httpsCallable(functions, 'submitAnswer')
+const resumeQuizFn = httpsCallable(functions, 'resumeQuiz')
 const claimTaskFn = httpsCallable(functions, 'claimTask')
 const ensureDailyQuestsFn = httpsCallable(functions, 'ensureDailyQuests')
 const startSurvivalFn = httpsCallable(functions, 'startSurvival')
@@ -69,6 +70,13 @@ export async function startQuizSession() {
 const submitAnswerPoziv = poziv('submitAnswer', submitAnswerFn)
 export async function submitQuizAnswer(sessionId, answerIndex) {
   return submitAnswerPoziv({ sessionId, answerIndex })
+}
+
+// Nastavak poslije pauze → { total, question }. Ne mijenja nijedan odgovor ni
+// brojač pokušaja, samo pomjera rok pitanja, pa je bezopasno ponoviti.
+const resumeQuizPoziv = poziv('resumeQuiz', resumeQuizFn, { ponovi: true })
+export async function resumeQuizQuestion(sessionId) {
+  return resumeQuizPoziv({ sessionId })
 }
 
 // → { reward, newBadges }
@@ -109,16 +117,21 @@ export async function registerForDuel() {
   return registerForDuelPoziv({})
 }
 
-// → { noMatch? , alreadyPlayed?, score?, matchId?, total?, question? }
+// → { noMatch?, alreadyPlayed?, score?, matchId?, total?, index?, secondsLeft?,
+//     totalSeconds?, question? }
+// secondsLeft je ostatak JEDNOG sata za cijeli duel (120 s); ne resetuje se
+// povratkom u aplikaciju.
 const startDuelPoziv = poziv('startDuel', startDuelFn, { ponovi: true })
 export async function startDuel() {
   return startDuelPoziv({})
 }
 
-// → { correct, correctIndex, explanation, finished, question?, myScore?, total? }
+// → { correct, correctIndex, explanation, finished, question?, secondsLeft?,
+//     myScore?, total?, isteklo? }
+// `kraj: true` zatvara duel na mjestu (klijentski tajmer je došao na nulu).
 const submitDuelPoziv = poziv('submitDuelAnswer', submitDuelFn)
-export async function submitDuelAnswer(answerIndex) {
-  return submitDuelPoziv({ answerIndex })
+export async function submitDuelAnswer(answerIndex, { kraj = false } = {}) {
+  return submitDuelPoziv({ answerIndex, kraj })
 }
 
 // Otvaranje kovčega za level → { level, preostalo }

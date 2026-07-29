@@ -41,6 +41,13 @@ export const getClanPlayerDetails = poziv(
   httpsCallable(functions, 'getClanPlayerDetails'),
   { ponovi: true }
 )
+// Javni prikaz bilo kojeg klana (sastav + osnovni podaci) — vidi ga svako, ne
+// samo članovi tog klana.
+export const getClanDetails = poziv(
+  'getClanDetails',
+  httpsCallable(functions, 'getClanDetails'),
+  { ponovi: true }
+)
 
 export const createClan = poziv('createClan', httpsCallable(functions, 'createClan'))
 export const requestJoinClan = poziv('requestJoinClan', httpsCallable(functions, 'requestJoinClan'))

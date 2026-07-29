@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { startQuizSession, submitQuizAnswer } from '../services/quizApi'
+import { startQuizSession, submitQuizAnswer, resumeQuizQuestion } from '../services/quizApi'
 import { track } from '../services/analytics'
 import { levelFromXp } from '../utils/levels'
 import { formatCountdown, nextDailyResetAt } from '../utils/periods'
@@ -106,6 +106,15 @@ export default function Kviz() {
     }
   }
 
+  // Nastavak poslije pauze (zaključan ekran, poziv, druga aplikacija). Server
+  // pomjeri rok pitanja da tačan odgovor ne bude poništen kao zakašnjeli;
+  // pokušaj se ne troši i nijedan odgovor se ne gubi.
+  async function handleResume() {
+    const res = await resumeQuizQuestion(session.sessionId)
+    track('quiz_resume', { index: res.question?.index })
+    return res
+  }
+
   if (phase === 'playing' && question) {
     return (
       <QuestionScreen
@@ -114,6 +123,7 @@ export default function Kviz() {
         total={session.total}
         onSubmit={handleSubmit}
         onNext={handleNext}
+        onResume={handleResume}
       />
     )
   }
@@ -192,6 +202,8 @@ export default function Kviz() {
       ) : (
         <p className="mt-2 text-slate-500">
           10 nasumičnih pitanja · 30 sekundi po pitanju.
+          <br />
+          Ako te neko prekine, kviz se pauzira i čeka te.
           <br />
           Jedan pokušaj se vraća svaka 4 sata · najviše {xpCap} XP dnevno.
         </p>
