@@ -15,13 +15,23 @@ const PAUZA_PRAG_MS = 3000
 // props: question ({ index, text, options, points, seconds }), total,
 //        onSubmit(selectedIndex|null) => Promise<feedback>, onNext(feedback),
 //        onResume() => Promise (opciono — bez njega nema pauze)
-export default function QuestionScreen({ question, total, onSubmit, onNext, onResume }) {
+export default function QuestionScreen({
+  question,
+  total,
+  onSubmit,
+  onNext,
+  onResume,
+  onHint,
+  hintovi = 0,
+}) {
   const trajanje = question.seconds || 30
   const [seconds, setSeconds] = useState(trajanje)
   const [selected, setSelected] = useState(undefined) // undefined = još bira
   const [feedback, setFeedback] = useState(null) // odgovor servera
   const [error, setError] = useState(false)
   const [pauza, setPauza] = useState(false) // vraćen s pozadine, čeka "Nastavi"
+  const [skriveni, setSkriveni] = useState([]) // 50:50 iz Kliničke Apoteke
+  const [trosimHint, setTrosimHint] = useState(false)
   const rokRef = useRef(Date.now() + trajanje * 1000)
   const otkucajRef = useRef(Date.now())
 
@@ -159,14 +169,40 @@ export default function QuestionScreen({ question, total, onSubmit, onNext, onRe
         </h2>
       </div>
 
+      {/* 50:50 — Klinička Apoteka. Nestaje čim se odgovori ili potroši. */}
+      {onHint && hintovi > 0 && !answered && skriveni.length === 0 && (
+        <button
+          onClick={async () => {
+            if (trosimHint) return
+            setTrosimHint(true)
+            try {
+              const r = await onHint()
+              setSkriveni(r.skriveni || [])
+            } catch {
+              /* nema više upotreba ili nema konekcije — dugme ostaje */
+            } finally {
+              setTrosimHint(false)
+            }
+          }}
+          disabled={trosimHint}
+          className="mt-4 self-center rounded-xl bg-indigo-100 px-4 py-2 text-sm font-bold text-indigo-800 active:bg-indigo-200 disabled:opacity-60"
+        >
+          {trosimHint ? 'Tražim…' : `🩺 50:50 · ostalo ${hintovi}`}
+        </button>
+      )}
+
       {/* Opcije */}
       <div className="mt-5 flex flex-col gap-3">
         {question.options.map((option, i) => (
           <button
             key={i}
-            disabled={answered}
+            disabled={answered || skriveni.includes(i)}
             onClick={() => answer(i)}
-            className={`flex items-center gap-4 rounded-2xl border-2 px-4 py-3.5 text-left transition-colors ${optionStyle(i, selected, feedback)}`}
+            className={`flex items-center gap-4 rounded-2xl border-2 px-4 py-3.5 text-left transition-colors ${
+              skriveni.includes(i) && !feedback
+                ? 'border-slate-100 bg-slate-50 text-slate-300 line-through'
+                : optionStyle(i, selected, feedback)
+            }`}
           >
             <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 font-bold ${letterStyle(i, selected, feedback)}`}>
               {LETTERS[i]}

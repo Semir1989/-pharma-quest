@@ -219,6 +219,23 @@ service cloud.firestore {
       }
     }
 
+    // Klanski rat. Čitanje je otvoreno prijavljenima (historija sedmica i
+    // parovi), pisanje isključivo server — CP, nagrade i nivoi Okruga se
+    // dodjeljuju u Cloud Functions.
+    //
+    // NAPOMENA: živo bodovanje rata NIJE ovdje nego u RTDB-u (clanWar/*), da
+    // jedan XP događaj ne bi značio dodatni Firestore upis po igraču. Klijent
+    // te čvorove ne čita direktno — sve ide kroz callable getClanWar — pa RTDB
+    // pravila za clanWar/* i clanWarDaily/* mogu ostati zatvorena.
+    match /clanWars/{warId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+      match /matches/{matchId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+
     // 'adminLog' — trag svake radnje iz admin panela. Piše ISKLJUČIVO server
     // (Admin SDK); admin ga smije čitati da vidi šta je i kada mijenjano.
     match /adminLog/{entryId} {

@@ -13,6 +13,7 @@ import {
 import { COSMETICS } from '../data/cosmetics'
 import { levelFromXp } from '../utils/levels'
 import EventKontrola from '../components/admin/EventKontrola'
+import RatKontrola from '../components/admin/RatKontrola'
 import {
   normalizeCategory,
   categoryLabel,
@@ -99,6 +100,8 @@ export default function Admin() {
       </p>
 
       <EventKontrola />
+
+      <RatKontrola />
 
       <AdminObjava />
 

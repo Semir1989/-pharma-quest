@@ -4,6 +4,7 @@ import { levelFromXp } from '../utils/levels'
 import MojKlan from '../components/MojKlan'
 import PronadjiKlan from '../components/PronadjiKlan'
 import KlanDetalji from '../components/KlanDetalji'
+import KlanskiRat from '../components/KlanskiRat'
 import UpravljanjeKlanom from '../components/UpravljanjeKlanom'
 import TakmicenjeBanner from '../components/TakmicenjeBanner'
 import {
@@ -196,6 +197,14 @@ export default function Klan() {
               Moj klan
             </button>
             <button
+              onClick={() => setTab('rat')}
+              className={`flex-1 rounded-lg py-2 text-sm font-bold ${
+                tab === 'rat' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              Rat
+            </button>
+            <button
               onClick={() => setTab('klanovi')}
               className={`flex-1 rounded-lg py-2 text-sm font-bold ${
                 tab === 'klanovi' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'
@@ -220,7 +229,9 @@ export default function Klan() {
             )}
           </div>
 
-          {tab === 'klanovi' ? (
+          {tab === 'rat' ? (
+            <KlanskiRat mojUid={user?.uid} mozeUpravljati={mozeUpravljati} />
+          ) : tab === 'klanovi' ? (
             <PronadjiKlan
               level={levelFromXp(profile.xp || 0)}
               mojUid={user?.uid}

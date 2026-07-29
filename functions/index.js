@@ -49,6 +49,35 @@ import {
   duelPreostalo,
   resolveMatch,
 } from './duel-pravila.js'
+// Klanski rat. Prefiks `rat*` je namjeran: imena poput `bonusi` ili `mnozilac`
+// su preopšta za fajl od 4600 linija, a `objekat`/`resolveMatch` bi se sudarili
+// s postojećim funkcijama.
+import {
+  OBJEKTI as RAT_OBJEKTI,
+  MAX_NIVO as RAT_MAX_NIVO,
+  COMBO_PRAG,
+  DNEVNI_CP_STROP,
+  UCESCE_BONUS,
+  UPARIVANJE_DAN,
+  UPARIVANJE_SAT,
+  RAT_POCETAK_SAT,
+  RAT_KRAJ_SAT,
+  objekat as ratObjekat,
+  cijenaNadogradnje as ratCijenaNadogradnje,
+  bonusi as ratBonusi,
+  mnozilac as ratMnozilac,
+  cpZaXp as ratCpZaXp,
+  pragUcesca as ratPragUcesca,
+  odlukaOBonusu as ratOdlukaOBonusu,
+  napraviParove as ratNapraviParove,
+  ishodMeca as ratIshodMeca,
+  nagradaKlanu as ratNagradaKlanu,
+  nagradaClanu as ratNagradaClanu,
+  warIdZa as ratWarIdZa,
+  dnevniKljuc as ratDnevniKljuc,
+  ratUToku,
+} from './klan-rat.js'
+import { danUSedmici as ratDanUSedmici } from './klan-pravila.js'
 
 setGlobalOptions({ region: 'europe-west1', maxInstances: 10 })
 
@@ -863,6 +892,11 @@ export const startQuiz = onCall(async (request) => {
   const userSnap = await userRef.get()
   if (!userSnap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
   const limit = quizEnergyState(userSnap.data(), day)
+  // Galenski Laboratorij: +1 s po nivou. Trajanje se ZAMRZAVA u sesiju — ako
+  // klan nadogradi objekat usred kviza, tajmer se ne smije promijeniti između
+  // dva pitanja, a server mora provjeravati isto trajanje koje je klijent dobio.
+  const bonKlan = await bonusiIgraca(uid)
+  const qSeconds = QUESTION_SECONDS + (bonKlan.sekunde || 0)
   const limitInfo = {
     used: QUIZ_ENERGY_MAX - limit.energy,
     limit: QUIZ_ENERGY_MAX,
@@ -871,6 +905,7 @@ export const startQuiz = onCall(async (request) => {
     xpToday: limit.xp,
     xpCap: DAILY_QUIZ_XP_CAP,
     resetsAt: nextDailyResetAt(),
+    hintovi: bonKlan.hintovi || 0,
   }
 
   // Nedovršena sesija od danas → nastavi je (osvježen tajmer, isti pokušaj).
@@ -887,7 +922,7 @@ export const startQuiz = onCall(async (request) => {
           total: s.questions.length,
           resumed: true,
           ...limitInfo,
-          question: publicQuestion(meta.id, qData, s.current),
+          question: publicQuestion(meta.id, qData, s.current, s.qSeconds || QUESTION_SECONDS),
         }
       }
     }
@@ -918,6 +953,9 @@ export const startQuiz = onCall(async (request) => {
     current: 0,
     finished: false,
     askedAt: Date.now(),
+    qSeconds,
+    xpBonus: bonKlan.xpBonus || 0, // Logistički Centar, zamrznut za ovu sesiju
+    comboBonus: bonKlan.comboBonus || 0, // Dječija Apoteka
     startedAt: FieldValue.serverTimestamp(),
   }
   // Trošenje pokušaja ide transakcijom — dva paralelna starta ne smiju proći.
@@ -943,7 +981,7 @@ export const startQuiz = onCall(async (request) => {
     used: QUIZ_ENERGY_MAX - poslije.energy,
     energy: poslije.energy,
     regenAt: poslije.regenAt,
-    question: publicQuestion(chosen[0].id, firstData, 0),
+    question: publicQuestion(chosen[0].id, firstData, 0, qSeconds),
   }
 })
 
@@ -967,8 +1005,11 @@ export const submitAnswer = onCall(async (request) => {
   if (session.finished) throw new HttpsError('failed-precondition', 'Kviz je već završen.')
 
   // Server-side tajmer: zakašnjeli odgovor se računa kao neodgovoren.
+  // Trajanje dolazi IZ SESIJE (Galenski Laboratorij ga produžava), ne iz
+  // konstante — inače bi server odbijao odgovore koje je klijentu sam dozvolio.
+  const qSeconds = session.qSeconds || QUESTION_SECONDS
   const elapsed = (Date.now() - session.askedAt) / 1000
-  const effective = elapsed > QUESTION_SECONDS + GRACE_SECONDS ? null : answer
+  const effective = elapsed > qSeconds + GRACE_SECONDS ? null : answer
 
   const q = session.questions[session.current]
   const secret = await getSecret(q.id)
@@ -989,16 +1030,38 @@ export const submitAnswer = onCall(async (request) => {
       correctIndex: secret.correctIndex,
       explanation: secret.explanation,
       finished: false,
-      question: publicQuestion(nextMeta.id, nextData, session.current + 1),
+      question: publicQuestion(nextMeta.id, nextData, session.current + 1, qSeconds),
     }
   }
 
   // Zadnje pitanje → finalizacija: XP, statistika, taskovi, leaderboard.
-  const earnedXp = answers.reduce((s, a) => s + (a.correct ? a.points : 0), 0)
+  //
+  // Bonusi Zelenog Okruga se računaju POSLIJE osnovnog zbira, a PRIJE dnevnog
+  // capa: klan ne smije moći probiti DAILY_QUIZ_XP_CAP, samo brže do njega doći.
+  //   - Logistički Centar: +5% po nivou na cijeli kviz
+  //   - Dječija Apoteka: combo, +5% po nivou na svaki tačan od TREĆEG zaredom
+  const osnovniXp = answers.reduce((s, a) => s + (a.correct ? a.points : 0), 0)
+  let comboXp = 0
+  if (session.comboBonus > 0) {
+    let niz = 0
+    for (const a of answers) {
+      if (!a.correct) {
+        niz = 0
+        continue
+      }
+      niz++
+      if (niz >= COMBO_PRAG) comboXp += a.points * session.comboBonus
+    }
+  }
+  const earnedXp = Math.round(osnovniXp * (1 + (session.xpBonus || 0)) + comboXp)
+  const bonusXpKlana = earnedXp - osnovniXp
   const correctCount = answers.filter((a) => a.correct).length
   const correctByCategory = {}
+  const xpByCategory = {}
   for (const a of answers) {
-    if (a.correct) correctByCategory[a.category] = (correctByCategory[a.category] || 0) + 1
+    if (!a.correct) continue
+    correctByCategory[a.category] = (correctByCategory[a.category] || 0) + 1
+    xpByCategory[a.category] = (xpByCategory[a.category] || 0) + a.points
   }
 
   const userRef = db.doc(`users/${uid}`)
@@ -1057,6 +1120,9 @@ export const submitAnswer = onCall(async (request) => {
   await syncLeaderboard(uid, profileAfter, finalXp, awardedXp, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
   await addWeekendXp(uid, awardedXp)
+  // Klanski rat: CP ide s raspodjelom po kategorijama, da srijedni boost zna
+  // koliki dio kviza pripada izvučenoj kategoriji.
+  const cpRat = await addClanWarCp(uid, awardedXp, { xpPoKategoriji: xpByCategory })
   await bumpStreak(uid)
 
   return {
@@ -1064,6 +1130,8 @@ export const submitAnswer = onCall(async (request) => {
     correctIndex: secret.correctIndex,
     explanation: secret.explanation,
     finished: true,
+    klan: cpRat ? { cp: cpRat.cp, mnozilac: cpRat.mnoz || 1, strop: !!cpRat.strop } : null,
+    bonusXpKlana,
     summary: {
       earnedXp: awardedXp,
       rawXp: earnedXp, // koliko bi bilo bez capa (za poruku na rezultatima)
@@ -1174,8 +1242,16 @@ export const claimTask = onCall(async (request) => {
   await syncLeaderboard(uid, profileAfter, finalXp, task.reward, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
   await addWeekendXp(uid, task.reward)
+  // Nagrada za quest nema kategoriju, pa srijedni boost na nju ne djeluje.
+  const cpRat = await addClanWarCp(uid, task.reward)
 
-  return { reward: task.reward, newLevel: levelFromXp(finalXp, cfg), levelBonus, newBadges }
+  return {
+    reward: task.reward,
+    newLevel: levelFromXp(finalXp, cfg),
+    levelBonus,
+    newBadges,
+    klan: cpRat ? { cp: cpRat.cp, mnozilac: cpRat.mnoz || 1, strop: !!cpRat.strop } : null,
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -1887,6 +1963,13 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   })
   const levelBonus = await awardLevelMilestones(uid)
   await addWeekendXp(uid, SURVIVAL_XP_PER_CORRECT)
+  // Klanski rat: Preživljavanje nosi CP kao i kviz, uključujući kovčeg na
+  // svakom 10. koraku. Kategorija pitanja se čita iz keširanog indeksa banke,
+  // pa srijedni boost radi i ovdje bez ijednog dodatnog čitanja.
+  const svKat = (await getQuestionById(run.currentQid))?.category || null
+  await addClanWarCp(uid, SURVIVAL_XP_PER_CORRECT + chestReward, {
+    xpPoKategoriji: svKat ? { [svKat]: SURVIVAL_XP_PER_CORRECT + chestReward } : null,
+  })
   await applyProgress(uid, { survivalCorrect: 1, survivalBest: newStreak })
 
   await runRef.update({
@@ -3583,3 +3666,1098 @@ export const checkFounderInactivity = onSchedule(
     )
   }
 )
+
+// ===========================================================================
+// KLANSKI RAT ("Zeleni Okrug")
+//
+// Ponedjeljak 08:00 → petak 20:00. Svaki XP koji igrač osvoji nosi 1 CP svom
+// klanu, uz množioce (srijeda: kategorija ×1.5, petak 08–20: sve ×2) i bonus
+// za dnevno učešće. U petak u 20:00 meč se zatvara: pobjednik nosi rating i
+// zelene bodove kojima klan gradi Okrug.
+//
+// ARHITEKTURA — zašto je bodovanje u RTDB-u, a ne u Firestoreu:
+// jedan XP događaj bi u Firestoreu bio 6. upis u lanac koji P2 iz
+// optimizacijskog izvještaja tek treba sažeti. Zato CIJELO živo bodovanje
+// (CP klana, CP člana, dnevna aktivnost, dnevni strop igrača) živi u RTDB-u uz
+// transakcije — isti obrazac kao leaderboardi. Firestore drži samo metapodatke
+// rata i konačan rezultat, tj. onoliko upisa koliko ima mečeva, jednom sedmično.
+//
+//   RTDB  clanWar/{warId}/{clanId}/cp                 živi skor klana
+//                                 /meta               ime/tag za prikaz
+//                                 /members/{uid}      { name, avatar, cp }
+//                                 /days/{dan}/cp      dnevni skor
+//                                 /days/{dan}/aktivni/{uid}
+//                                 /days/{dan}/bonus   'ispunjeno' | 'stit' | 'nedovoljno'
+//         clanWarDaily/{dan}/{uid}                    dnevni strop igrača (XP)
+//
+//   FS    config/clanWar                              prekidač i prozor
+//         clanWars/{warId}                            sedmica
+//         clanWars/{warId}/matches/{matchId}          parovi i konačan ishod
+//         clans/{clanId}.clanRating, .trezor, .okrug
+//         users/{uid}.clanGold, .hint
+// ===========================================================================
+
+let warConfigCache = null
+let warConfigAt = 0
+function invalidirajRatKes() {
+  warConfigCache = null
+  warConfigAt = 0
+  klanBonusKes.clear()
+}
+
+async function getWarConfig() {
+  if (warConfigCache && Date.now() - warConfigAt < 30000) return warConfigCache
+  const snap = await db.doc('config/clanWar').get()
+  warConfigCache = snap.exists ? snap.data() : null
+  warConfigAt = Date.now()
+  return warConfigCache
+}
+
+// Rat je "otvoren za bodovanje" samo unutar svog prozora i samo dok je aktivan.
+function ratOtvoren(cfg, now = Date.now()) {
+  if (!cfg || cfg.enabled === false || !cfg.warId) return false
+  if (cfg.status !== 'active') return false
+  if (cfg.startAt && now < cfg.startAt) return false
+  if (cfg.endAt && now > cfg.endAt) return false
+  return true
+}
+
+// ---------------------------------------------------------------------------
+// Klan i bonusi igrača — keširano, jer se čita na SVAKI osvojeni XP
+// ---------------------------------------------------------------------------
+// Bez keša bi svaki završen kviz značio dva Firestore čitanja (clanMembers +
+// clans). Članstvo i nivoi Okruga se mijenjaju rijetko, pa je 5 minuta zaostatka
+// prihvatljivo.
+//
+// PAŽNJA: `invalidirajRatKes()` čisti keš SAMO one instance funkcije u kojoj se
+// izvršio. Cloud Functions drži više instanci, pa je stvarna granica zastarjelosti
+// TTL, ne poziv za brisanje. Praktično: nadograđen objekat počne djelovati svima
+// najkasnije za 5 minuta. Ako to ikad postane problem, rješenje NIJE kraći TTL
+// (to vraća čitanja na vrući put) nego verzija sadržaja u jednom dokumentu, kao
+// config/content.version kod taskova.
+const klanBonusKes = new Map() // uid → { at, clanId, clan, bonusi }
+const KLAN_KES_TTL = 5 * 60 * 1000
+
+async function klanZaIgraca(uid) {
+  const zapisKes = klanBonusKes.get(uid)
+  if (zapisKes && Date.now() - zapisKes.at < KLAN_KES_TTL) return zapisKes
+  const m = await clanMemberRef(uid).get()
+  const clanId = m.exists ? m.data().clanId : null
+  let clan = null
+  if (clanId) {
+    const s = await clanRef(clanId).get()
+    if (s.exists && !s.data().disbandedAt) clan = { id: s.id, ...s.data() }
+  }
+  const zapis = {
+    at: Date.now(),
+    clanId: clan ? clan.id : null,
+    clan,
+    bonusi: ratBonusi(clan?.okrug?.nivoi || {}),
+  }
+  klanBonusKes.set(uid, zapis)
+  return zapis
+}
+
+// Bonusi Okruga za igrača — koriste ih kviz (tajmer, XP, combo, 50:50) i rat.
+// Igrač bez klana dobija nule, ne grešku.
+async function bonusiIgraca(uid) {
+  try {
+    return (await klanZaIgraca(uid)).bonusi
+  } catch {
+    return ratBonusi({})
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pripis CP-a — jedina ulazna tačka
+// ---------------------------------------------------------------------------
+// Zove se s ISTIH mjesta kao addWeekendXp: kraj kviza, nagrada za quest i tačan
+// odgovor u Preživljavanju. Namjerno NE na svaki odgovor u kvizu — kviz se
+// pripisuje jednom, na kraju, s poznatom raspodjelom po kategorijama.
+//
+// `xpPoKategoriji` je opcion: { interakcije: 30, astma: 10 }. Bez njega srijedni
+// množilac ne zna koliko XP-a pripada izvučenoj kategoriji, pa ga i ne
+// primjenjuje — nikad ne pretpostavlja u korist igrača.
+async function addClanWarCp(uid, xp, { xpPoKategoriji = null } = {}) {
+  if (!xp || xp <= 0) return null
+  const cfg = await getWarConfig()
+  if (!ratOtvoren(cfg)) return null
+
+  const { clanId, clan, bonusi: bon } = await klanZaIgraca(uid)
+  if (!clanId || !clan) return null
+
+  const p = bihParts()
+  const dan = ratDnevniKljuc(p)
+
+  // 1. Dnevni strop igrača — atomično u RTDB-u, prije bilo kakvog pripisa.
+  // `priznato` je koliko je XP-a od ovog događaja stalo ispod stropa.
+  let priznato = 0
+  await rtdb.ref(`clanWarDaily/${dan}/${uid}`).transaction((cur) => {
+    const iskoristeno = cur || 0
+    priznato = Math.max(0, Math.min(xp, DNEVNI_CP_STROP - iskoristeno))
+    return iskoristeno + priznato
+  })
+  if (priznato <= 0) return { priznato: 0, cp: 0, strop: true }
+
+  // 2. Množilac. Kad znamo raspodjelu po kategorijama, boostuje se samo onaj
+  // dio XP-a koji stvarno pripada izvučenoj kategoriji.
+  let dio = null
+  if (xpPoKategoriji && cfg.boostKategorija) {
+    const ukupno = Object.values(xpPoKategoriji).reduce((a, b) => a + (b || 0), 0)
+    if (ukupno > 0) dio = (xpPoKategoriji[cfg.boostKategorija] || 0) / ukupno
+  }
+  const mnoz = ratMnozilac(p, { boostKategorija: cfg.boostKategorija || null, dio })
+  const cp = ratCpZaXp(priznato, { mnoz, cpBonus: bon.cpBonus })
+  if (cp <= 0) return { priznato, cp: 0 }
+
+  // 3. Upis — sve RTDB transakcije, nijedan Firestore upis.
+  const korijen = `clanWar/${cfg.warId}/${clanId}`
+  const us = await db.doc(`users/${uid}`).get()
+  const prof = us.exists ? us.data() : {}
+
+  await rtdb.ref(`${korijen}/cp`).transaction((cur) => (cur || 0) + cp)
+  await rtdb.ref(`${korijen}/days/${dan}/cp`).transaction((cur) => (cur || 0) + cp)
+  await rtdb.ref(`${korijen}/members/${uid}`).transaction((cur) => ({
+    name: prof.displayName || 'Farmaceut',
+    avatar: prof.avatar || 'a1',
+    cp: (cur?.cp || 0) + cp,
+  }))
+  // Oznaka dnevne aktivnosti — po njoj se računa bonus za učešće.
+  await rtdb.ref(`${korijen}/days/${dan}/aktivni/${uid}`).set(true)
+  await rtdb.ref(`${korijen}/meta`).update({
+    name: clan.name || '',
+    tag: clan.tag || null,
+  })
+
+  return { priznato, cp, mnoz }
+}
+
+// ---------------------------------------------------------------------------
+// Dnevni bonus za učešće
+// ---------------------------------------------------------------------------
+// Obrađuje se tek kad dan PROĐE (ili kad rat završi), jednom po klanu i danu.
+// Idempotentno: oznaka `days/{dan}/bonus` je i rezultat i brava.
+async function obradiDanUcesca(warId, clanId, dan) {
+  const korijen = `clanWar/${warId}/${clanId}`
+  const vec = await rtdb.ref(`${korijen}/days/${dan}/bonus`).get()
+  if (vec.exists()) return null // već obrađen
+
+  const snap = await clanRef(clanId).get()
+  if (!snap.exists) return null
+  const clan = { id: snap.id, ...snap.data() }
+  const clanova = (clan.memberIds || []).length
+  const aktivniSnap = await rtdb.ref(`${korijen}/days/${dan}/aktivni`).get()
+  const aktivnih = aktivniSnap.exists() ? Object.keys(aktivniSnap.val() || {}).length : 0
+
+  const bon = ratBonusi(clan.okrug?.nivoi || {})
+  const stitStanje = clan.okrug?.stit || {}
+  const potroseno = stitStanje.week === warId ? stitStanje.potroseno || 0 : 0
+  const ostalo = Math.max(0, bon.stitovi - potroseno)
+
+  const odluka = ratOdlukaOBonusu({ aktivnih, clanova, stitovaOstalo: ostalo })
+  if (!odluka.bonus) {
+    await rtdb.ref(`${korijen}/days/${dan}/bonus`).set('nedovoljno')
+    return { ...odluka, clanId, dan }
+  }
+
+  if (odluka.stit) {
+    await clanRef(clanId).update({ 'okrug.stit': { week: warId, potroseno: potroseno + 1 } })
+    klanBonusKes.clear()
+  }
+  await rtdb.ref(`${korijen}/cp`).transaction((cur) => (cur || 0) + UCESCE_BONUS)
+  await rtdb.ref(`${korijen}/days/${dan}/cp`).transaction((cur) => (cur || 0) + UCESCE_BONUS)
+  await rtdb.ref(`${korijen}/days/${dan}/bonus`).set(odluka.stit ? 'stit' : 'ispunjeno')
+  return { ...odluka, clanId, dan }
+}
+
+// Dani rata koji su PROŠLI (nastupio je sljedeći BiH dan) ili su svi dani ako
+// je rat gotov. Bonus se ne smije obračunati usred dana — igrač koji odigra
+// popodne inače ne bi ušao u brojanje.
+function daniZaObradu(cfg, now = Date.now()) {
+  const dani = []
+  if (!cfg?.startAt) return dani
+  const kraj = Math.min(now, cfg.endAt || now)
+  const gotov = !!(cfg.endAt && now > cfg.endAt)
+  for (let t = cfg.startAt; t <= kraj; t += 86400000) {
+    const kljuc = ratDnevniKljuc(bihParts(new Date(t)))
+    if (dani.includes(kljuc)) continue
+    const pocetakSutra = Date.parse(`${kljuc}T00:00:00Z`) + 86400000 - 2 * 3600000 // BiH = UTC+2
+    if (gotov || now >= pocetakSutra) dani.push(kljuc)
+  }
+  return dani
+}
+
+async function obradiProsleDane(cfg) {
+  const dani = daniZaObradu(cfg)
+  if (dani.length === 0) return []
+  const mecevi = await db.collection(`clanWars/${cfg.warId}/matches`).get()
+  const rezultati = []
+  for (const d of mecevi.docs) {
+    for (const clanId of d.data().clanIds || []) {
+      for (const dan of dani) {
+        const r = await obradiDanUcesca(cfg.warId, clanId, dan)
+        if (r) rezultati.push(r)
+      }
+    }
+  }
+  return rezultati
+}
+
+// ---------------------------------------------------------------------------
+// Životni ciklus rata: uparivanje → start → zatvaranje
+// ---------------------------------------------------------------------------
+
+// Kategorija za srijedu se izvlači SAMO iz kategorija s dovoljno pitanja.
+// Banka je neravnomjerna (interakcije 36 pitanja, kardiologija 2) — boost na
+// kategoriju s dva pitanja bio bi nagrada koju niko ne može iskoristiti.
+const BOOST_MIN_PITANJA = 20
+
+async function izvuciBoostKategoriju() {
+  const pitanja = await getActiveQuestions()
+  const broj = {}
+  for (const q of pitanja) {
+    const k = (q.category || '').trim()
+    if (!k) continue
+    broj[k] = (broj[k] || 0) + 1
+  }
+  const kandidati = Object.entries(broj)
+    .filter(([, n]) => n >= BOOST_MIN_PITANJA)
+    .map(([k]) => k)
+  if (kandidati.length === 0) return null
+  return kandidati[Math.floor(Math.random() * kandidati.length)]
+}
+
+// Prozor rata za zadanu sedmicu (warId = datum ponedjeljka).
+// BiH je UTC+2 ljeti; prozori se računaju iz ponoći UTC pa pomjeraju, isto kao
+// survivalWindowFor() — dosljednost je ovdje važnija od preciznosti na zimsko
+// računanje vremena, a admin ionako može upisati tačan trenutak.
+function ratProzorZa(warId) {
+  const ponoc = Date.parse(`${warId}T00:00:00Z`) - 2 * 3600000 // BiH ponoć
+  return {
+    startAt: ponoc + RAT_POCETAK_SAT * 3600000,
+    endAt: ponoc + 4 * 86400000 + RAT_KRAJ_SAT * 3600000, // petak
+  }
+}
+
+// Aktivni klanovi kao kandidati za uparivanje.
+async function klanoviZaRat() {
+  const snap = await db.collection('clans').where('disbandedAt', '==', null).get()
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((c) => (c.memberIds || []).length > 0)
+    .map((c) => ({
+      id: c.id,
+      rating: c.clanRating || 0,
+      name: c.name,
+      tag: c.tag || null,
+      clanLevel: c.clanLevel || 1,
+    }))
+}
+
+// Napravi rat: dokument sedmice + mečevi. `parovi` može doći izvana (admin
+// ručno upario) ili se računa iz ratinga.
+async function napraviRat(warId, { parovi = null, boostKategorija = null, startAt, endAt } = {}) {
+  const klanovi = await klanoviZaRat()
+  const konacniParovi = parovi || ratNapraviParove(klanovi)
+  const imena = Object.fromEntries(klanovi.map((k) => [k.id, { name: k.name, tag: k.tag }]))
+  const prozor = ratProzorZa(warId)
+  const pocetak = startAt || prozor.startAt
+  const kraj = endAt || prozor.endAt
+  const kategorija = boostKategorija !== null ? boostKategorija : await izvuciBoostKategoriju()
+
+  const batch = db.batch()
+  batch.set(db.doc(`clanWars/${warId}`), {
+    warId,
+    startAt: pocetak,
+    endAt: kraj,
+    status: 'pending',
+    boostKategorija: kategorija,
+    brojMeceva: konacniParovi.length,
+    brojKlanova: klanovi.length,
+    createdAt: FieldValue.serverTimestamp(),
+  })
+  konacniParovi.forEach((par, i) => {
+    batch.set(db.doc(`clanWars/${warId}/matches/m${i}`), {
+      clanIds: par.clanIds,
+      grupni: !!par.grupni,
+      bye: !!par.bye,
+      imena: Object.fromEntries(par.clanIds.map((id) => [id, imena[id] || { name: id }])),
+      status: 'pending',
+      scores: {},
+      winner: null,
+    })
+  })
+  await batch.commit()
+
+  return { warId, parovi: konacniParovi, boostKategorija: kategorija, startAt: pocetak, endAt: kraj }
+}
+
+// Pokreni rat: config se prebacuje na 'active' i od tog trenutka CP kola.
+async function pokreniRat(warId, { startAt, endAt } = {}) {
+  const snap = await db.doc(`clanWars/${warId}`).get()
+  if (!snap.exists) throw new HttpsError('not-found', `Rat ${warId} ne postoji — prvo ga napravi.`)
+  const rat = snap.data()
+  const pocetak = startAt || rat.startAt
+  const kraj = endAt || rat.endAt
+
+  await db.doc(`clanWars/${warId}`).update({ status: 'active', startAt: pocetak, endAt: kraj })
+  await db.doc('config/clanWar').set(
+    {
+      enabled: true,
+      warId,
+      status: 'active',
+      startAt: pocetak,
+      endAt: kraj,
+      boostKategorija: rat.boostKategorija || null,
+      label: 'Klanski rat',
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  )
+  invalidirajRatKes()
+  return { warId, startAt: pocetak, endAt: kraj }
+}
+
+// Zatvaranje rata: bonusi za zadnje dane, ishod svakog meča, nagrade.
+// Idempotentno preko clanWars/{warId}.status — dvostruko pokretanje ne isplaćuje
+// nagrade dvaput.
+async function zavrsiRat(warId) {
+  const ratRef = db.doc(`clanWars/${warId}`)
+  const snap = await ratRef.get()
+  if (!snap.exists) return { greska: 'Rat ne postoji.' }
+  const rat = snap.data()
+  if (rat.status === 'resolved') return { vec: true, warId }
+
+  // Zadnji dani prije zaključenja — inače bi petak ostao bez bonusa za učešće.
+  await obradiProsleDane({ warId, startAt: rat.startAt, endAt: rat.endAt })
+
+  const mecevi = await db.collection(`clanWars/${warId}/matches`).get()
+  const izvjestaj = []
+
+  for (const d of mecevi.docs) {
+    const m = d.data()
+    if (m.status === 'done') continue
+    const clanIds = m.clanIds || []
+
+    // Živi skorovi iz RTDB-a → konačni rezultat u Firestore.
+    const scores = {}
+    for (const clanId of clanIds) {
+      const s = await rtdb.ref(`clanWar/${warId}/${clanId}/cp`).get()
+      scores[clanId] = s.exists() ? s.val() || 0 : 0
+    }
+    const ishod = m.bye ? { pobjednik: clanIds[0] || null, redoslijed: [], nerijeseno: false } : ratIshodMeca(scores)
+
+    // Nagrade klanovima i članovima.
+    for (let i = 0; i < ishod.redoslijed.length || i < clanIds.length; i++) {
+      const clanId = ishod.redoslijed[i]?.clanId || clanIds[i]
+      if (!clanId) continue
+      const cp = scores[clanId] || 0
+      const cSnap = await clanRef(clanId).get()
+      if (!cSnap.exists) continue
+      const clan = { id: cSnap.id, ...cSnap.data() }
+      const bon = ratBonusi(clan.okrug?.nivoi || {})
+      const nagrada = ratNagradaKlanu({
+        mjesto: i,
+        nerijeseno: ishod.nerijeseno && i <= 1,
+        cp,
+        goldBonus: bon.goldBonus,
+        smanjenjeGubitka: bon.smanjenjeGubitka,
+        ratingPoraz: rat.ratingPoraz ?? undefined,
+      })
+
+      await clanRef(clanId).update({
+        clanRating: Math.max(0, (clan.clanRating || 0) + nagrada.rating),
+        trezor: (clan.trezor || 0) + nagrada.gold,
+        clanXP: (clan.clanXP || 0) + cp,
+        zadnjiRat: { warId, cp, mjesto: i, pobjeda: ishod.pobjednik === clanId, rating: nagrada.rating, gold: nagrada.gold },
+      })
+
+      // Članovi: zeleni bodovi po vlastitom doprinosu.
+      const clanoviSnap = await rtdb.ref(`clanWar/${warId}/${clanId}/members`).get()
+      const clanovi = clanoviSnap.exists() ? clanoviSnap.val() || {} : {}
+      for (const [uid, zapis] of Object.entries(clanovi)) {
+        const gold = ratNagradaClanu({
+          mojCp: zapis?.cp || 0,
+          pobjednik: ishod.pobjednik === clanId,
+          goldBonus: bon.goldBonus,
+        })
+        if (gold > 0) {
+          await db
+            .doc(`users/${uid}`)
+            .update({ clanGold: FieldValue.increment(gold) })
+            .catch(() => {}) // obrisan nalog ne smije srušiti zatvaranje rata
+        }
+      }
+
+      izvjestaj.push({ clanId, cp, mjesto: i, ...nagrada })
+    }
+
+    await d.ref.update({
+      status: 'done',
+      scores,
+      winner: ishod.pobjednik,
+      nerijeseno: ishod.nerijeseno,
+      zavrseno: FieldValue.serverTimestamp(),
+    })
+  }
+
+  // `endAt` se pomjera na SADA, ne samo status.
+  //
+  // Config se kešira 30 s po instanci funkcije, a keš jedne instance se ne može
+  // obrisati iz druge. Da se mijenja samo status, instanca sa zastarjelim kešom
+  // bi do 30 s poslije zatvaranja i dalje pripisivala CP u rat kojem su nagrade
+  // već isplaćene. Pomjeren `endAt` obara i takav keš — ratOtvoren() gleda sat,
+  // a sat je isti na svim instancama.
+  const zatvorenoU = Date.now()
+  await ratRef.update({
+    status: 'resolved',
+    endAt: zatvorenoU,
+    resolvedAt: FieldValue.serverTimestamp(),
+  })
+  await db
+    .doc('config/clanWar')
+    .set({ status: 'resolved', enabled: false, endAt: zatvorenoU }, { merge: true })
+  invalidirajRatKes()
+
+  // Obavijest klanovima — rezultat koji niko ne vidi nije rezultat.
+  for (const red of izvjestaj) {
+    const cSnap = await clanRef(red.clanId).get()
+    if (!cSnap.exists) continue
+    await obavijestiClan(
+      { id: cSnap.id, ...cSnap.data() },
+      {
+        naslov: red.mjesto === 0 ? '🏆 Pobjeda u klanskom ratu!' : 'Klanski rat je završen',
+        tekst: `Skupili ste ${red.cp} CP · +${red.rating} ratinga · +${red.gold} zelenih bodova za Okrug.`,
+      }
+    ).catch(() => {})
+  }
+
+  return { warId, mecevi: mecevi.size, izvjestaj }
+}
+
+// ---------------------------------------------------------------------------
+// clanWarTick — JEDAN zakazani posao za cijeli rat
+// ---------------------------------------------------------------------------
+// Namjerno jedan, a ne četiri (nedjelja/ponedjeljak/dnevno/petak): Cloud
+// Scheduler je besplatan do 3 posla, projekat ih već ima 3 (tournamentTick,
+// notifTick, survivalWeeklyReset). Ovaj je ČETVRTI i košta ~$0.10 mjesečno;
+// četiri odvojena bi koštala ~$0.40. Sat vremena granularnosti je dovoljno jer
+// su svi prelomi na pun sat.
+export const clanWarTick = onSchedule({ schedule: '5 * * * *', timeZone: BIH_TZ }, async () => {
+  const cfg = await getWarConfig()
+  const p = bihParts()
+  const now = Date.now()
+  const koraci = []
+
+  // 1. Zatvaranje: prozor je istekao, a rat je još aktivan.
+  if (cfg?.warId && cfg.status === 'active' && cfg.endAt && now > cfg.endAt) {
+    const r = await zavrsiRat(cfg.warId)
+    koraci.push(`zavrsen ${cfg.warId} (${r.mecevi ?? 0} meceva)`)
+  }
+
+  // 2. Dnevni bonusi za rat u toku.
+  const svjez = await (async () => {
+    invalidirajRatKes()
+    return getWarConfig()
+  })()
+  if (svjez?.warId && svjez.status === 'active') {
+    const obradjeni = await obradiProsleDane(svjez)
+    if (obradjeni.length) koraci.push(`bonusi: ${obradjeni.length}`)
+  }
+
+  // 3. Uparivanje u nedjelju 00:00 — samo ako je automatika uključena.
+  if (svjez?.autoUparivanje !== false && ratDanUSedmici(p) === UPARIVANJE_DAN && p.hh === UPARIVANJE_SAT) {
+    const warId = ratWarIdZa(p)
+    const postoji = await db.doc(`clanWars/${warId}`).get()
+    if (!postoji.exists) {
+      const r = await napraviRat(warId)
+      koraci.push(`uparivanje ${warId}: ${r.parovi.length} meceva, boost ${r.boostKategorija || '—'}`)
+    }
+  }
+
+  // 4. Start u ponedjeljak 08:00.
+  if (ratDanUSedmici(p) === 1 && p.hh === RAT_POCETAK_SAT) {
+    const warId = ratWarIdZa(p)
+    const rat = await db.doc(`clanWars/${warId}`).get()
+    if (rat.exists && rat.data().status === 'pending') {
+      await pokreniRat(warId)
+      koraci.push(`pokrenut ${warId}`)
+    }
+  }
+
+  if (koraci.length) console.log(`clanWarTick: ${koraci.join(' | ')}`)
+})
+
+// ---------------------------------------------------------------------------
+// Zeleni Okrug — gradnja preko zajedničkog uloga (crowdfund)
+// ---------------------------------------------------------------------------
+// Model: klan bira JEDAN cilj, članovi u njega ulažu svoje zelene bodove
+// (users/{uid}.clanGold), vođa može dodati i iz trezora. Kad ulog dostigne
+// cijenu, nivo se diže SAM i cilj se briše.
+//
+// Zašto jedan cilj: s ~16 igrača i ~600 bodova sedmično, dva paralelna cilja
+// znače da nijedan ne bude gotov — a nedovršena gradnja ne daje nikakav bonus.
+
+async function okrugStanje(clan) {
+  const nivoi = clan.okrug?.nivoi || {}
+  const gradnja = clan.okrug?.gradnja || null
+  return {
+    nivoi,
+    gradnja,
+    bonusi: ratBonusi(nivoi),
+    trezor: clan.trezor || 0,
+    rating: clan.clanRating || 0,
+    stit: clan.okrug?.stit || null,
+  }
+}
+
+// Vođa/savjetnik bira sljedeći cilj gradnje.
+export const startBuild = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { objekatId } = request.data || {}
+  const { clan, uloga } = await mojKlan(uid)
+  if (!smijeUpravljati(uloga)) {
+    throw new HttpsError('permission-denied', 'Cilj gradnje bira osnivač ili savjetnik.')
+  }
+  const o = ratObjekat(objekatId)
+  if (!o) throw new HttpsError('invalid-argument', 'Nepoznat objekat.')
+  if (clan.okrug?.gradnja) {
+    throw new HttpsError('failed-precondition', 'Već gradite nešto — prvo završite ili otkažite.')
+  }
+  const trenutni = clan.okrug?.nivoi?.[objekatId] || 0
+  if (trenutni >= RAT_MAX_NIVO) {
+    throw new HttpsError('failed-precondition', 'Objekat je već na najvišem nivou.')
+  }
+  const nivo = trenutni + 1
+  const cijena = ratCijenaNadogradnje(objekatId, nivo)
+
+  await clanRef(clan.id).update({
+    'okrug.gradnja': {
+      objekatId,
+      nivo,
+      cijena,
+      sakupljeno: 0,
+      doprinosi: {},
+      pokrenuo: uid,
+      pokrenutoAt: Date.now(),
+    },
+  })
+  invalidirajRatKes()
+  return { objekatId, nivo, cijena }
+})
+
+// Ulaganje u tekući cilj. `izTrezora` smiju samo vođa i savjetnik.
+export const contributeToBuild = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { iznos, izTrezora = false } = request.data || {}
+  const kolicina = Math.floor(Number(iznos) || 0)
+  if (kolicina <= 0) throw new HttpsError('invalid-argument', 'Iznos mora biti veći od nule.')
+
+  const { clan, uloga } = await mojKlan(uid)
+  if (izTrezora && !smijeUpravljati(uloga)) {
+    throw new HttpsError('permission-denied', 'Iz trezora ulažu osnivač i savjetnici.')
+  }
+
+  const cRef = clanRef(clan.id)
+  const uRef = db.doc(`users/${uid}`)
+  let rezultat = null
+
+  await db.runTransaction(async (tx) => {
+    const [cs, us] = await Promise.all([tx.get(cRef), tx.get(uRef)])
+    if (!cs.exists) throw new HttpsError('not-found', 'Klan ne postoji.')
+    const c = cs.data()
+    const g = c.okrug?.gradnja
+    if (!g) throw new HttpsError('failed-precondition', 'Nema aktivnog cilja gradnje.')
+
+    // Nikad ne primaj više nego što fali — ostatak bi bio nepovratno zaključan.
+    const fali = Math.max(0, g.cijena - (g.sakupljeno || 0))
+    if (fali === 0) throw new HttpsError('failed-precondition', 'Cilj je već sakupljen.')
+
+    const izvor = izTrezora ? c.trezor || 0 : us.exists ? us.data().clanGold || 0 : 0
+    const ulog = Math.min(kolicina, fali, izvor)
+    if (ulog <= 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        izTrezora ? 'Trezor je prazan.' : 'Nemaš dovoljno zelenih bodova.'
+      )
+    }
+
+    const sakupljeno = (g.sakupljeno || 0) + ulog
+    const doprinosi = { ...(g.doprinosi || {}) }
+    const kljuc = izTrezora ? 'trezor' : uid
+    doprinosi[kljuc] = (doprinosi[kljuc] || 0) + ulog
+
+    if (izTrezora) tx.update(cRef, { trezor: (c.trezor || 0) - ulog })
+    else tx.update(uRef, { clanGold: (us.data().clanGold || 0) - ulog })
+
+    if (sakupljeno >= g.cijena) {
+      // Gotovo → nivo gore, cilj se briše. Doprinosi ostaju u historiji klana.
+      tx.update(cRef, {
+        [`okrug.nivoi.${g.objekatId}`]: g.nivo,
+        'okrug.gradnja': FieldValue.delete(),
+        'okrug.historija': FieldValue.arrayUnion({
+          objekatId: g.objekatId,
+          nivo: g.nivo,
+          cijena: g.cijena,
+          zavrseno: Date.now(),
+        }),
+      })
+      rezultat = { ulozeno: ulog, sakupljeno, cijena: g.cijena, gotovo: true, objekatId: g.objekatId, nivo: g.nivo }
+    } else {
+      tx.update(cRef, { 'okrug.gradnja.sakupljeno': sakupljeno, 'okrug.gradnja.doprinosi': doprinosi })
+      rezultat = { ulozeno: ulog, sakupljeno, cijena: g.cijena, gotovo: false }
+    }
+  })
+
+  invalidirajRatKes()
+  if (rezultat.gotovo) {
+    const svjez = await clanRef(clan.id).get()
+    const o = ratObjekat(rezultat.objekatId)
+    await obavijestiClan(
+      { id: svjez.id, ...svjez.data() },
+      {
+        naslov: `${o?.emoji || '🏗️'} ${o?.naziv || 'Objekat'} — nivo ${rezultat.nivo}!`,
+        tekst: 'Zeleni Okrug je nadograđen. Bonus važi odmah za sve članove.',
+      },
+      uid
+    ).catch(() => {})
+  }
+  return rezultat
+})
+
+// Otkazivanje cilja — ulozi se VRAĆAJU tačno onima koji su ih dali.
+// Bez povrata bi otkazivanje bilo kazna za klan koji se predomislio, a vođa bi
+// mogao nenamjerno spaliti tuđe bodove.
+export const cancelBuild = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { clan, uloga } = await mojKlan(uid)
+  if (!smijeUpravljati(uloga)) throw new HttpsError('permission-denied', 'Samo osnivač ili savjetnik.')
+  const g = clan.okrug?.gradnja
+  if (!g) throw new HttpsError('failed-precondition', 'Nema aktivnog cilja.')
+
+  const doprinosi = g.doprinosi || {}
+  let uTrezor = 0
+  for (const [kljuc, iznos] of Object.entries(doprinosi)) {
+    if (!iznos || iznos <= 0) continue
+    if (kljuc === 'trezor') uTrezor += iznos
+    else {
+      await db
+        .doc(`users/${kljuc}`)
+        .update({ clanGold: FieldValue.increment(iznos) })
+        .catch(() => {
+          uTrezor += iznos // obrisan nalog → bodovi idu klanu, ne u prazno
+        })
+    }
+  }
+  await clanRef(clan.id).update({
+    'okrug.gradnja': FieldValue.delete(),
+    trezor: FieldValue.increment(uTrezor),
+  })
+  invalidirajRatKes()
+  return { vraceno: Object.values(doprinosi).reduce((a, b) => a + (b || 0), 0), uTrezor }
+})
+
+// ---------------------------------------------------------------------------
+// 50:50 (Klinička Apoteka)
+// ---------------------------------------------------------------------------
+// Server skriva dva netačna odgovora. Jedan hint po pitanju: bez toga bi se
+// ponovnim pozivom moglo doći do potpunog otkrivanja tačnog odgovora.
+export const useHint = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const { sessionId } = request.data || {}
+  if (typeof sessionId !== 'string') throw new HttpsError('invalid-argument', 'Nedostaje sessionId.')
+
+  const bon = await bonusiIgraca(uid)
+  if (bon.hintovi <= 0) {
+    throw new HttpsError('failed-precondition', 'Klan još nema Kliničku Apoteku.')
+  }
+
+  const sRef = db.doc(`quizSessions/${sessionId}`)
+  const sSnap = await sRef.get()
+  if (!sSnap.exists) throw new HttpsError('not-found', 'Sesija ne postoji.')
+  const session = sSnap.data()
+  if (session.uid !== uid) throw new HttpsError('permission-denied', 'Ovo nije tvoja sesija.')
+  if (session.finished) throw new HttpsError('failed-precondition', 'Kviz je završen.')
+
+  // Isto pitanje → isti odgovor, bez novog trošenja.
+  if (session.hintNa === session.current && Array.isArray(session.hintSkriveni)) {
+    return { skriveni: session.hintSkriveni, ostalo: session.hintOstalo ?? 0, ponovljen: true }
+  }
+
+  const sedmica = ratWarIdZa(bihParts())
+  const uRef = db.doc(`users/${uid}`)
+  let ostalo = 0
+  await db.runTransaction(async (tx) => {
+    const us = await tx.get(uRef)
+    const h = us.exists ? us.data().hint || {} : {}
+    const iskoristeno = h.week === sedmica ? h.iskoristeno || 0 : 0
+    if (iskoristeno >= bon.hintovi) {
+      throw new HttpsError('resource-exhausted', 'Potrošio/la si sve 50:50 ove sedmice.')
+    }
+    ostalo = bon.hintovi - iskoristeno - 1
+    tx.update(uRef, { hint: { week: sedmica, iskoristeno: iskoristeno + 1 } })
+  })
+
+  const q = session.questions[session.current]
+  const secret = await getSecret(q.id)
+  const pogresni = [0, 1, 2, 3].filter((i) => i !== secret.correctIndex)
+  for (let i = pogresni.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pogresni[i], pogresni[j]] = [pogresni[j], pogresni[i]]
+  }
+  const skriveni = pogresni.slice(0, 2)
+  await sRef.update({ hintNa: session.current, hintSkriveni: skriveni, hintOstalo: ostalo })
+  return { skriveni, ostalo }
+})
+
+// ---------------------------------------------------------------------------
+// Pregled rata za igrače
+// ---------------------------------------------------------------------------
+export const getClanWar = onCall(async (request) => {
+  const uid = requireAuth(request)
+  const cfg = await getWarConfig()
+  const m = await clanMemberRef(uid).get()
+  const clanId = m.exists ? m.data().clanId : null
+  if (!clanId) return { clan: null, rat: cfg || null }
+
+  const cSnap = await clanRef(clanId).get()
+  if (!cSnap.exists) return { clan: null, rat: cfg || null }
+  const clan = { id: cSnap.id, ...cSnap.data() }
+  const okrug = await okrugStanje(clan)
+
+  const osnovno = {
+    clan: { id: clan.id, name: clan.name, tag: clan.tag || null, memberCount: (clan.memberIds || []).length },
+    okrug,
+    mojiBodovi: (await db.doc(`users/${uid}`).get()).data()?.clanGold || 0,
+    objekti: RAT_OBJEKTI,
+    cijene: Object.fromEntries(
+      RAT_OBJEKTI.map((o) => [
+        o.id,
+        Array.from({ length: RAT_MAX_NIVO }, (_, i) => ratCijenaNadogradnje(o.id, i + 1)),
+      ])
+    ),
+  }
+
+  if (!cfg?.warId) return { ...osnovno, rat: null }
+
+  // Meč mog klana + živi skorovi.
+  const mecevi = await db.collection(`clanWars/${cfg.warId}/matches`).get()
+  const moj = mecevi.docs.find((d) => (d.data().clanIds || []).includes(clanId))
+  const skorovi = {}
+  const clanIds = moj ? moj.data().clanIds || [] : [clanId]
+  for (const id of clanIds) {
+    const s = await rtdb.ref(`clanWar/${cfg.warId}/${id}`).get()
+    const v = s.exists() ? s.val() || {} : {}
+    skorovi[id] = { cp: v.cp || 0, name: v.meta?.name || moj?.data().imena?.[id]?.name || id, tag: v.meta?.tag || null }
+  }
+  const mojiClanovi = await rtdb.ref(`clanWar/${cfg.warId}/${clanId}/members`).get()
+  const dani = await rtdb.ref(`clanWar/${cfg.warId}/${clanId}/days`).get()
+
+  return {
+    ...osnovno,
+    rat: {
+      warId: cfg.warId,
+      status: cfg.status,
+      startAt: cfg.startAt || null,
+      endAt: cfg.endAt || null,
+      boostKategorija: cfg.boostKategorija || null,
+      mnozilacSada: ratMnozilac(bihParts(), { boostKategorija: cfg.boostKategorija || null, dio: 1 }),
+    },
+    mec: moj ? { id: moj.id, clanIds, grupni: !!moj.data().grupni, status: moj.data().status } : null,
+    skorovi,
+    doprinosi: mojiClanovi.exists() ? mojiClanovi.val() : {},
+    dani: dani.exists() ? dani.val() : {},
+    prag: ratPragUcesca((clan.memberIds || []).length),
+  }
+})
+
+// ---------------------------------------------------------------------------
+// ADMIN — kontrola rata
+// ---------------------------------------------------------------------------
+// Rat traje pet dana i dira bodovanje, pa svaka poluga koja bi inače tražila
+// skriptu s računara mora biti i ovdje. Redoslijed poluga prati ono što može
+// poći po zlu: napravi → provjeri upozorenja → pokreni → (pauza) → zatvori.
+
+// Upozorenja koja admin treba vidjeti PRIJE nego pokrene rat. Svako od njih je
+// nešto što je već negdje zapelo ili očito može zapeti.
+async function ratUpozorenja(cfg, rat, mecevi, klanovi) {
+  const u = []
+  const now = Date.now()
+
+  if (klanovi.length < 2) {
+    u.push({ nivo: 'blok', tekst: `Samo ${klanovi.length} klan(ova) postoji — rat treba bar dva.` })
+  }
+  const uparen = new Set(mecevi.flatMap((m) => m.clanIds || []))
+  const neupareni = klanovi.filter((k) => !uparen.has(k.id))
+  if (rat && neupareni.length) {
+    u.push({
+      nivo: 'upozorenje',
+      tekst: `Nije upareno: ${neupareni.map((k) => k.name).join(', ')}. Ti klanovi skupljaju CP koji nigdje ne ulazi.`,
+    })
+  }
+  for (const k of klanovi) {
+    const prag = ratPragUcesca(k.memberCount)
+    if (k.memberCount > 0 && prag > k.memberCount) {
+      u.push({ nivo: 'upozorenje', tekst: `${k.name}: prag učešća (${prag}) je veći od broja članova.` })
+    }
+    if (k.memberCount === 1) {
+      u.push({ nivo: 'info', tekst: `${k.name} ima jednog člana — bonus za učešće mu je zagarantovan.` })
+    }
+  }
+  if (cfg?.status === 'active' && cfg.endAt && now > cfg.endAt) {
+    u.push({ nivo: 'blok', tekst: 'Rat je aktivan a prozor je istekao — zatvori ga ručno ili čekaj tick.' })
+  }
+  if (cfg?.status === 'active' && !cfg.boostKategorija) {
+    u.push({ nivo: 'info', tekst: 'Nema izvučene kategorije za srijedu — boost neće raditi.' })
+  }
+  if (cfg?.startAt && cfg?.endAt && cfg.endAt <= cfg.startAt) {
+    u.push({ nivo: 'blok', tekst: 'Kraj rata je prije početka.' })
+  }
+  const bezOkruga = klanovi.filter((k) => !k.imaOkrug)
+  if (rat && bezOkruga.length === klanovi.length && klanovi.length > 0) {
+    u.push({ nivo: 'info', tekst: 'Nijedan klan još nema nijednu nadogradnju — prvi nivo je 200 bodova.' })
+  }
+  return u
+}
+
+export const adminWarStatus = onCall(async (request) => {
+  requireAdmin(request)
+  // NAMJERNO bez keša: config se kešira 30 s po instanci, pa bi admin poslije
+  // klika na "Pokreni" još pola minute gledao staro stanje i mislio da nije
+  // prošlo. Ovaj poziv se dešava rijetko — jedno čitanje je jeftinije od
+  // pogrešnog dojma da poluga ne radi.
+  invalidirajRatKes()
+  const cfgSnap = await db.doc('config/clanWar').get()
+  const cfg = cfgSnap.exists ? cfgSnap.data() : null
+  const p = bihParts()
+
+  const clanSnap = await db.collection('clans').where('disbandedAt', '==', null).get()
+  const klanovi = clanSnap.docs.map((d) => {
+    const c = d.data()
+    return {
+      id: d.id,
+      name: c.name,
+      tag: c.tag || null,
+      rating: c.clanRating || 0,
+      trezor: c.trezor || 0,
+      memberCount: (c.memberIds || []).length,
+      nivoi: c.okrug?.nivoi || {},
+      imaOkrug: Object.values(c.okrug?.nivoi || {}).some((n) => n > 0),
+      gradnja: c.okrug?.gradnja || null,
+    }
+  })
+
+  let rat = null
+  let mecevi = []
+  const warId = cfg?.warId || ratWarIdZa(p)
+  const rSnap = await db.doc(`clanWars/${warId}`).get()
+  if (rSnap.exists) {
+    rat = { id: rSnap.id, ...rSnap.data() }
+    const mSnap = await db.collection(`clanWars/${warId}/matches`).get()
+    mecevi = await Promise.all(
+      mSnap.docs.map(async (d) => {
+        const m = d.data()
+        const skorovi = {}
+        for (const id of m.clanIds || []) {
+          const s = await rtdb.ref(`clanWar/${warId}/${id}/cp`).get()
+          skorovi[id] = s.exists() ? s.val() || 0 : 0
+        }
+        return { id: d.id, ...m, zivi: skorovi }
+      })
+    )
+  }
+
+  return {
+    sada: Date.now(),
+    bih: p,
+    config: cfg || null,
+    predlozeniWarId: ratWarIdZa(p),
+    rat,
+    mecevi,
+    klanovi,
+    upozorenja: await ratUpozorenja(cfg, rat, mecevi, klanovi),
+    ocekivanoUToku: ratUToku(p),
+  }
+})
+
+// Napravi rat. `parovi` se šalje kad admin ručno upari klanove:
+//   [{ clanIds: ['a','b'] }, { clanIds: ['c','d','e'], grupni: true }]
+// Bez njih se pari po ratingu.
+export const adminWarCreate = onCall(async (request) => {
+  requireAdmin(request)
+  const { warId, parovi = null, boostKategorija = null, startAt = null, endAt = null, prepisi = false } =
+    request.data || {}
+  const id = warId || ratWarIdZa(bihParts())
+
+  const postoji = await db.doc(`clanWars/${id}`).get()
+  if (postoji.exists && !prepisi) {
+    throw new HttpsError('already-exists', `Rat ${id} već postoji. Pošalji prepisi:true da ga zamijeniš.`)
+  }
+  if (postoji.exists && postoji.data().status === 'resolved') {
+    throw new HttpsError('failed-precondition', `Rat ${id} je već zatvoren — nagrade su isplaćene.`)
+  }
+  if (postoji.exists) {
+    // Prepis: stari mečevi se brišu da ne ostanu siročad s prošlim parovima.
+    const stari = await db.collection(`clanWars/${id}/matches`).get()
+    const batch = db.batch()
+    stari.docs.forEach((d) => batch.delete(d.ref))
+    await batch.commit()
+  }
+
+  // Provjera ručnih parova: klan ne smije biti u dva meča.
+  if (parovi) {
+    const svi = parovi.flatMap((p) => p.clanIds || [])
+    if (new Set(svi).size !== svi.length) {
+      throw new HttpsError('invalid-argument', 'Isti klan je u dva meča.')
+    }
+    for (const cid of svi) {
+      const s = await clanRef(cid).get()
+      if (!s.exists || s.data().disbandedAt) {
+        throw new HttpsError('invalid-argument', `Klan ${cid} ne postoji ili je raspušten.`)
+      }
+    }
+  }
+
+  const r = await napraviRat(id, { parovi, boostKategorija, startAt, endAt })
+  invalidirajRatKes()
+  return r
+})
+
+// Pokreni rat ODMAH, sa zadanim krajem. Ovo je poluga za "hoću da event krene
+// danas": prozor ne mora biti ponedjeljak-petak.
+export const adminWarStart = onCall(async (request) => {
+  requireAdmin(request)
+  const { warId, startAt = null, endAt = null } = request.data || {}
+  const id = warId || ratWarIdZa(bihParts())
+
+  const mecevi = await db.collection(`clanWars/${id}/matches`).get()
+  if (mecevi.empty) {
+    throw new HttpsError('failed-precondition', 'Rat nema nijedan meč — prvo napravi parove.')
+  }
+  const pocetak = startAt || Date.now()
+  const rSnap = await db.doc(`clanWars/${id}`).get()
+  const kraj = endAt || rSnap.data()?.endAt
+  if (kraj && kraj <= pocetak) {
+    throw new HttpsError('invalid-argument', 'Kraj rata mora biti poslije početka.')
+  }
+  const r = await pokreniRat(id, { startAt: pocetak, endAt: kraj })
+  return r
+})
+
+// Zatvori rat i isplati nagrade odmah.
+export const adminWarEnd = onCall(async (request) => {
+  requireAdmin(request)
+  const { warId } = request.data || {}
+  const cfg = await getWarConfig()
+  const id = warId || cfg?.warId
+  if (!id) throw new HttpsError('failed-precondition', 'Nema rata za zatvaranje.')
+  const r = await zavrsiRat(id)
+  return r
+})
+
+// Prekidač bez posljedica: bodovanje staje, nagrade se NE isplaćuju.
+// Prva stvar koju treba povući ako se u ratu pojavi greška.
+export const adminWarPause = onCall(async (request) => {
+  requireAdmin(request)
+  const { enabled } = request.data || {}
+  await db.doc('config/clanWar').set({ enabled: enabled === true }, { merge: true })
+  invalidirajRatKes()
+  return { enabled: enabled === true }
+})
+
+// Otkazivanje rata BEZ nagrada — briše mečeve i žive skorove.
+export const adminWarCancel = onCall(async (request) => {
+  requireAdmin(request)
+  const { warId, potvrda } = request.data || {}
+  const id = warId || (await getWarConfig())?.warId
+  if (!id) throw new HttpsError('failed-precondition', 'Nema rata.')
+  if (potvrda !== id) {
+    throw new HttpsError('invalid-argument', 'Za otkazivanje pošalji potvrda = warId.')
+  }
+  const rSnap = await db.doc(`clanWars/${id}`).get()
+  if (rSnap.exists && rSnap.data().status === 'resolved') {
+    throw new HttpsError('failed-precondition', 'Rat je zatvoren i nagrade su isplaćene — ne otkazuje se.')
+  }
+  const mecevi = await db.collection(`clanWars/${id}/matches`).get()
+  const batch = db.batch()
+  mecevi.docs.forEach((d) => batch.delete(d.ref))
+  batch.delete(db.doc(`clanWars/${id}`))
+  await batch.commit()
+  await rtdb.ref(`clanWar/${id}`).remove()
+  await db.doc('config/clanWar').set({ enabled: false, status: 'off', warId: null }, { merge: true })
+  invalidirajRatKes()
+  return { otkazan: id, obrisanoMeceva: mecevi.size }
+})
+
+// Podešavanja u letu: kategorija za srijedu, automatika, kraj prozora.
+export const adminWarSetConfig = onCall(async (request) => {
+  requireAdmin(request)
+  const { boostKategorija, autoUparivanje, endAt, startAt } = request.data || {}
+  const patch = { updatedAt: FieldValue.serverTimestamp() }
+  if (boostKategorija !== undefined) patch.boostKategorija = boostKategorija || null
+  if (autoUparivanje !== undefined) patch.autoUparivanje = autoUparivanje !== false
+  if (endAt !== undefined) patch.endAt = endAt || null
+  if (startAt !== undefined) patch.startAt = startAt || null
+  await db.doc('config/clanWar').set(patch, { merge: true })
+
+  const cfg = await (async () => {
+    invalidirajRatKes()
+    return getWarConfig()
+  })()
+  if (cfg?.warId) {
+    const p = {}
+    if (patch.boostKategorija !== undefined) p.boostKategorija = patch.boostKategorija
+    if (patch.endAt !== undefined) p.endAt = patch.endAt
+    if (patch.startAt !== undefined) p.startAt = patch.startAt
+    if (Object.keys(p).length) await db.doc(`clanWars/${cfg.warId}`).update(p).catch(() => {})
+  }
+  return cfg
+})
+
+// Ponovni obračun dnevnog bonusa (briše oznaku pa obračuna iznova).
+// Treba kad se ispravi članstvo ili kad tick padne.
+export const adminWarRecomputeDay = onCall(async (request) => {
+  requireAdmin(request)
+  const { dan, warId } = request.data || {}
+  const cfg = await getWarConfig()
+  const id = warId || cfg?.warId
+  if (!id || !dan) throw new HttpsError('invalid-argument', 'Nedostaje warId ili dan.')
+
+  const mecevi = await db.collection(`clanWars/${id}/matches`).get()
+  const rezultati = []
+  for (const d of mecevi.docs) {
+    for (const clanId of d.data().clanIds || []) {
+      const oznaka = await rtdb.ref(`clanWar/${id}/${clanId}/days/${dan}/bonus`).get()
+      // Već dodijeljen bonus se prvo skida, inače bi se sabrao dvaput.
+      if (oznaka.exists() && oznaka.val() !== 'nedovoljno') {
+        await rtdb.ref(`clanWar/${id}/${clanId}/cp`).transaction((c) => Math.max(0, (c || 0) - UCESCE_BONUS))
+        await rtdb
+          .ref(`clanWar/${id}/${clanId}/days/${dan}/cp`)
+          .transaction((c) => Math.max(0, (c || 0) - UCESCE_BONUS))
+      }
+      await rtdb.ref(`clanWar/${id}/${clanId}/days/${dan}/bonus`).remove()
+      const r = await obradiDanUcesca(id, clanId, dan)
+      if (r) rezultati.push(r)
+    }
+  }
+  return { dan, rezultati }
+})
+
+// Test alat: postavi nivo objekta i zelene bodove, bez čekanja pet dana rata.
+export const adminWarSetOkrug = onCall(async (request) => {
+  requireAdmin(request)
+  const { clanId, objekatId, nivo, trezor, clanGoldUid, clanGold } = request.data || {}
+  if (clanId && objekatId !== undefined) {
+    const n = Math.max(0, Math.min(RAT_MAX_NIVO, Number(nivo) || 0))
+    if (!ratObjekat(objekatId)) throw new HttpsError('invalid-argument', 'Nepoznat objekat.')
+    await clanRef(clanId).update({ [`okrug.nivoi.${objekatId}`]: n })
+  }
+  if (clanId && trezor !== undefined) {
+    await clanRef(clanId).update({ trezor: Math.max(0, Number(trezor) || 0) })
+  }
+  if (clanGoldUid && clanGold !== undefined) {
+    await db.doc(`users/${clanGoldUid}`).update({ clanGold: Math.max(0, Number(clanGold) || 0) })
+  }
+  invalidirajRatKes()
+  return { ok: true }
+})

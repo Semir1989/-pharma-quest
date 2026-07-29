@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { startQuizSession, submitQuizAnswer, resumeQuizQuestion } from '../services/quizApi'
+import { useHint } from '../services/klanRatApi'
 import { track } from '../services/analytics'
 import { levelFromXp } from '../utils/levels'
 import { formatCountdown, nextDailyResetAt } from '../utils/periods'
@@ -30,6 +31,7 @@ export default function Kviz() {
   const [summary, setSummary] = useState(null) // { earnedXp, rawXp, capped, correctCount, total }
   const [limit, setLimit] = useState(null) // { used, limit, xpToday, xpCap, resetsAt }
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
+  const [hintovi, setHintovi] = useState(0) // 50:50 iz Kliničke Apoteke
   const xpAtStartRef = useRef(0)
 
   async function startQuiz() {
@@ -51,6 +53,7 @@ export default function Kviz() {
       }
       setSession({ sessionId: res.sessionId, total: res.total })
       setQuestion(res.question)
+      setHintovi(res.hintovi || 0)
       setAnswers([])
       setSummary(null)
       setBadgeQueue([])
@@ -124,6 +127,13 @@ export default function Kviz() {
         onSubmit={handleSubmit}
         onNext={handleNext}
         onResume={handleResume}
+        hintovi={hintovi}
+        onHint={async () => {
+          const r = await useHint({ sessionId: session.sessionId })
+          if (!r.ponovljen) setHintovi(r.ostalo ?? 0)
+          track('hint_50_50', { ostalo: r.ostalo })
+          return r
+        }}
       />
     )
   }
