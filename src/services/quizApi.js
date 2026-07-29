@@ -128,6 +128,12 @@ export async function claimLevelChest() {
   return (await claimLevelChestFn({})).data
 }
 
+// Otvaranje kovčega za rekord Preživljavanja → { preostalo, reward }
+const claimSurvivalRecordChestFn = httpsCallable(functions, 'claimSurvivalRecordChest')
+export async function claimSurvivalRecordChest() {
+  return (await claimSurvivalRecordChestFn({})).data
+}
+
 // Trošenje žetona za pokušaj kviza → { energy, preostaloZetona }
 const spendQuizRefillFn = httpsCallable(functions, 'spendQuizRefill')
 export async function spendQuizRefill() {

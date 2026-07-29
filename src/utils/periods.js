@@ -80,22 +80,36 @@ export function secondsUntilDailyReset(d = new Date()) {
   return Math.max(0, Math.floor((nextDailyResetAt(d) - d.getTime()) / 1000))
 }
 
-// Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM (reset srijedom).
-// UTC-bazirano, identično serveru (functions/index.js) da putanja leaderboarda
-// bude ista. Vraća datum posljednje srijede, npr. '2026-07-22'.
+// Sat u srijedu (BiH vrijeme) kad počinje nova sedmica Preživljavanja —
+// isti trenutak u kojem zakazani posao na serveru (survivalWeeklyReset)
+// otvara novi prozor eventa.
+export const SURVIVAL_RESET_HOUR = 8
+
+// Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM U 08:00 po BiH
+// vremenu. Identično serveru (functions/index.js) da putanja leaderboarda bude
+// ista. Vraća datum posljednje srijede, npr. '2026-07-29'.
 export function survivalWeekKey(d = new Date()) {
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
-  const diff = (date.getUTCDay() - 3 + 7) % 7 // srijeda = 3
-  date.setUTCDate(date.getUTCDate() - diff)
+  const { y, m, d: day, hh } = bihParts(d)
+  // Pomak od 8 sati unazad: sve prije srijede u 08:00 još pripada prošloj sedmici.
+  const date = new Date(Date.UTC(y, m - 1, day, hh - SURVIVAL_RESET_HOUR))
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() - 3 + 7) % 7)) // srijeda = 3
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
 }
 
-// Sekunde do sljedeće srijede 00:00 UTC (odbrojavanje do resetа Preživljavanja).
+// Trenutak sljedeće srijede u 08:00 po BiH vremenu (ms epoch). Dva prolaza zbog
+// ljetnog/zimskog vremena — isti postupak kao nextDailyResetAt.
+export function nextSurvivalResetAt(d = new Date()) {
+  const { y, m, d: day, hh } = bihParts(d)
+  let dana = (3 - new Date(Date.UTC(y, m - 1, day)).getUTCDay() + 7) % 7
+  if (dana === 0 && hh >= SURVIVAL_RESET_HOUR) dana = 7 // srijeda je, ali je 08:00 prošlo
+  const civil = Date.UTC(y, m - 1, day + dana, SURVIVAL_RESET_HOUR)
+  const guess = civil - bihOffset(d)
+  return civil - bihOffset(new Date(guess))
+}
+
+// Sekunde do novog pokušaja (srijeda 08:00 po BiH vremenu).
 export function secondsUntilSurvivalReset(d = new Date()) {
-  const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
-  const diff = (3 - next.getUTCDay() + 7) % 7 || 7 // dana do sljedeće srijede
-  next.setUTCDate(next.getUTCDate() + diff)
-  return Math.max(0, Math.floor((next - d) / 1000))
+  return Math.max(0, Math.floor((nextSurvivalResetAt(d) - d.getTime()) / 1000))
 }
 
 // 'HH:MM:SS' format za tajmer.

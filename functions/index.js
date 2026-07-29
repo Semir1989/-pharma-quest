@@ -152,14 +152,45 @@ function nextDailyResetAt(d = new Date()) {
   return midnightCivil - bihOffset(new Date(guess))
 }
 
-// Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM (reset srijedom).
-// UTC-bazirano da klijent (čita leaderboard) i server (piše) uvijek dobiju isti
-// ključ. Vraća datum posljednje srijede, npr. '2026-07-22'.
+// Sat u srijedu (BiH vrijeme) kad počinje nova sedmica Preživljavanja. Isti
+// broj koristi zakazani restart (survivalWeeklyReset) i ključ sedmice — inače
+// bi se ljestvica praznila u jednom trenutku, a event otvarao u drugom.
+const SURVIVAL_RESET_HOUR = 8
+
+// Ključ sedmice Preživljavanja — sedmica POČINJE SRIJEDOM U 08:00 po BiH
+// vremenu. Računa se nad BiH civilnim vremenom pomjerenim 8 sati unazad: sve
+// prije srijede u 08:00 tako još pripada prošloj sedmici. Vraća datum
+// posljednje srijede, npr. '2026-07-29'.
+//
+// Ranije je bilo UTC-bazirano (srijeda 00:00 UTC = 02:00 po BiH), pa se
+// ljestvica praznila šest sati prije nego što se event uopšte otvori.
+// src/utils/periods.js ima identičnu kopiju — putanja leaderboarda mora biti
+// ista na obje strane.
 function survivalWeekKey(d = new Date()) {
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
-  const diff = (date.getUTCDay() - 3 + 7) % 7 // srijeda = 3
-  date.setUTCDate(date.getUTCDate() - diff)
+  const { y, m, d: day, hh } = bihParts(d)
+  const date = new Date(Date.UTC(y, m - 1, day, hh - SURVIVAL_RESET_HOUR))
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() - 3 + 7) % 7)) // srijeda = 3
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
+}
+
+// Trenutak sljedeće srijede u 08:00 po BiH vremenu (ms epoch). Dva prolaza zbog
+// prelaska na ljetno/zimsko vrijeme — drugi prolaz koristi offset koji vrijedi
+// u samom trenutku reseta (isti postupak kao nextDailyResetAt).
+function nextSurvivalResetAt(d = new Date()) {
+  const { y, m, d: day, hh } = bihParts(d)
+  let dana = (3 - new Date(Date.UTC(y, m - 1, day)).getUTCDay() + 7) % 7
+  if (dana === 0 && hh >= SURVIVAL_RESET_HOUR) dana = 7 // danas je srijeda, ali je 08:00 prošlo
+  const civil = Date.UTC(y, m - 1, day + dana, SURVIVAL_RESET_HOUR)
+  const guess = civil - bihOffset(d)
+  return civil - bihOffset(new Date(guess))
+}
+
+// Prozor eventa za sedmicu kojoj pripada dati trenutak: od srijede 08:00 do
+// sljedeće srijede 08:00. Početak se računa istom funkcijom (ne kao kraj minus
+// 7 dana) da prelazak na ljetno/zimsko vrijeme ne pomjeri sat otvaranja.
+function survivalWindowFor(d = new Date()) {
+  const closeAt = nextSurvivalResetAt(d)
+  return { openAt: nextSurvivalResetAt(new Date(closeAt - 8 * 86400000)), closeAt }
 }
 
 // Dnevni streak — niz uzastopnih dana igranja (UTC dan). profile.streak raste
@@ -355,6 +386,10 @@ async function activeEventsFor(uid) {
 async function setEventStatus(uid, patch) {
   const updates = {}
   for (const [k, v] of Object.entries(patch)) updates[`eventStatus.${k}`] = v
+  // Uz survival ide i sedmica na koju se odnosi. Bez nje klijent ne može
+  // razlikovati "ispao ove sedmice" od "ispao prošle sedmice" — a prošla
+  // sedmica ne smije gasiti signal u novoj (vidi useArenaAlert).
+  if ('survival' in patch) updates['eventStatus.survivalWeek'] = survivalWeekKey()
   await db.doc(`users/${uid}`).update(updates).catch(() => {})
 }
 
@@ -374,18 +409,25 @@ async function ensureDailyPicks(uid) {
   const userRef = db.doc(`users/${uid}`)
   const snap = await userRef.get()
   if (!snap.exists) return []
+
+  // Status eventa se osvježava pri SVAKOM pozivu, ne samo kad se pravi novi
+  // izbor questova. Ranije je stajao ispod ranog izlaza, pa je bio dnevni
+  // snimak: ko je otvorio aplikaciju prije nego se prozor eventa otvori,
+  // ostajao je na `false` do sutra iako je u međuvremenu smio igrati.
+  const events = await activeEventsFor(uid)
+  await setEventStatus(uid, {
+    survival: events.includes('survival'),
+    tournament: events.includes('tournament'),
+  })
+
   const existing = snap.data().taskProgress?.daily
   if (existing?.period === day && Array.isArray(existing.picked) && existing.picked.length > 0) {
     return existing.picked
   }
   // Izbor se pravi izvan transakcije (čita config i survivalRuns), pa se
   // transakcijom samo upisuje — i to tek ako ga u međuvremenu niko nije upisao.
-  const [pool, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
+  const pool = await getActiveTasks()
   const picked = pickDailyTaskIds(pool, uid, day, events)
-  await setEventStatus(uid, {
-    survival: events.includes('survival'),
-    tournament: events.includes('tournament'),
-  })
   let final = picked
   await db.runTransaction(async (tx) => {
     const s = await tx.get(userRef)
@@ -1554,6 +1596,72 @@ async function writeSurvivalLeaderboard(uid, week, streak) {
     avatar: p.avatar || 'a1',
     streak,
   })
+  await updateSurvivalRecord(uid, p, week, streak)
+}
+
+// ---------------------------------------------------------------------------
+// Rekord Preživljavanja — najbolji niz IKAD
+// ---------------------------------------------------------------------------
+// Stalan poredak od jednog mjesta: config/survivalRecord
+//   { uid, name, avatar, streak, week, setAt }
+//
+// Rekord ruši SAMO strogo veći niz — izjednačenje ostavlja mjesto onome ko ga
+// je prvi osvojio. Ko na njemu sjedi u trenutku sedmičnog restarta, dobija tri
+// kovčega (survivalWeeklyReset → dodijeliRekordKovcege).
+//
+// Drži se kao vlastiti dokument umjesto da se računa iz RTDB stabla pri svakom
+// čitanju (najboljiSurvivalIz radi upravo to, ali za jedan ekran u klanu):
+// karticu rekorda vidi svako otvaranje Preživljavanja, pa mora biti jedan read.
+// Živi u 'config' jer je to jedina kolekcija koju pravila daju klijentu da
+// čita, a serveru da piše (firestore.rules).
+const SURVIVAL_RECORD_DOC = 'config/survivalRecord'
+
+// Najbolji niz u cijelom stablu ljestvica. Treba samo jednom — da uvođenje
+// rekorda ne krene od nule i pobriše ono što su igrači već postigli.
+async function rekordIzStabla() {
+  const stablo = await survivalStablo()
+  let naj = null
+  for (const [week, igraci] of Object.entries(stablo)) {
+    for (const [uid, zapis] of Object.entries(igraci || {})) {
+      const streak = zapis?.streak || 0
+      if (streak > 0 && (!naj || streak > naj.streak)) {
+        naj = { uid, name: zapis.name || 'Farmaceut', avatar: zapis.avatar || 'a1', streak, week }
+      }
+    }
+  }
+  return naj
+}
+
+// Zastavica po instanci: čim znamo da rekord postoji, sijanje se više ni ne
+// provjerava — inače bi svaki tačan odgovor plaćao jedan suvišan read.
+let rekordZasijan = false
+
+async function osiguraRekord(ref) {
+  if (rekordZasijan) return
+  if (!(await ref.get()).exists) {
+    const sjeme = await rekordIzStabla()
+    if (sjeme) await ref.set({ ...sjeme, setAt: FieldValue.serverTimestamp() })
+  }
+  rekordZasijan = true
+}
+
+async function updateSurvivalRecord(uid, profile, week, streak) {
+  if (streak <= 0) return
+  const ref = db.doc(SURVIVAL_RECORD_DOC)
+  await osiguraRekord(ref)
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    const cur = snap.exists ? snap.data() : null
+    if (cur && (cur.streak || 0) >= streak) return // izjednačenje ne ruši rekord
+    tx.set(ref, {
+      uid,
+      name: profile.displayName || 'Farmaceut',
+      avatar: profile.avatar || 'a1',
+      streak,
+      week,
+      setAt: FieldValue.serverTimestamp(),
+    })
+  })
 }
 
 // startSurvival — pokreni novi run, nastavi pauzirani/aktivni, ili javi da je
@@ -1725,6 +1833,98 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   }
 })
 
+// Sedmični restart Preživljavanja — SRIJEDOM U 08:00 po BiH vremenu.
+//
+// Do sada se prozor eventa postavljao isključivo ručno (skripta
+// postavi-survival-config.js ili admin panel), pa je event ostajao zatvoren dok
+// admin ne intervenira. Ovo je poluga koja to radi sama:
+//
+//   1. prozor  — config/survival se pomjera na tekuću sedmicu
+//   2. pokušaji — survivalRuns iz prošlih sedmica se brišu (svi su istekli)
+//   3. signal  — svima eventStatus.survival = true, pa Arena zasvijetli
+//   4. questovi — današnji izbor se poništava da survival zadatak uđe u ponudu
+//
+// Ljestvicu ne treba dirati: ona živi po sedmicama (survival/{week}/{uid}), pa
+// nova sedmica kreće iz praznog čvora i rezultati prošle time više ne važe.
+// Stari čvorovi se NAMJERNO ne brišu — najboljiSurvivalIz() ih pretražuje da bi
+// ekran "Upravljanje klanom" pokazao najbolji niz igrača ikad.
+//
+// Posao je idempotentan uz jednu iznimku: kovčezi rekorderu (korak 0) se pri
+// svakom pokretanju dodjeljuju iznova, jer su brojač, ne stanje.
+const BATCH_LIMIT = 400 // Firestore dozvoljava 500 operacija po batchu
+
+// Koliko kovčega dobija vlasnik rekorda pri sedmičnom restartu.
+const RECORD_CHESTS = 3
+
+// Nagrada se dodjeljuje PRIJE svega ostalog u restartu — tako je dobija onaj ko
+// je bio prvi u sekundi prije restarta, kako i treba. Kovčezi stoje na profilu
+// kao brojač (users/{uid}.recordChests) i otvaraju se na kartici rekorda
+// (claimSurvivalRecordChest); isti su bubanj žetona kao kovčezi za level.
+async function dodijeliRekordKovcege() {
+  const snap = await db.doc(SURVIVAL_RECORD_DOC).get()
+  const rekord = snap.exists ? snap.data() : null
+  if (!rekord?.uid) return null
+  await db
+    .doc(`users/${rekord.uid}`)
+    .update({ recordChests: FieldValue.increment(RECORD_CHESTS) })
+    .catch(() => {}) // obrisan nalog ne smije srušiti restart
+  return rekord
+}
+
+export const survivalWeeklyReset = onSchedule(
+  { schedule: `0 ${SURVIVAL_RESET_HOUR} * * 3`, timeZone: BIH_TZ },
+  async () => {
+    const week = survivalWeekKey() // u 08:00 ovo je već NOVA sedmica
+    const { openAt, closeAt } = survivalWindowFor()
+
+    // 0. Kovčezi vlasniku rekorda — prvo, dok ljestvica prošle sedmice još stoji.
+    const rekord = await dodijeliRekordKovcege()
+
+    // 1. Prozor eventa.
+    await db.doc('config/survival').set({
+      enabled: true,
+      openAt,
+      closeAt,
+      label: 'Sedmični izazov preživljavanja',
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+    survivalConfigCache = null // keš ove instance; ostale isteknu za 30 s
+
+    // 2. Pokušaji iz prošlih sedmica.
+    const runs = await db.collection('survivalRuns').get()
+    let obrisanihRunova = 0
+    for (let i = 0; i < runs.docs.length; i += BATCH_LIMIT) {
+      const batch = db.batch()
+      for (const d of runs.docs.slice(i, i + BATCH_LIMIT)) {
+        if (d.data().week === week) continue // već igra u novoj sedmici
+        batch.delete(d.ref)
+        obrisanihRunova++
+      }
+      await batch.commit()
+    }
+
+    // 3. i 4. Signal i dnevni questovi za sve igrače.
+    const users = await db.collection('users').get()
+    for (let i = 0; i < users.docs.length; i += BATCH_LIMIT) {
+      const batch = db.batch()
+      for (const d of users.docs.slice(i, i + BATCH_LIMIT)) {
+        batch.update(d.ref, {
+          'eventStatus.survival': true,
+          'eventStatus.survivalWeek': week,
+          'taskProgress.daily.picked': null,
+        })
+      }
+      await batch.commit()
+    }
+
+    console.log(
+      `survivalWeeklyReset: sedmica ${week}, prozor ${new Date(openAt).toISOString()} → ` +
+        `${new Date(closeAt).toISOString()}, igrača ${users.size}, obrisano runova ${obrisanihRunova}` +
+        `, rekord: ${rekord ? `${rekord.name} (niz ${rekord.streak}) +${RECORD_CHESTS} kovčega` : 'nema'}`
+    )
+  }
+)
+
 // ---------------------------------------------------------------------------
 // Kovčezi za level (Etapa 9)
 //
@@ -1791,6 +1991,38 @@ export const claimLevelChest = onCall(async (request) => {
     rezultat = {
       level: noviLevel,
       preostalo: level - noviLevel,
+      reward: { id: nagrada.id, kind: nagrada.kind, amount: nagrada.amount, label: nagrada.label },
+    }
+  })
+
+  return rezultat
+})
+
+// Otvaranje kovčega za rekord Preživljavanja. Isti bubanj nagrada kao kod
+// kovčega za level — razlika je samo odakle kovčeg dolazi (sedmični restart
+// dodijeli tri vlasniku rekorda) i gdje se otvara (kartica rekorda u
+// Preživljavanju). Brojač: users/{uid}.recordChests.
+export const claimSurvivalRecordChest = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const ref = db.doc(`users/${uid}`)
+  let rezultat = null
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const p = snap.data()
+    const cekaju = p.recordChests || 0
+    if (cekaju <= 0) throw new HttpsError('failed-precondition', 'Nema kovčega za otvaranje.')
+    // Izvlačenje je na SERVERU: da klijent ne može ponavljati dok ne padne +3.
+    const nagrada = rollChestReward()
+    const staro = p.rewards?.[nagrada.kind] || 0
+    tx.update(ref, {
+      recordChests: cekaju - 1,
+      [`rewards.${nagrada.kind}`]: staro + nagrada.amount,
+    })
+    rezultat = {
+      preostalo: cekaju - 1,
       reward: { id: nagrada.id, kind: nagrada.kind, amount: nagrada.amount, label: nagrada.label },
     }
   })
@@ -2083,6 +2315,7 @@ export const adminResetSurvival = onCall(async (request) => {
   await rtdb.ref(`survival/${week}/${uid}`).remove()
   await db.doc(`users/${uid}`).update({
     'eventStatus.survival': true,
+    'eventStatus.survivalWeek': week,
     'taskProgress.daily.picked': null,
     survivalChest: null, // da se animacije kovčega mogu ponovo vidjeti
   })

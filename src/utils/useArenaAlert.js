@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getTournamentConfig, isRegisteredForDuel } from '../services/tournament'
+import { subscribeSurvivalConfig, survivalOpen } from '../services/survival'
+import { survivalWeekKey } from './periods'
 import { useNow } from './useNow'
 
 // Signal "Arena te čeka" za ikonicu u donjoj navigaciji.
@@ -35,9 +37,26 @@ export function refreshArenaAlert() {
   notify()
 }
 
-function computeSignals({ profile, cfg, registered, now }) {
+// Preživljavanje gori kad je prozor eventa otvoren I igrač nije ispao u
+// TEKUĆOJ sedmici. Oba podatka su živa: prozor stiže pretplatom na
+// config/survival, ispadanje s profila. Zato se ikonica upali sama u srijedu u
+// 08:00 i ugasi u trenutku ispadanja, bez reloada.
+//
+// Ranije se gledala samo zastavica eventStatus.survival, koju je server
+// osvježavao jednom dnevno (pri prvom izboru dnevnih questova). Ko je otvorio
+// aplikaciju prije nego se prozor otvori, ostajao je tamni cijeli dan iako je
+// smio igrati; a `false` od prošle sedmice nikad nije bio vraćen na `true`.
+// Zastavica se sada koristi SAMO za ispadanje, uz sedmicu na koju se odnosi.
+function survivalSignal(profile, scfg, now) {
+  if (scfg === undefined) return false // config se još učitava — ne trepći uprazno
+  const es = profile?.eventStatus
+  const ispao = es?.survival === false && es?.survivalWeek === survivalWeekKey(new Date(now))
+  return survivalOpen(scfg, now) && !ispao
+}
+
+function computeSignals({ profile, cfg, scfg, registered, now }) {
   const signals = []
-  if (profile?.eventStatus?.survival === true) signals.push('survival')
+  if (survivalSignal(profile, scfg, now)) signals.push('survival')
   if (cfg?.enabled && cfg.key) {
     if (now >= cfg.regOpenAt && now <= cfg.regCloseAt && !registered) signals.push('duel-reg')
     if (now >= cfg.openAt && now <= cfg.closeAt) {
@@ -53,6 +72,7 @@ export function useArenaAlert() {
   const uid = user?.uid
   const now = useNow(30000) // faze eventa se mjere minutama, ne sekundama
   const [cfg, setCfg] = useState(null)
+  const [scfg, setScfg] = useState(undefined) // prozor Preživljavanja (živo)
   const [registered, setRegistered] = useState(false)
   const [tick, setTick] = useState(0)
 
@@ -65,6 +85,8 @@ export function useArenaAlert() {
       alive = false
     }
   }, [])
+
+  useEffect(() => subscribeSurvivalConfig(setScfg), [])
 
   useEffect(() => {
     if (!cfg?.key || !uid) return
@@ -82,6 +104,6 @@ export function useArenaAlert() {
     return () => listeners.delete(fn)
   }, [])
 
-  const signals = computeSignals({ profile, cfg, registered, now })
+  const signals = computeSignals({ profile, cfg, scfg, registered, now })
   return { active: signals.length > 0, signals }
 }

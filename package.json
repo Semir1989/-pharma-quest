@@ -18,6 +18,8 @@
     "postavi-bedzeve": "node scripts/postavi-bedzeve.js",
     "postavi-survival": "node scripts/postavi-survival-config.js",
     "reset-survival": "node scripts/reset-survival.js",
+    "postavi-rekord": "node scripts/postavi-survival-rekord.js",
+    "restartuj-survival": "node scripts/restartuj-survival-sedmicu.js",
     "postavi-admina": "node scripts/postavi-admina.js",
     "postavi-turnir": "node scripts/postavi-turnir-config.js"
   },

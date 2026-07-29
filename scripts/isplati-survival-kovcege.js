@@ -25,12 +25,23 @@ const MAX_STEP = 100
 const stvarno = process.argv.includes('--stvarno')
 
 // Doslovna kopija survivalWeekKey iz functions/index.js — sedmica počinje
-// SRIJEDOM, UTC-bazirano (da klijent i server uvijek dobiju isti ključ).
+// SRIJEDOM U 08:00 po BiH vremenu (da klijent i server uvijek dobiju isti ključ).
 function survivalWeekKey(d = new Date()) {
   const pad = (n) => String(n).padStart(2, '0')
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
-  const diff = (date.getUTCDay() - 3 + 7) % 7 // srijeda = 3
-  date.setUTCDate(date.getUTCDate() - diff)
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Sarajevo',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+    })
+      .formatToParts(d)
+      .map((x) => [x.type, x.value])
+  )
+  const date = new Date(Date.UTC(+p.year, +p.month - 1, +p.day, (+p.hour % 24) - 8))
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() - 3 + 7) % 7)) // srijeda = 3
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
 }
 

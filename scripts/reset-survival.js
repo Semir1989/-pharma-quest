@@ -36,9 +36,28 @@ const db = getFirestore()
 const rtdb = getDatabase()
 
 const pad = (n) => String(n).padStart(2, '0')
-// Ista logika kao u functions/index.js — sedmica počinje srijedom (UTC).
+// Ista logika kao u functions/index.js — sedmica počinje SRIJEDOM U 08:00 po
+// BiH vremenu. Pomak od 8 sati unazad: sve prije srijede u 08:00 još pripada
+// prošloj sedmici.
+function bihParts(d = new Date()) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Sarajevo',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+    })
+      .formatToParts(d)
+      .map((x) => [x.type, x.value])
+  )
+  return { y: +p.year, m: +p.month, d: +p.day, hh: +p.hour % 24 }
+}
+
 function survivalWeekKey(d = new Date()) {
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const { y, m, d: day, hh } = bihParts(d)
+  const date = new Date(Date.UTC(y, m - 1, day, hh - 8))
   date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() - 3 + 7) % 7))
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
 }
@@ -83,6 +102,7 @@ await rtdb.ref(`survival/${week}/${uid}`).remove()
 //    izbor questova da se napravi nanovo, sa survival zadatkom u ponudi.
 await db.doc(`users/${uid}`).update({
   'eventStatus.survival': true,
+  'eventStatus.survivalWeek': week,
   'taskProgress.daily.picked': null,
 })
 

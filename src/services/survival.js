@@ -1,5 +1,6 @@
 import { ref, onValue, query, orderByChild, limitToLast } from 'firebase/database'
-import { rtdb } from '../firebase'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { rtdb, db } from '../firebase'
 import { survivalWeekKey } from '../utils/periods'
 
 // Leaderboard Preživljavanja (Etapa 8) — klijent SAMO ČITA; upisuje server.
@@ -38,4 +39,62 @@ export function subscribeSurvivalLeaderboard(callback) {
     },
     () => callback([])
   )
+}
+
+// --- Prozor eventa (config/survival) ---
+//
+// Ikonica Arene mora znati je li event otvoren UPRAVO SADA, a ne kakav je bio
+// kad se aplikacija učitala: u srijedu u 08:00 se otvara sam i signal mora
+// zasvijetliti bez reloada. Zato živa pretplata umjesto jednokratnog čitanja
+// (kao getTournamentConfig). Listener je jedan po sesiji koliko god komponenti
+// ga tražilo, a posljednja vrijednost se pamti da novi pretplatnik ne čeka.
+let cfgVrijednost // undefined = još se učitava, null = doc ne postoji
+let cfgUnsub = null
+const cfgPretplatnici = new Set()
+
+export function subscribeSurvivalConfig(callback) {
+  cfgPretplatnici.add(callback)
+  if (cfgVrijednost !== undefined) callback(cfgVrijednost)
+  if (!cfgUnsub) {
+    const javi = (v) => {
+      cfgVrijednost = v
+      for (const fn of cfgPretplatnici) fn(v)
+    }
+    cfgUnsub = onSnapshot(
+      doc(db, 'config', 'survival'),
+      (snap) => javi(snap.exists() ? snap.data() : null),
+      () => javi(null)
+    )
+  }
+  return () => {
+    cfgPretplatnici.delete(callback)
+    if (cfgPretplatnici.size === 0 && cfgUnsub) {
+      cfgUnsub()
+      cfgUnsub = null
+      cfgVrijednost = undefined
+    }
+  }
+}
+
+// --- Rekord: najbolji niz IKAD (config/survivalRecord) ---
+//
+// Stalna kartica iznad sedmične ljestvice — pokazuje jedno mjesto i ne
+// resetuje se srijedom. Upisuje ga server poslije svakog odgovora
+// (updateSurvivalRecord); klijent samo čita, živo, da se smjena rekordera vidi
+// bez reloada.
+export function subscribeSurvivalRecord(callback) {
+  return onSnapshot(
+    doc(db, 'config', 'survivalRecord'),
+    (snap) => callback(snap.exists() ? snap.data() : null),
+    () => callback(null)
+  )
+}
+
+// Je li prozor eventa otvoren. Isto pravilo kao na serveru
+// (survivalWindowClosed): nema config-a ili enabled=false → nema gejta.
+export function survivalOpen(cfg, now = Date.now()) {
+  if (!cfg || !cfg.enabled) return true
+  if (cfg.openAt && now < cfg.openAt) return false
+  if (cfg.closeAt && now > cfg.closeAt) return false
+  return true
 }

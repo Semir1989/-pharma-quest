@@ -22,6 +22,7 @@ import SurvivalQuestion from '../components/SurvivalQuestion'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import ChestOpenOverlay from '../components/ChestOpenOverlay'
 import SurvivalLadder from '../components/SurvivalLadder'
+import SurvivalRecord from '../components/SurvivalRecord'
 import Avatar from '../components/Avatar'
 
 // Preživljavanje (Etapa 8): endless mod, jedna sedmična "sudbina".
@@ -320,6 +321,10 @@ export default function Prezivljavanje() {
         )}
         <SurvivalLadder streak={ladder} opened={opened} onOpenChest={handleOpenChest} />
       </section>
+
+      {/* Rekord — stalna ljestvica od jednog mjesta, ne resetuje se srijedom.
+          Stoji IZNAD sedmične da se vidi šta je meta. */}
+      <SurvivalRecord profile={profile} uid={user?.uid} />
 
       {/* Leaderboard sedmice */}
       <section className="mt-5">
