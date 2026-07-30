@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { startQuizSession, submitQuizAnswer, resumeQuizQuestion } from '../services/quizApi'
+import {
+  startQuizSession,
+  submitQuizAnswer,
+  resumeQuizQuestion,
+  pocniPitanjeKviza,
+} from '../services/quizApi'
 import { useHint } from '../services/klanRatApi'
 import { track } from '../services/analytics'
 import { levelFromXp } from '../utils/levels'
@@ -77,8 +82,10 @@ export default function Kviz() {
         },
         selected,
         correct: res.correct,
+        late: !!res.late, // odgovor poništen kao zakašnjeli, nije pogrešan
       },
     ])
+    if (res.late) track('quiz_answer_late', { index: question.index })
     if (res.finished) {
       setSummary(res.summary)
       setLimit({
@@ -118,6 +125,13 @@ export default function Kviz() {
     return res
   }
 
+  // Pitanje je iscrtano → serverov rok kreće od SADA, a ne od ocjene prethodnog
+  // pitanja. Bez ovoga vrijeme provedeno na ekranu s objašnjenjem jede rok
+  // sljedećeg pitanja (greška od 30.07.2026.).
+  async function handleStart(index) {
+    return pocniPitanjeKviza(session.sessionId, index)
+  }
+
   if (phase === 'playing' && question) {
     return (
       <QuestionScreen
@@ -127,6 +141,7 @@ export default function Kviz() {
         onSubmit={handleSubmit}
         onNext={handleNext}
         onResume={handleResume}
+        onStart={() => handleStart(question.index)}
         hintovi={hintovi}
         onHint={async () => {
           const r = await useHint({ sessionId: session.sessionId })

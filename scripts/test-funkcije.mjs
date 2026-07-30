@@ -68,10 +68,57 @@ if (JSON.stringify(resume.question).includes('correctIndex')) {
 }
 console.log(`✓ resumeQuiz: pauza vraća isto pitanje (${resume.question.index + 1}/${resume.total})`)
 
-// 4. Odgovori na svih 10 pitanja (uvijek opcija 0)
+// Tačni odgovori se broje kroz cijeli test (i kroz blok 3c), da se na kraju
+// mogu uporediti sa serverskim zbirom.
+let correctCount = 0
+
+// 3c. Rok pitanja kreće kad pitanje STANE PRED IGRAČA (ispravka 30.07.2026.)
+//
+// Regresija koju ovo čuva: askedAt se postavljao pri ocjeni PRETHODNOG pitanja,
+// pa je vrijeme na ekranu s objašnjenjem jelo rok sljedećeg pitanja i tačni
+// odgovori su poništavani dok je na tajmeru još bilo sekundi.
+// Čitanje objašnjenja se simulira pomjeranjem askedAt 60 s u prošlost (prag je qSeconds + GRACE = 45 s).
+const sRef = db.doc(`quizSessions/${start.sessionId}`)
+{
+  // (1) BEZ pocniPitanje → odgovor se poništava, ali server to sad JAVLJA
+  //     (late) i pamti šta je igrač stvarno pritisnuo (selectedRaw).
+  await sRef.update({ askedAt: Date.now() - 60000 })
+  const zakasnio = await call('submitAnswer', { sessionId: start.sessionId, answerIndex: 0 })
+  if (!zakasnio.late) throw new Error('Server nije javio late za poništeni odgovor!')
+  if (zakasnio.correct) throw new Error('Zakašnjeli odgovor je priznat kao tačan!')
+  const odg = (await sRef.get()).data().answers[0]
+  if (odg.selected !== null) throw new Error('Poništeni odgovor nije zapisan kao null!')
+  if (odg.selectedRaw !== 0) throw new Error('selectedRaw (stvarni izbor) nije sačuvan!')
+  console.log('✓ Poništeni odgovor: late:true + selectedRaw sačuvan za provjeru')
+
+  // (2) SA pocniPitanje → isto vrijeme na objašnjenju, odgovor se NORMALNO
+  //     ocjenjuje. Ovo je srž ispravke.
+  const prije = (await sRef.get()).data()
+  await sRef.update({ askedAt: Date.now() - 60000 })
+  const p = await call('pocniPitanje', { sessionId: start.sessionId, index: prije.current })
+  if (!p.pokrenuto) throw new Error('pocniPitanje nije pomjerio rok pitanja!')
+  const naVrijeme = await call('submitAnswer', { sessionId: start.sessionId, answerIndex: 0 })
+  if (naVrijeme.late) throw new Error('Odgovor poslije pocniPitanje je poništen!')
+  if (naVrijeme.correct) correctCount++
+  console.log('✓ pocniPitanje: 60 s na ekranu objašnjenja više ne jede rok pitanja')
+
+  // (3) Zaštita od zloupotrebe: rok se po pitanju pomjera SAMO JEDNOM i nikad
+  //     za pitanje koje je već prošlo.
+  const sad = (await sRef.get()).data()
+  const prvi = await call('pocniPitanje', { sessionId: start.sessionId, index: sad.current })
+  if (!prvi.pokrenuto) throw new Error('Prvi pocniPitanje za novo pitanje nije prošao!')
+  const rok = (await sRef.get()).data().askedAt
+  const drugi = await call('pocniPitanje', { sessionId: start.sessionId, index: sad.current })
+  if (drugi.pokrenuto) throw new Error('pocniPitanje se dao ponoviti za isto pitanje!')
+  if ((await sRef.get()).data().askedAt !== rok) throw new Error('Ponovljeni poziv je pomjerio rok!')
+  const staro = await call('pocniPitanje', { sessionId: start.sessionId, index: sad.current - 1 })
+  if (staro.pokrenuto) throw new Error('pocniPitanje je pomjerio rok za prošlo pitanje!')
+  console.log('✓ pocniPitanje: jedan pomjeraj po pitanju, zakašnjeli poziv ne dodaje vrijeme')
+}
+
+// 4. Odgovori na ostatak pitanja (uvijek opcija 0)
 let finished = false
 let lastResult = null
-let correctCount = 0
 for (let i = 0; i < start.total && !finished; i++) {
   lastResult = await call('submitAnswer', { sessionId: start.sessionId, answerIndex: 0 })
   if (lastResult.correct) correctCount++

@@ -48,6 +48,7 @@ function poziv(ime, fn, { ponovi = false } = {}) {
 const startQuizFn = httpsCallable(functions, 'startQuiz')
 const submitAnswerFn = httpsCallable(functions, 'submitAnswer')
 const resumeQuizFn = httpsCallable(functions, 'resumeQuiz')
+const pocniPitanjeFn = httpsCallable(functions, 'pocniPitanje')
 const claimTaskFn = httpsCallable(functions, 'claimTask')
 const ensureDailyQuestsFn = httpsCallable(functions, 'ensureDailyQuests')
 const startSurvivalFn = httpsCallable(functions, 'startSurvival')
@@ -66,10 +67,28 @@ export async function startQuizSession() {
   return startQuizPoziv({})
 }
 
-// → { correct, correctIndex, explanation, finished, question?, summary?, newBadges? }
+// → { correct, late, correctIndex, explanation, finished, question?, summary?, newBadges? }
+//   late: true = igrač je odgovorio, ali je server odgovor poništio kao
+//   zakašnjeli. Klijent to mora razlikovati od pogrešnog odgovora.
 const submitAnswerPoziv = poziv('submitAnswer', submitAnswerFn)
 export async function submitQuizAnswer(sessionId, answerIndex) {
   return submitAnswerPoziv({ sessionId, answerIndex })
+}
+
+// Javlja serveru da je pitanje iscrtano — tek tad kreće njegov rok. Bez ovoga
+// rok teče od ocjene prethodnog pitanja, pa vrijeme čitanja objašnjenja jede
+// sljedeće pitanje (greška od 30.07.2026.).
+//
+// Best effort: greška se namjerno guta jer server ima sigurnosnu mrežu
+// (askedAt iz submitAnswer). Server je idempotentan — rok po pitanju pomjera
+// najviše jednom, pa je i dupli poziv (StrictMode, retry) bezopasan.
+const pocniPitanjePoziv = poziv('pocniPitanje', pocniPitanjeFn, { ponovi: true })
+export async function pocniPitanjeKviza(sessionId, index) {
+  try {
+    return await pocniPitanjePoziv({ sessionId, index })
+  } catch {
+    return { pokrenuto: false }
+  }
 }
 
 // Nastavak poslije pauze → { total, question }. Ne mijenja nijedan odgovor ni

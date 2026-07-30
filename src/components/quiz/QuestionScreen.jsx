@@ -11,16 +11,18 @@ const PAUZA_PRAG_MS = 3000
 
 // Ekran jednog pitanja (Etapa 6 — server verzija).
 // Klijent NE ZNA tačan odgovor: šalje izbor serveru (onSubmit) i prikazuje
-// feedback koji server vrati { correct, correctIndex, explanation }.
+// feedback koji server vrati { correct, late, correctIndex, explanation }.
 // props: question ({ index, text, options, points, seconds }), total,
 //        onSubmit(selectedIndex|null) => Promise<feedback>, onNext(feedback),
-//        onResume() => Promise (opciono — bez njega nema pauze)
+//        onResume() => Promise (opciono — bez njega nema pauze),
+//        onStart() => Promise (opciono — javlja serveru da rok pitanja kreće)
 export default function QuestionScreen({
   question,
   total,
   onSubmit,
   onNext,
   onResume,
+  onStart,
   onHint,
   hintovi = 0,
 }) {
@@ -49,6 +51,20 @@ export default function QuestionScreen({
     },
     [onSubmit]
   )
+
+  // Rok pitanja kreće OVDJE — kad je pitanje iscrtano, ne kad je server ocijenio
+  // prethodno. Ekran s objašnjenjem stoji koliko igrač želi, a to vrijeme je
+  // ranije jelo rok sljedećeg pitanja (greška od 30.07.2026.).
+  //
+  // Namjerno se pušta bez čekanja i rokRef se NE pomjera na odgovor servera:
+  // klijentski rok tako kreće malo PRIJE serverskog (za trajanje poziva), pa je
+  // klijent stroži od servera — nikad obrnuto.
+  const pokrenutoRef = useRef(false)
+  useEffect(() => {
+    if (!onStart || pokrenutoRef.current) return
+    pokrenutoRef.current = true
+    onStart()
+  }, [onStart])
 
   // Odbrojavanje — staje kad korisnik odgovori ili kad se ekran pauzira.
   //
@@ -108,6 +124,9 @@ export default function QuestionScreen({
   }
 
   const correct = feedback?.correct
+  // Odgovor je poslan, ali ga je server poništio jer je rok istekao. Bez ovoga
+  // klijent nije mogao razlikovati poništenje od pogrešnog odgovora.
+  const zakasnio = !!feedback?.late
 
   // Pauza pokriva ekran: bez nje bi se odgovaralo na pitanje kojem je serverski
   // rok istekao, a to je izgledalo kao da igra ne priznaje tačan odgovor.
@@ -238,14 +257,33 @@ export default function QuestionScreen({
       {/* Feedback servera: poruka + objašnjenje + dugme dalje */}
       {feedback && (
         <div className="mt-4">
-          <div className={`rounded-2xl p-4 ${correct ? 'bg-emerald-50' : 'bg-red-50'}`}>
-            <p className={`font-bold ${correct ? 'text-emerald-700' : 'text-red-700'}`}>
+          <div
+            className={`rounded-2xl p-4 ${
+              correct ? 'bg-emerald-50' : zakasnio ? 'bg-amber-50' : 'bg-red-50'
+            }`}
+          >
+            <p
+              className={`font-bold ${
+                correct ? 'text-emerald-700' : zakasnio ? 'text-amber-700' : 'text-red-700'
+              }`}
+            >
               {correct
                 ? `✓ Tačno! +${question.points} XP`
-                : selected === null
-                  ? '⏱ Isteklo vrijeme!'
-                  : '✗ Netačno.'}
+                : zakasnio
+                  ? '⏱ Odgovor je stigao poslije roka.'
+                  : selected === null
+                    ? '⏱ Isteklo vrijeme!'
+                    : '✗ Netačno.'}
             </p>
+            {/* Poništen odgovor NIJE pogrešan odgovor — bez ove poruke je pisalo
+                "✗ Netačno." i onda kad je igrač pritisnuo tačno slovo. */}
+            {zakasnio && (
+              <p className="mt-1 text-sm text-amber-700">
+                Tvoj izbor{' '}
+                {selected !== null && selected !== undefined ? `(${LETTERS[selected]}) ` : ''}
+                nije se računao jer je rok ovog pitanja istekao.
+              </p>
+            )}
             <p className="mt-2 flex gap-2 text-sm leading-relaxed text-slate-600">
               <span>💡</span>
               <span>{feedback.explanation}</span>
@@ -264,7 +302,8 @@ export default function QuestionScreen({
 }
 
 // Stil opcije: prije feedbacka izabrana je teal; poslije — tačna zelena,
-// izabrana netačna crvena, ostale sive.
+// izabrana netačna crvena, ostale sive. Poništen (zakašnjeli) izbor je žut, a
+// ne crven: igrač nije pogriješio, odgovor mu se nije računao.
 function optionStyle(i, selected, feedback) {
   if (!feedback) {
     if (i === selected) return 'border-teal-600 bg-teal-600 text-white'
@@ -272,7 +311,11 @@ function optionStyle(i, selected, feedback) {
     return 'border-teal-600 bg-white text-slate-800 active:bg-teal-50'
   }
   if (i === feedback.correctIndex) return 'border-emerald-500 bg-emerald-50 text-emerald-900'
-  if (i === selected) return 'border-red-400 bg-red-50 text-red-800'
+  if (i === selected) {
+    return feedback.late
+      ? 'border-amber-400 bg-amber-50 text-amber-800'
+      : 'border-red-400 bg-red-50 text-red-800'
+  }
   return 'border-slate-200 bg-white text-slate-400'
 }
 
@@ -282,6 +325,10 @@ function letterStyle(i, selected, feedback) {
     return 'border-teal-600 text-teal-700'
   }
   if (i === feedback.correctIndex) return 'border-emerald-500 bg-emerald-500 text-white'
-  if (i === selected) return 'border-red-400 bg-red-400 text-white'
+  if (i === selected) {
+    return feedback.late
+      ? 'border-amber-400 bg-amber-400 text-white'
+      : 'border-red-400 bg-red-400 text-white'
+  }
   return 'border-slate-200 text-slate-300'
 }

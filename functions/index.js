@@ -1007,9 +1007,18 @@ export const submitAnswer = onCall(async (request) => {
   // Server-side tajmer: zakašnjeli odgovor se računa kao neodgovoren.
   // Trajanje dolazi IZ SESIJE (Galenski Laboratorij ga produžava), ne iz
   // konstante — inače bi server odbijao odgovore koje je klijentu sam dozvolio.
+  //
+  // Rok teče od askedAt, a njega od 30.07.2026. postavlja pocniPitanje — dakle
+  // od trenutka kad pitanje STVARNO stane pred igrača. Ranije se postavljao ovdje,
+  // pri ocjeni PRETHODNOG pitanja, pa je vrijeme čitanja objašnjenja jelo rok
+  // sljedećeg pitanja i tačni odgovori su poništavani s 5 sekundi na tajmeru.
   const qSeconds = session.qSeconds || QUESTION_SECONDS
   const elapsed = (Date.now() - session.askedAt) / 1000
   const effective = elapsed > qSeconds + GRACE_SECONDS ? null : answer
+  // Igrač je odgovorio, ali je odgovor poništen kao zakašnjeli. Klijent to MORA
+  // znati: bez ovoga je prikazivao "✗ Netačno." (jer njegov `selected` nije
+  // null), pa je poništenje izgledalo kao da igra ne priznaje tačan odgovor.
+  const late = answer !== null && effective === null
 
   const q = session.questions[session.current]
   const secret = await getSecret(q.id)
@@ -1017,16 +1026,29 @@ export const submitAnswer = onCall(async (request) => {
 
   const answers = [
     ...session.answers,
-    { id: q.id, category: q.category, points: q.points, selected: effective, correct },
+    {
+      id: q.id,
+      category: q.category,
+      points: q.points,
+      selected: effective,
+      correct,
+      // Šta je igrač stvarno pritisnuo, prije poništenja. Bez ovoga se izbor
+      // nepovratno gubio (effective ga prepiše), pa se prijava igrača nije
+      // mogla provjeriti iz baze. Piše se samo kad se razlikuje.
+      ...(late ? { selectedRaw: answer, late: true, elapsed: Math.round(elapsed) } : {}),
+    },
   ]
   const isLast = session.current + 1 >= session.questions.length
 
   if (!isLast) {
     const nextMeta = session.questions[session.current + 1]
     const nextData = await getQuestionById(nextMeta.id)
+    // askedAt se ovdje postavlja samo kao SIGURNOSNA MREŽA (npr. pocniPitanje ne
+    // prođe zbog mreže). Pravi rok postavlja pocniPitanje kad se pitanje iscrta.
     await sessionRef.update({ answers, current: session.current + 1, askedAt: Date.now() })
     return {
       correct,
+      late,
       correctIndex: secret.correctIndex,
       explanation: secret.explanation,
       finished: false,
@@ -1127,6 +1149,7 @@ export const submitAnswer = onCall(async (request) => {
 
   return {
     correct,
+    late,
     correctIndex: secret.correctIndex,
     explanation: secret.explanation,
     finished: true,
@@ -1148,6 +1171,51 @@ export const submitAnswer = onCall(async (request) => {
     levelBonus,
     newBadges,
   }
+})
+
+// ---------------------------------------------------------------------------
+// pocniPitanje — rok pitanja kreće kad pitanje STANE PRED IGRAČA
+// ---------------------------------------------------------------------------
+// Greška koju ovo rješava (nađena 30.07.2026.):
+//
+// submitAnswer je postavljao askedAt sljedećeg pitanja u trenutku kad ocijeni
+// PRETHODNO. A klijent sljedeće pitanje iscrta tek kad igrač na ekranu s
+// objašnjenjem pritisne "Sljedeće pitanje →". Sve vrijeme čitanja objašnjenja
+// je zato teklo iz roka sljedećeg pitanja, a igrač je na svom tajmeru vidio
+// pune 30 sekundi. Ko pogriješi pa pažljivo pročita objašnjenje (20+ s), tom
+// bi tačan odgovor bio poništen i pri 5 sekundi na tajmeru — a pisalo bi
+// "✗ Netačno". U bazi je od 4680 odgovora tako poništeno 168 (3,6 %).
+//
+// Zato klijent na iscrtavanju pitanja javi "počeo sam" i tek tad rok kreće.
+// Zaštita od zloupotrebe: rok se po pitanju smije pomjeriti SAMO JEDNOM
+// (pokrenutoZa pamti indeks) i samo za pitanje koje je trenutno u toku. Igrač
+// tako ne može dobiti više od qSeconds + GRACE po pitanju — može samo odgoditi
+// početak, što je isto što i sporije čitanje objašnjenja.
+//
+// Poziv je namjerno "best effort": ako padne, ostaje askedAt koji je postavio
+// submitAnswer, tj. staro (strože) ponašanje.
+export const pocniPitanje = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+
+  const { sessionId, index } = request.data || {}
+  if (typeof sessionId !== 'string') throw new HttpsError('invalid-argument', 'Nedostaje sessionId.')
+  if (!Number.isInteger(index)) throw new HttpsError('invalid-argument', 'Nedostaje index pitanja.')
+
+  const ref = db.doc(`quizSessions/${sessionId}`)
+  const snap = await ref.get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Sesija ne postoji.')
+  const session = snap.data()
+  if (session.uid !== uid) throw new HttpsError('permission-denied', 'Ovo nije tvoja sesija.')
+  if (session.finished) return { pokrenuto: false }
+
+  // Zakašnjeli poziv za pitanje koje je već prošlo NE SMIJE pomjeriti rok
+  // tekućeg pitanja (inače bi spori mrežni poziv poklonio dodatno vrijeme).
+  if (index !== session.current) return { pokrenuto: false }
+  if (session.pokrenutoZa === session.current) return { pokrenuto: false }
+
+  await ref.update({ askedAt: Date.now(), pokrenutoZa: session.current })
+  return { pokrenuto: true, seconds: session.qSeconds || QUESTION_SECONDS }
 })
 
 // ---------------------------------------------------------------------------
@@ -1180,10 +1248,19 @@ export const resumeQuiz = onCall(async (request) => {
   const qData = meta ? await getQuestionById(meta.id) : null
   if (!qData) throw new HttpsError('internal', 'Pitanje nije dostupno, pokušaj ponovo.')
 
-  await ref.update({ askedAt: Date.now(), pauses: FieldValue.increment(1) })
+  // pokrenutoZa: rok je upravo pomjeren, pa ga pocniPitanje ne treba (ni smije)
+  // pomjerati još jednom za isto pitanje.
+  await ref.update({
+    askedAt: Date.now(),
+    pauses: FieldValue.increment(1),
+    pokrenutoZa: session.current,
+  })
   return {
     total: session.questions.length,
-    question: publicQuestion(meta.id, qData, session.current),
+    // qSeconds MORA ići i ovdje: bez njega je publicQuestion vraćao
+    // podrazumijevanih 30 s, pa je igrač s Galenskim Laboratorijem poslije
+    // pauze gubio svoje dodatne sekunde na prikazu.
+    question: publicQuestion(meta.id, qData, session.current, session.qSeconds || QUESTION_SECONDS),
   }
 })
 

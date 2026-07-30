@@ -7,7 +7,8 @@ import BadgeUnlockOverlay from '../BadgeUnlockOverlay'
 // Prije rezultata se prikazuje BadgeUnlockOverlay za svaki novi bedž (Etapa 8).
 // Level-up se od Etape 9 NE prikazuje ovdje — svaki pređeni level ostavlja
 // kovčeg u XP baru na početnoj, i animacija ide samo na njegovo otvaranje.
-// props: answers = [{ question, selected, correct }], earnedXp,
+// props: answers = [{ question, selected, correct, late }], earnedXp,
+//        late = odgovor je poslan ali poništen jer je rok pitanja istekao,
 //        capped ({ rawXp, cap } kad je dnevni strop odsjekao dio XP-a),
 //        quizzesToday ('2/3' ili null),
 //        badge ({ emoji, name, description } ili null), onBadgeSeen, onContinue
@@ -73,12 +74,15 @@ export default function ResultsScreen({
             >
               <span className="font-bold text-slate-800">Pitanje {i + 1}</span>
               <span className="flex items-center gap-3">
+                {/* Poništen (zakašnjeli) odgovor nosi ⏱, ne ✗ — igrač nije pogriješio. */}
                 <span className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-sm font-bold ${
                   a.correct
                     ? 'border-emerald-500 text-emerald-600'
-                    : 'border-red-400 text-red-500'
+                    : a.late
+                      ? 'border-amber-400 text-amber-600'
+                      : 'border-red-400 text-red-500'
                 }`}>
-                  {a.correct ? '✓' : '✗'}
+                  {a.correct ? '✓' : a.late ? '⏱' : '✗'}
                 </span>
                 <span className={`text-slate-400 transition-transform ${open[i] ? 'rotate-180' : ''}`}>
                   ▾
@@ -89,9 +93,10 @@ export default function ResultsScreen({
               <div className="border-t border-slate-100 px-4 py-3 text-sm">
                 <p className="font-medium text-slate-800">{a.question.text}</p>
                 {!a.correct && (
-                  <p className="mt-2 text-red-600">
+                  <p className={`mt-2 ${a.late ? 'text-amber-700' : 'text-red-600'}`}>
                     Tvoj odgovor:{' '}
                     {a.selected === null ? 'isteklo vrijeme' : a.question.options[a.selected]}
+                    {a.late && ' — stigao poslije roka, nije se računao'}
                   </p>
                 )}
                 <p className="mt-1 text-emerald-700">
