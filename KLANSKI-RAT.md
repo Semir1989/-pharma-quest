@@ -53,13 +53,24 @@ kroz callable `getClanWar`.
 ## 2. Tok bodova
 
 `addClanWarCp(uid, xp, { xpPoKategoriji })` je **jedina** ulazna tačka. Zove se
-s ista tri mjesta kao `addWeekendXp`:
+s **tačno dva** mjesta:
 
 | Mjesto | XP koji ulazi | Kategorija |
 |---|---|---|
 | kraj kviza (`submitAnswer`) | `awardedXp` (poslije dnevnog capa) | raspodjela po pitanjima |
-| nagrada za quest (`claimTask`) | `task.reward` | nema |
 | tačan odgovor u Preživljavanju | 3 XP + kovčeg | kategorija pitanja |
+
+### U rat ulazi samo odigrano, ne pokupljeno
+
+Nagrade za questove — dnevne, sedmične i mjesečne — **ne nose CP**. Rat mjeri
+koliko se igra; questovi se pune iz istih tih kvizova, pa bi se isti trud
+brojao dvaput, a klan bi mogao dobiti rat skupljanjem nagrada umjesto igranjem.
+
+Klanski bonusi (+% CP kroz nivoe Zelenog Okruga) i dalje rade normalno — samo
+djeluju isključivo na CP iz kviza i Preživljavanja.
+
+> Do 30.07.2026. je `claimTask` greškom pripisivao CP. Ispravljeno, a CP koji je
+> tim putem ušao u rat `2026-07-27` je oduzet (vidi `scripts/rat-skini-quest-cp.js`).
 
 Redoslijed unutar funkcije:
 
@@ -82,8 +93,8 @@ imao smisla. (U praksi se i ne sreću: boost je samo srijedom.)
 
 Kviz od 10 pitanja rijetko je cijeli iz jedne kategorije. Zato `submitAnswer`
 šalje `xpPoKategoriji`, pa se boostuje samo onaj dio XP-a koji stvarno pripada
-izvučenoj kategoriji. Bez te raspodjele (npr. nagrada za quest) boost se **ne**
-primjenjuje — nikad se ne pretpostavlja u korist igrača.
+izvučenoj kategoriji. Bez te raspodjele boost se **ne** primjenjuje — nikad se
+ne pretpostavlja u korist igrača.
 
 ---
 

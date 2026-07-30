@@ -1319,15 +1319,19 @@ export const claimTask = onCall(async (request) => {
   await syncLeaderboard(uid, profileAfter, finalXp, task.reward, levelFromXp(finalXp, cfg))
   const newBadges = await awardBadges(uid)
   await addWeekendXp(uid, task.reward)
-  // Nagrada za quest nema kategoriju, pa srijedni boost na nju ne djeluje.
-  const cpRat = await addClanWarCp(uid, task.reward)
+  // KLANSKI RAT: nagrada za quest NAMJERNO ne nosi CP.
+  // U rat ulazi samo XP zarađen kroz dnevni kviz i Preživljavanje — questovi
+  // (dnevni, sedmični, mjesečni) se ne broje. Rat mjeri koliko se igra, a ne
+  // koliko se pokupi nagrada; questovi se ionako pune iz istih tih kvizova, pa
+  // bi se isti trud brojao dvaput. Klanski bonusi (+% CP) i dalje djeluju, ali
+  // samo na CP iz kviza i Preživljavanja.
+  // Ne dodavati addClanWarCp ovdje.
 
   return {
     reward: task.reward,
     newLevel: levelFromXp(finalXp, cfg),
     levelBonus,
     newBadges,
-    klan: cpRat ? { cp: cpRat.cp, mnozilac: cpRat.mnoz || 1, strop: !!cpRat.strop } : null,
   }
 })
 
@@ -3848,9 +3852,14 @@ async function bonusiIgraca(uid) {
 // ---------------------------------------------------------------------------
 // Pripis CP-a — jedina ulazna tačka
 // ---------------------------------------------------------------------------
-// Zove se s ISTIH mjesta kao addWeekendXp: kraj kviza, nagrada za quest i tačan
-// odgovor u Preživljavanju. Namjerno NE na svaki odgovor u kvizu — kviz se
-// pripisuje jednom, na kraju, s poznatom raspodjelom po kategorijama.
+// Zove se s TAČNO DVA mjesta: kraj kviza (submitAnswer) i tačan odgovor u
+// Preživljavanju. Namjerno NE na svaki odgovor u kvizu — kviz se pripisuje
+// jednom, na kraju, s poznatom raspodjelom po kategorijama.
+//
+// NAGRADE ZA QUESTOVE (dnevne, sedmične, mjesečne) NE ULAZE U RAT. To je
+// pravilo igre, ne previd: rat mjeri koliko se igra, a questovi se pune iz
+// istih kvizova pa bi se isti trud brojao dvaput. Ako ikad zatreba treće
+// mjesto pripisa, provjeri da izvor nije nagrada nego odigrano.
 //
 // `xpPoKategoriji` je opcion: { interakcije: 30, astma: 10 }. Bez njega srijedni
 // množilac ne zna koliko XP-a pripada izvučenoj kategoriji, pa ga i ne

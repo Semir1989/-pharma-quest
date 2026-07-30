@@ -41,6 +41,72 @@ body {
   }
 }
 
+/* Zvono notifikacija dok su ISKLJUČENE.
+   Igrač bez notifikacija ne zna da mu je klan u ratu, da mu je protivnik
+   odigrao duel ni da mu se vratio pokušaj — zato zvono traži pažnju sve dok se
+   ne uključi, a u trenutku uključenja se i halo i njihanje gase (klase se
+   skidaju). Njihanje ide u NALETU, ne neprekidno: cijeli ciklus je 4 s, a
+   zvoni zadnjih ~0,7 s. Neprekidno drmanje na ekranu je zamorno i vuče oko s
+   brojeva zbog kojih se Home i otvara. */
+@keyframes zvono-halo {
+  0% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(217, 119, 6, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+  }
+}
+
+@keyframes zvono-zvoni {
+  0%,
+  82%,
+  100% {
+    transform: rotate(0deg);
+  }
+  84% {
+    transform: rotate(-18deg);
+  }
+  86% {
+    transform: rotate(15deg);
+  }
+  88% {
+    transform: rotate(-12deg);
+  }
+  90% {
+    transform: rotate(9deg);
+  }
+  92% {
+    transform: rotate(-6deg);
+  }
+  94% {
+    transform: rotate(4deg);
+  }
+  96% {
+    transform: rotate(-2deg);
+  }
+}
+
+.zvono-halo {
+  animation: zvono-halo 2s ease-out infinite;
+}
+
+/* Njiše se ikona, ne dugme: dugme mora ostati mirna meta za prst. */
+.zvono-zvoni {
+  display: inline-block;
+  transform-origin: 50% 10%;
+  animation: zvono-zvoni 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zvono-halo,
+  .zvono-zvoni {
+    animation: none;
+  }
+}
+
 /* ---------------------------------------------------------------------------
    Okviri avatara (data/cosmetics.js).
    Efekat se vrti na prstenu IZA avatara, nikad na samom avataru — zato lice

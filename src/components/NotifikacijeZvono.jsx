@@ -21,6 +21,12 @@ export default function NotifikacijeZvono({ notif, tamno = false, kompaktno = fa
       : 'bg-white text-slate-500 shadow-sm'
     : 'bg-amber-500 text-white shadow'
 
+  // Dok su notifikacije isključene, zvono svijetli i zvoni — bez njih igrač ne
+  // sazna ni da mu je klan u ratu ni da mu je protivnik odigrao duel. Čim se
+  // uključe, klase nestaju i animacija staje u istom kadru (vidi index.css).
+  // Za vrijeme samog prebacivanja se ne animira: dugme je tad zauzeto.
+  const trazipaznju = !ukljuceno && !radi
+
   return (
     <button
       onClick={prebaci}
@@ -30,9 +36,11 @@ export default function NotifikacijeZvono({ notif, tamno = false, kompaktno = fa
       title={ukljuceno ? 'Notifikacije su uključene' : 'Notifikacije su isključene'}
       className={`flex shrink-0 items-center gap-1.5 rounded-xl text-sm font-bold transition disabled:opacity-60 ${
         samoIkona ? 'px-2.5 py-1' : 'px-3 py-1.5'
-      } ${boja}`}
+      } ${boja} ${trazipaznju ? 'zvono-halo' : ''}`}
     >
-      <span className="text-base leading-none">{radi ? '…' : ukljuceno ? '🔔' : '🔕'}</span>
+      <span className={`text-base leading-none ${trazipaznju ? 'zvono-zvoni' : ''}`}>
+        {radi ? '…' : ukljuceno ? '🔔' : '🔕'}
+      </span>
       {!samoIkona && <span>{ukljuceno ? 'Uključene' : 'Uključi'}</span>}
     </button>
   )
