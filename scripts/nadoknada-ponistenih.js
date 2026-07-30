@@ -81,10 +81,19 @@ if (!existsSync(KEY_PATH)) {
   process.exit(1)
 }
 const kljuc = JSON.parse(readFileSync(KEY_PATH, 'utf8'))
-initializeApp({
-  credential: cert(kljuc),
-  databaseURL: `https://${kljuc.project_id}-default-rtdb.firebaseio.com`,
-})
+
+// RTDB adresa se ČITA iz .env. Baza projekta je u regiji europe-west1, pa
+// pretpostavljeni `...-default-rtdb.firebaseio.com` (US) ne postoji — admin SDK
+// se na njega samo beskonačno pokušava povezati i skripta visi bez greške.
+const ENV_PATH = join(__dirname, '..', '.env')
+const rtdbUrl = existsSync(ENV_PATH)
+  ? (readFileSync(ENV_PATH, 'utf8').match(/^VITE_FIREBASE_DATABASE_URL=(.+)$/m) || [])[1]?.trim()
+  : null
+if (!rtdbUrl && !EMULATOR) {
+  console.error('GREŠKA: VITE_FIREBASE_DATABASE_URL nije nađen u .env — ne znam adresu RTDB-a.')
+  process.exit(1)
+}
+initializeApp({ credential: cert(kljuc), databaseURL: rtdbUrl })
 const db = getFirestore()
 const rtdb = getDatabase()
 
@@ -153,9 +162,14 @@ const badgeDefs = (await db.collection('badges').where('active', '==', true).get
 }))
 
 // --- 2. Šta je već nadoknađeno ----------------------------------------------
+// `ljestvice: true` na zapisu znači da su i XP i ljestvice odrađeni. Zapis bez
+// te oznake je prekinuto pokretanje (XP legao, RTDB ne) — takve dovršava faza A.
 const placeno = new Set()
+const nedovrseni = new Map() // uid → Set(sessionId) čije ljestvice nisu odrađene
 for (const d of (await db.collection('xpNadoknade').get()).docs) {
-  for (const sid of d.data().sesije || []) placeno.add(sid)
+  const sesije = d.data().sesije || []
+  for (const sid of sesije) placeno.add(sid)
+  if (d.data().ljestvice !== true) nedovrseni.set(d.id, new Set(sesije))
 }
 
 // --- 3. Skupi poništene odgovore --------------------------------------------
@@ -165,11 +179,24 @@ const sedmicaSad = weeklyKey()
 let preskoceno = 0
 let ukupnoStavki = 0
 
+const popravkaSedmica = new Map() // uid → XP tekuće sedmice iz PLAĆENIH sesija
+
 sesije.forEach((doc) => {
   const s = doc.data()
   if (!s.finished || !s.uid) return
   if (placeno.has(doc.id)) {
     preskoceno++
+    // Prekinuto pokretanje: XP je legao, ali sedmična ljestvica nije dobila
+    // svoj dio. Taj dio se ovdje ponovo izračuna da ga faza A može upisati.
+    if (nedovrseni.get(s.uid)?.has(doc.id)) {
+      const start0 = s.startedAt?.toMillis?.() || 0
+      if (weeklyKey(new Date(start0)) === weeklyKey()) {
+        const zbir0 = (s.answers || [])
+          .filter((a, i) => i > 0 && a.selected === null)
+          .reduce((t, a) => t + (a.points || 0), 0)
+        popravkaSedmica.set(s.uid, (popravkaSedmica.get(s.uid) || 0) + zbir0)
+      }
+    }
     return
   }
   const start = s.startedAt?.toMillis?.() || 0
@@ -198,8 +225,50 @@ console.log(`Granica (--do): ${new Date(GRANICA).toISOString()}`)
 console.log(`Poništenih odgovora za nadoknadu: ${ukupnoStavki} kod ${poIgracu.size} igrača`)
 console.log(`Ukupno XP za isplatu: ${[...poIgracu.values()].reduce((t, r) => t + r.xp, 0)}\n`)
 
+// Upis na ljestvice — isto što radi syncLeaderboard u functions/index.js.
+// Globalni unos je idempotentan (piše trenutno stanje), sedmični se UVEĆAVA pa
+// se smije zvati samo jednom po isplati.
+async function upisiLjestvice(uid, p, xpUkupno, level, sedmicniDelta) {
+  if (p.hideFromBoards === true) return
+  const unos = {
+    name: p.displayName || 'Farmaceut',
+    avatar: p.avatar || 'a1',
+    level,
+    streak: p.streak || 0,
+  }
+  await rtdb.ref(`leaderboard/global/${uid}`).update({ ...unos, xp: xpUkupno })
+  if (sedmicniDelta > 0) {
+    await rtdb
+      .ref(`leaderboard/weekly/${sedmicaSad}/${uid}`)
+      .transaction((cur) => ({ ...unos, xp: (cur?.xp || 0) + sedmicniDelta }))
+  }
+}
+
+// --- FAZA A: dovrši prekinuto pokretanje ------------------------------------
+// Prvo pokretanje 30.07.2026. je stalo na pogrešnoj RTDB adresi: XP i zapis su
+// legli, ljestvice nisu. Ovdje se dovršava samo taj RTDB dio.
+if (nedovrseni.size > 0) {
+  console.log(`Nedovršenih zapisa (XP legao, ljestvice ne): ${nedovrseni.size}`)
+  for (const uid of nedovrseni.keys()) {
+    const snap = await db.doc(`users/${uid}`).get()
+    if (!snap.exists) continue
+    const p = snap.data()
+    const level = levelFromXp(p.xp || 0, cfg)
+    const sedm = popravkaSedmica.get(uid) || 0
+    console.log(
+      `  ${(p.displayName || uid).padEnd(22)} ljestvica → xp ${p.xp}, level ${level}` +
+        (sedm ? `, sedmično +${sedm}` : '') +
+        (PRIMIJENI ? '' : ' (suhi hod)')
+    )
+    if (!PRIMIJENI) continue
+    await upisiLjestvice(uid, p, p.xp || 0, level, sedm)
+    await db.doc(`xpNadoknade/${uid}`).set({ ljestvice: true }, { merge: true })
+  }
+  console.log('')
+}
+
 if (poIgracu.size === 0) {
-  console.log('Nema šta nadoknaditi.')
+  console.log('Nema više šta nadoknaditi.')
   process.exit(0)
 }
 
@@ -303,21 +372,10 @@ for (const [uid, rec] of poIgracu) {
   }
   await batch.commit()
 
-  // 4c. Ljestvice (RTDB). Skriveni nalozi se ne upisuju — isto kao syncLeaderboard.
-  if (p.hideFromBoards !== true) {
-    const unos = {
-      name: p.displayName || 'Farmaceut',
-      avatar: p.avatar || 'a1',
-      level: levelPoslije,
-      streak: p.streak || 0,
-    }
-    await rtdb.ref(`leaderboard/global/${uid}`).update({ ...unos, xp: xpPoslije })
-    if (rec.xpSedmica > 0) {
-      await rtdb
-        .ref(`leaderboard/weekly/${sedmicaSad}/${uid}`)
-        .transaction((cur) => ({ ...unos, xp: (cur?.xp || 0) + rec.xpSedmica }))
-    }
-  }
+  // 4c. Ljestvice (RTDB), pa oznaka da je igrač u cijelosti odrađen. Oznaka ide
+  //     POSLIJE upisa: padne li skripta ovdje, faza A dovršava ljestvice.
+  await upisiLjestvice(uid, p, xpPoslije, levelPoslije, rec.xpSedmica)
+  await db.doc(`xpNadoknade/${uid}`).set({ ljestvice: true }, { merge: true })
 }
 
 // --- 5. Izvještaj ------------------------------------------------------------
