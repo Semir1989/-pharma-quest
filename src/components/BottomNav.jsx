@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useArenaAlert } from '../utils/useArenaAlert'
 import { useNow } from '../utils/useNow'
 import { quizEnergy } from '../utils/quizEnergy'
+import { klanZabranaOstalo, formatZabranu } from '../utils/klanZabrana'
 
 // Donja navigacija — linijske ikonice usklađene s dizajnom (počeni ekran.png).
 // Arena je stalno mjesto za sva takmičenja (dueli, XP trka, Preživljavanje),
@@ -15,6 +16,10 @@ import { quizEnergy } from '../utils/quizEnergy'
 //   Arena — u Areni ima nešto aktivno za uraditi
 // Signal je isti u oba slučaja: amber tačkica + spori halo. Tačkica nosi
 // informaciju i kad je animacija ugašena (prefers-reduced-motion).
+//
+// Klan ima drugačiju oznaku: dok traje zabrana poslije izlaska iz klana, ispod
+// ikonice stoji ODBROJAVANJE do trenutka kad se smije u novi klan. To nije
+// poziv na akciju nego obavijest, pa nema ni halo ni tačkicu.
 const TABS = [
   { to: '/', label: 'Home', Icon: HomeIcon },
   { to: '/kviz', label: 'Kviz', Icon: QuizIcon, alert: 'quiz' },
@@ -32,6 +37,9 @@ export default function BottomNav() {
   const quizAlert = quizEnergy(profile, now).energy > 0
 
   const gori = { quiz: quizAlert, arena: arenaAlert }
+
+  // Odbrojavanje se osvježava svake sekunde samo dok zabrana traje.
+  const zabrana = klanZabranaOstalo(profile, now)
 
   return (
     <nav className="fixed bottom-0 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-around border-t border-slate-200 bg-white pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1">
@@ -65,7 +73,13 @@ export default function BottomNav() {
                     <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white" />
                   )}
                 </span>
-                {label}
+                {to === '/klan' && zabrana > 0 ? (
+                  <span className="font-mono text-[10px] font-bold tabular-nums text-amber-600">
+                    {formatZabranu(zabrana)}
+                  </span>
+                ) : (
+                  label
+                )}
               </>
             )}
           </NavLink>

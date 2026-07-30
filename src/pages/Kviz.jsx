@@ -159,6 +159,7 @@ export default function Kviz() {
         answers={answers}
         earnedXp={summary?.earnedXp || 0}
         capped={summary?.capped ? { rawXp: summary.rawXp, cap: limit?.xpCap } : null}
+        petakDupli={!!summary?.petakDupli}
         quizzesToday={limit ? `${limit.used}/${limit.limit}` : null}
         badge={badgeQueue[0] || null}
         onBadgeSeen={() => setBadgeQueue((q) => q.slice(1))}

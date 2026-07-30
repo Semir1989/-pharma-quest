@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { levelFromXp } from '../utils/levels'
+import { klanZabranaOstalo, porukaZabrane } from '../utils/klanZabrana'
+import { useNow } from '../utils/useNow'
 import MojKlan from '../components/MojKlan'
 import PronadjiKlan from '../components/PronadjiKlan'
 import KlanDetalji from '../components/KlanDetalji'
@@ -35,6 +37,8 @@ export default function Klan() {
   const [greska, setGreska] = useState('')
   const [poruka, setPoruka] = useState('')
   const [tab, setTab] = useState('moj') // moj | klanovi | upravljanje
+  // Otkucaj za odbrojavanje zabrane (minuta je dovoljna — rok je sedam dana).
+  const sada = useNow(60000)
   const [otvorenKlan, setOtvorenKlan] = useState(null) // clanId tuđeg klana
 
   const ucitaj = useCallback(async () => {
@@ -110,6 +114,7 @@ export default function Klan() {
   }
 
   const imamKlan = !!stanje.clan
+  const zabrana = klanZabranaOstalo(profile, sada)
   const uloga = stanje.uloga || null
   const mozeUpravljati = uloga === 'founder' || uloga === 'advisor'
   const brojZahtjeva = (stanje.zahtjevi || []).length
@@ -164,6 +169,15 @@ export default function Klan() {
       {poruka && (
         <p className="mx-4 mt-3 rounded-xl bg-teal-50 p-3 text-sm font-medium text-teal-800">
           {poruka}
+        </p>
+      )}
+
+      {/* Zabrana poslije izlaska: objašnjenje stoji na ekranu na kojem se i
+          pokušava ući u klan. Server je svejedno odbija, ali igrač bez ovoga
+          ne bi znao zašto. */}
+      {!imamKlan && zabrana > 0 && (
+        <p className="mx-4 mt-3 rounded-xl bg-amber-50 p-3 text-sm font-medium text-amber-800">
+          ⏳ {porukaZabrane(zabrana)}
         </p>
       )}
 

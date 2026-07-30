@@ -291,6 +291,29 @@ if (lb?.xp !== profile2.xp) throw new Error('Leaderboard XP se ne slaže!')
   console.log('✓ Zamjena sedmičnog questa: troši svoj žeton, izbor se mijenja')
 }
 
+// 11. Zabrana od 7 dana poslije napuštanja klana (30.07.2026).
+{
+  await db.doc(`users/${uid}`).update({ clanCooldownUntil: Date.now() + 3 * 86400000 })
+  let blokiranoOsnivanje = false
+  try {
+    await call('createClan', { name: 'Test Klan Zabrana', tag: 'TZB' })
+  } catch (e) {
+    blokiranoOsnivanje = /pridružiti/i.test(e.message) || /level/i.test(e.message)
+  }
+  if (!blokiranoOsnivanje) throw new Error('Klan osnovan uprkos zabrani!')
+
+  let blokiranoPridruzivanje = false
+  try {
+    await call('requestJoinClan', { clanId: 'bilokoji' })
+  } catch (e) {
+    blokiranoPridruzivanje = /pridružiti/i.test(e.message)
+  }
+  if (!blokiranoPridruzivanje) throw new Error('Pridruživanje prošlo uprkos zabrani!')
+  console.log('✓ Zabrana poslije izlaska: i osnivanje i pridruživanje odbijeni')
+
+  await db.doc(`users/${uid}`).update({ clanCooldownUntil: 0 })
+}
+
 console.log('\n══════════════════════════════════')
 console.log('SVI TESTOVI PROŠLI ✓ Server-side bodovanje radi.')
 process.exit(0)

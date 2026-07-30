@@ -26,6 +26,8 @@ import {
   MAX_SAVJETNIKA,
   MIN_LEVEL_OSNIVANJE,
   NEAKTIVNOST_DANA,
+  KLAN_ZABRANA_MS,
+  zabranaOstalo,
   kljucImena,
   validirajIme,
   validirajTag,
@@ -946,6 +948,32 @@ function spendQuizEnergy(state, now = Date.now()) {
   return { ...state, energy, regenAt: state.regenAt || now + QUIZ_REGEN_MS }
 }
 
+// ---------------------------------------------------------------------------
+// Nagrada za redovnost: petkom 2× XP iz kviza
+// ---------------------------------------------------------------------------
+// Uslov: igrač je igrao kviz SVAKOG dana od ponedjeljka do petka, uključujući
+// današnji. Broji se `taskProgress.weekly.days` — broj različitih dana s
+// odigranim kvizom u tekućoj sedmici (sedmica po BiH vremenu počinje
+// ponedjeljkom). Današnji dan se dodaje ovdje jer se `days` uvećava tek u
+// bumpProgress, u istoj transakciji.
+//
+// NAMJERNO se ne koristi `profile.streak`: on broji i Preživljavanje, a
+// zaštita streaka (žeton) ga održava i preko preskočenog dana — pa bi bonus
+// dobio i onaj ko nije igrao svaki dan. Ovdje se traži stvarno odigrano.
+const PETAK = 5
+
+function petakBonusVazi(profile, day = dailyKey(), d = new Date()) {
+  const { y, m, d: dan } = bihParts(d)
+  const dow = new Date(Date.UTC(y, m - 1, dan)).getUTCDay() || 7 // pon=1 … ned=7
+  if (dow !== PETAK) return false
+
+  const w = profile?.taskProgress?.weekly
+  const sedmica = periodKey('weekly')
+  const daniDosad = w?.period === sedmica ? w.days || 0 : 0
+  const danasNov = (w?.period === sedmica ? w.lastDay : null) !== day
+  return daniDosad + (danasNov ? 1 : 0) >= PETAK
+}
+
 export const startQuiz = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se za igranje kviza.')
@@ -1156,6 +1184,7 @@ export const submitAnswer = onCall(async (request) => {
   let profileAfter, totalXp
   let awardedXp = 0 // XP poslije dnevnog capa — sve dalje računa s ovim
   let xpToday = 0
+  let petakDupli = false // je li nagrada za redovnost udvostručila ovaj kviz
 
   await db.runTransaction(async (tx) => {
     const userSnap = await tx.get(userRef)
@@ -1173,9 +1202,19 @@ export const submitAnswer = onCall(async (request) => {
       Object.entries(stats).map(([cat, s]) => [cat, Math.round((s.correct / s.total) * 100)])
     )
 
-    // Dnevni cap: iz kvizova se ne može osvojiti više od 300 XP dnevno.
+    // Nagrada za redovnost: ko je igrao SVAKI dan od ponedjeljka do petka,
+    // petkom mu se XP iz kviza udvostručuje. Uslov se ne čita iz `streak`
+    // (on broji i Preživljavanje, i zaštita streaka ga održava kroz preskočen
+    // dan) nego iz taskProgress.weekly.days — a to je broj RAZLIČITIH dana s
+    // odigranim kvizom u tekućoj sedmici. Sedmica počinje ponedjeljkom, pa je
+    // petkom uslov "pet dana", uključujući današnji kviz.
+    petakDupli = petakBonusVazi(profile, day)
+    const zaUpis = petakDupli ? earnedXp * 2 : earnedXp
+
+    // Dnevni cap se primjenjuje POSLIJE udvostručavanja — strop od
+    // DAILY_QUIZ_XP_CAP ostaje isti, samo se do njega stiže duplo brže.
     const limit = quizEnergyState(profile, day)
-    awardedXp = Math.min(earnedXp, Math.max(0, DAILY_QUIZ_XP_CAP - limit.xp))
+    awardedXp = Math.min(zaUpis, Math.max(0, DAILY_QUIZ_XP_CAP - limit.xp))
     xpToday = limit.xp + awardedXp
 
     totalXp = (profile.xp || 0) + awardedXp
@@ -1207,7 +1246,16 @@ export const submitAnswer = onCall(async (request) => {
   await addWeekendXp(uid, awardedXp)
   // Klanski rat: CP ide s raspodjelom po kategorijama, da srijedni boost zna
   // koliki dio kviza pripada izvučenoj kategoriji.
-  const cpRat = await addClanWarCp(uid, awardedXp, { xpPoKategoriji: xpByCategory })
+  //
+  // U rat ide OSNOVNI iznos, bez petkovog udvostručavanja: rat petkom i sam
+  // množi s 2 (rush), pa bi se inače udvostručilo dvaput i kviz bi petkom
+  // nosio 4× CP. Igraču na profil ide pun dupli iznos — samo se u rat šalje
+  // polovina, tj. ono što bi zaradio i bez bonusa.
+  const xpZaRat = petakDupli ? Math.round(awardedXp / 2) : awardedXp
+  const cpRat = await addClanWarCp(uid, xpZaRat, {
+    xpPoKategoriji: xpByCategory,
+    izvor: 'kviz',
+  })
   await bumpStreak(uid)
 
   return {
@@ -1220,8 +1268,9 @@ export const submitAnswer = onCall(async (request) => {
     bonusXpKlana,
     summary: {
       earnedXp: awardedXp,
-      rawXp: earnedXp, // koliko bi bilo bez capa (za poruku na rezultatima)
-      capped: awardedXp < earnedXp,
+      rawXp: petakDupli ? earnedXp * 2 : earnedXp, // bez capa (za poruku na rezultatima)
+      capped: awardedXp < (petakDupli ? earnedXp * 2 : earnedXp),
+      petakDupli, // klijent prikazuje "2× za redovnost"
       correctCount,
       total: answers.length,
     },
@@ -2115,8 +2164,11 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   // svakom 10. koraku. Kategorija pitanja se čita iz keširanog indeksa banke,
   // pa srijedni boost radi i ovdje bez ijednog dodatnog čitanja.
   const svKat = (await getQuestionById(run.currentQid))?.category || null
+  // Kovčeg (300 XP na svakom 10. koraku) NAMJERNO ulazi u rat zajedno s
+  // korakom — to je nagrada za odigrano, ne za pokupljeno.
   await addClanWarCp(uid, SURVIVAL_XP_PER_CORRECT + chestReward, {
     xpPoKategoriji: svKat ? { [svKat]: SURVIVAL_XP_PER_CORRECT + chestReward } : null,
+    izvor: 'survival',
   })
   await applyProgress(uid, { survivalCorrect: 1, survivalBest: newStreak })
 
@@ -3231,6 +3283,17 @@ async function obavijestiClan(clan, { naslov, tekst }, osimUid = null) {
 
 // Osnivanje klana. Level se računa iz XP-a — polje users.level ne diraju sve
 // putanje bodovanja, pa nije mjerodavno.
+// Poruka o zabrani govori KOLIKO je ostalo, ne samo da je zabranjeno — igrač
+// inače ne zna čeka li sat ili sedmicu.
+function porukaZabrane(ostaloMs) {
+  const sati = Math.ceil(ostaloMs / 3600000)
+  if (sati >= 24) {
+    const dana = Math.ceil(sati / 24)
+    return `Napustio/la si klan — novom se možeš pridružiti za ${dana} ${dana === 1 ? 'dan' : 'dana'}.`
+  }
+  return `Napustio/la si klan — novom se možeš pridružiti za ${sati} ${sati === 1 ? 'sat' : 'sata'}.`
+}
+
 export const createClan = onCall(async (request) => {
   const uid = requireAuth(request)
   const { name, tag } = request.data || {}
@@ -3260,6 +3323,10 @@ export const createClan = onCall(async (request) => {
       )
     if (clanstvo.exists && clanstvo.data().clanId)
       throw new HttpsError('failed-precondition', 'Već si član klana.')
+    // Zabrana poslije izlaska pokriva i osnivanje — inače se zaobilazi u dva
+    // dodira: osnuj svoj klan pa pozovi koga hoćeš.
+    const ostaloOsn = zabranaOstalo(me.data())
+    if (ostaloOsn > 0) throw new HttpsError('failed-precondition', porukaZabrane(ostaloOsn))
     if (imeDoc.exists) throw new HttpsError('already-exists', 'Klan s tim imenom već postoji.')
 
     tx.set(noviRef, {
@@ -3300,9 +3367,15 @@ export const requestJoinClan = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'Nedostaje klan.')
 
   await db.runTransaction(async (tx) => {
-    const [clanstvo, snap] = await Promise.all([tx.get(clanMemberRef(uid)), tx.get(clanRef(clanId))])
+    const [clanstvo, snap, me] = await Promise.all([
+      tx.get(clanMemberRef(uid)),
+      tx.get(clanRef(clanId)),
+      tx.get(db.doc(`users/${uid}`)),
+    ])
     if (clanstvo.exists && clanstvo.data().clanId)
       throw new HttpsError('failed-precondition', 'Već si član klana. Prvo izađi iz njega.')
+    const ostalo = zabranaOstalo(me.exists ? me.data() : null)
+    if (ostalo > 0) throw new HttpsError('failed-precondition', porukaZabrane(ostalo))
     if (!snap.exists || snap.data().disbandedAt)
       throw new HttpsError('not-found', 'Taj klan ne postoji.')
 
@@ -3461,6 +3534,14 @@ export const leaveClan = onCall(async (request) => {
   const { clan } = await mojKlan(uid)
 
   const ishod = await ukloniClana(clan.id, uid)
+  // Zabrana od 7 dana teče od DOBROVOLJNOG izlaska. Bez nje se u ratu skače
+  // iz klana u klan i doprinos se seli tamo gdje se baš tog dana pobjeđuje.
+  // Koga vođa izbaci (kickMember) NE dobija zabranu — za tuđu odluku se ne
+  // kažnjava; zato oznaka stoji ovdje, a ne u ukloniClana.
+  await db
+    .doc(`users/${uid}`)
+    .update({ clanCooldownUntil: Date.now() + KLAN_ZABRANA_MS })
+    .catch(() => {})
 
   if (!ishod.raspusten) {
     const svjez = await clanRef(clan.id).get()
@@ -4009,7 +4090,16 @@ async function bonusiIgraca(uid) {
 // `xpPoKategoriji` je opcion: { interakcije: 30, astma: 10 }. Bez njega srijedni
 // množilac ne zna koliko XP-a pripada izvučenoj kategoriji, pa ga i ne
 // primjenjuje — nikad ne pretpostavlja u korist igrača.
-async function addClanWarCp(uid, xp, { xpPoKategoriji = null } = {}) {
+//
+// `izvor` ('kviz' | 'survival') odlučuje o dvije stvari (odluka od 30.07.2026):
+//   - DNEVNI STROP od 1000 XP vrijedi samo za kviz. Preživljavanje je
+//     neograničeno: ono je ionako ograničeno ljestvicom (najviše korak 100 u
+//     danu), a strop bi kaznio baš onoga ko je odigrao savršen niz.
+//   - PETKOVI 2× (rush) vrijedi samo za kviz. XP iz Preživljavanja se ne
+//     udvostručuje ni na koji način.
+// Srijedni boost na izvučenu kategoriju ostaje za oba izvora — on ne
+// udvostručuje nego usmjerava šta se tog dana isplati igrati.
+async function addClanWarCp(uid, xp, { xpPoKategoriji = null, izvor = 'kviz' } = {}) {
   if (!xp || xp <= 0) return null
   const cfg = await getWarConfig()
   if (!ratOtvoren(cfg)) return null
@@ -4019,16 +4109,20 @@ async function addClanWarCp(uid, xp, { xpPoKategoriji = null } = {}) {
 
   const p = bihParts()
   const dan = ratDnevniKljuc(p)
+  const jeKviz = izvor === 'kviz'
 
   // 1. Dnevni strop igrača — atomično u RTDB-u, prije bilo kakvog pripisa.
   // `priznato` je koliko je XP-a od ovog događaja stalo ispod stropa.
-  let priznato = 0
-  await rtdb.ref(`clanWarDaily/${dan}/${uid}`).transaction((cur) => {
-    const iskoristeno = cur || 0
-    priznato = Math.max(0, Math.min(xp, DNEVNI_CP_STROP - iskoristeno))
-    return iskoristeno + priznato
-  })
-  if (priznato <= 0) return { priznato: 0, cp: 0, strop: true }
+  // Preživljavanje strop NE troši i njime NIJE ograničeno.
+  let priznato = xp
+  if (jeKviz) {
+    await rtdb.ref(`clanWarDaily/${dan}/${uid}`).transaction((cur) => {
+      const iskoristeno = cur || 0
+      priznato = Math.max(0, Math.min(xp, DNEVNI_CP_STROP - iskoristeno))
+      return iskoristeno + priznato
+    })
+    if (priznato <= 0) return { priznato: 0, cp: 0, strop: true }
+  }
 
   // 2. Množilac. Kad znamo raspodjelu po kategorijama, boostuje se samo onaj
   // dio XP-a koji stvarno pripada izvučenoj kategoriji.
@@ -4037,7 +4131,11 @@ async function addClanWarCp(uid, xp, { xpPoKategoriji = null } = {}) {
     const ukupno = Object.values(xpPoKategoriji).reduce((a, b) => a + (b || 0), 0)
     if (ukupno > 0) dio = (xpPoKategoriji[cfg.boostKategorija] || 0) / ukupno
   }
-  const mnoz = ratMnozilac(p, { boostKategorija: cfg.boostKategorija || null, dio })
+  const mnoz = ratMnozilac(p, {
+    boostKategorija: cfg.boostKategorija || null,
+    dio,
+    rush: jeKviz, // petkovi 2× je nagrada za kviz, ne za Preživljavanje
+  })
   const cp = ratCpZaXp(priznato, { mnoz, cpBonus: bon.cpBonus })
   if (cp <= 0) return { priznato, cp: 0 }
 

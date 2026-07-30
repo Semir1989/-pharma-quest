@@ -10,12 +10,14 @@ import BadgeUnlockOverlay from '../BadgeUnlockOverlay'
 // props: answers = [{ question, selected, correct, late }], earnedXp,
 //        late = odgovor je poslan ali poništen jer je rok pitanja istekao,
 //        capped ({ rawXp, cap } kad je dnevni strop odsjekao dio XP-a),
+//        petakDupli (petkom 2× jer je igrač igrao svaki dan od ponedjeljka),
 //        quizzesToday ('2/3' ili null),
 //        badge ({ emoji, name, description } ili null), onBadgeSeen, onContinue
 export default function ResultsScreen({
   answers,
   earnedXp,
   capped,
+  petakDupli = false,
   quizzesToday,
   badge,
   onBadgeSeen,
@@ -53,6 +55,11 @@ export default function ResultsScreen({
         <span className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-2.5 font-bold text-amber-600">
           ⭐ +{earnedXp} XP osvojeno
         </span>
+        {petakDupli && (
+          <span className="rounded-xl bg-teal-700 px-4 py-1.5 text-sm font-extrabold text-white shadow">
+            🔥 2× za redovnost — igrao/la si svaki dan ove sedmice
+          </span>
+        )}
         {capped && (
           <p className="max-w-xs text-center text-sm text-slate-500">
             Osvojio/la si {capped.rawXp} XP, ali dnevni strop iz kvizova je{' '}

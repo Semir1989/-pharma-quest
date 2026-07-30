@@ -8,6 +8,8 @@ import {
   MAX_SAVJETNIKA,
   MIN_LEVEL_OSNIVANJE,
   NEAKTIVNOST_DANA,
+  KLAN_ZABRANA_MS,
+  zabranaOstalo,
   kljucImena,
   validirajIme,
   validirajTag,
@@ -199,6 +201,20 @@ provjeri(
   weekIdZaRegistraciju({ y: 2026, m: 12, d: 31, hh: 12 }) === '2026-12-28',
   'prelazak godine ne kvari ID sedmice'
 )
+
+// Zabrana od 7 dana poslije DOBROVOLJNOG izlaska iz klana (30.07.2026).
+// Oznaku postavlja leaveClan; kickMember je namjerno ne postavlja.
+{
+  const sad = Date.parse('2026-08-01T12:00:00Z')
+  provjeri(KLAN_ZABRANA_MS === 7 * 86400000, 'zabrana traje tačno 7 dana')
+  provjeri(zabranaOstalo({}, sad) === 0, 'bez oznake nema zabrane')
+  provjeri(zabranaOstalo(null, sad) === 0, 'prazan profil ne ruši provjeru')
+  provjeri(zabranaOstalo({ clanCooldownUntil: sad - 1000 }, sad) === 0, 'istekla zabrana je 0')
+  provjeri(
+    zabranaOstalo({ clanCooldownUntil: sad + KLAN_ZABRANA_MS }, sad) === KLAN_ZABRANA_MS,
+    'puna zabrana vraća punih 7 dana'
+  )
+}
 
 console.log('\n══════════════════════════════════')
 if (pao > 0) {

@@ -201,11 +201,17 @@ export const COMBO_PRAG = 3
 //
 // `dio` je udio CP-a koji pripada boostovanoj kategoriji (0..1): kviz od 10
 // pitanja rijetko je cijeli iz jedne kategorije.
-export function mnozilac(p, { boostKategorija = null, kategorija = null, dio = null } = {}) {
+// `rush` (default true) isključuje petkovi 2× za izvore koji ga ne dobijaju.
+// Od 30.07.2026. to je Preživljavanje: njegov XP se ne udvostručuje ni na koji
+// način, pa ni kroz rat. Petak je nagrada za kviz.
+export function mnozilac(
+  p,
+  { boostKategorija = null, kategorija = null, dio = null, rush = true } = {}
+) {
   const dan = danUSedmici(p)
   let m = 1
 
-  if (dan === RUSH_DAN && p.hh >= RUSH_OD_SAT && p.hh < RUSH_DO_SAT) {
+  if (rush && dan === RUSH_DAN && p.hh >= RUSH_OD_SAT && p.hh < RUSH_DO_SAT) {
     m += RUSH_MNOZILAC - 1
   }
 

@@ -90,6 +90,13 @@ provjeri(mnozilac(PON) === 1, 'ponedjeljak bez množioca')
 provjeri(mnozilac(PET, {}) === 2, 'petak 12h = 2× (Final Shift)')
 provjeri(mnozilac(dan(31, 7)) === 1, 'petak 07h je PRIJE rusha → 1×')
 provjeri(mnozilac(dan(31, 20)) === 1, 'petak 20h je POSLIJE rusha → 1×')
+// Od 30.07.2026: petkovi 2× je nagrada za KVIZ. Preživljavanje ga ne dobija —
+// njegov XP se ne udvostručuje ni na koji način (rush: false).
+provjeri(mnozilac(PET, { rush: false }) === 1, 'petak + rush:false (Preživljavanje) → 1×')
+provjeri(
+  mnozilac(SRI, { rush: false, boostKategorija: 'interakcije', kategorija: 'interakcije' }) === 1.5,
+  'Preživljavanje SRIJEDOM i dalje dobija boost kategorije (rush ga ne dira)'
+)
 provjeri(
   mnozilac(SRI, { boostKategorija: 'interakcije', kategorija: 'interakcije' }) === 1.5,
   'srijeda + tačna kategorija = 1.5×'

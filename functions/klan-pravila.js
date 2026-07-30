@@ -9,6 +9,19 @@ export const MAX_SAVJETNIKA = 2
 export const MIN_LEVEL_OSNIVANJE = 10
 export const NEAKTIVNOST_DANA = 15
 
+// Zabrana poslije DOBROVOLJNOG izlaska iz klana: 7 dana bez pridruživanja i
+// bez osnivanja novog. Osnivanje je pokriveno namjerno — bez toga se zabrana
+// zaobilazi u dva dodira (osnuj svoj klan pa pozovi koga hoćeš).
+// Koga vođa izbaci, taj zabranu NE dobija.
+export const KLAN_ZABRANA_DANA = 7
+export const KLAN_ZABRANA_MS = KLAN_ZABRANA_DANA * 86400000
+
+// Koliko je zabrane ostalo, u milisekundama (0 = slobodan je).
+export function zabranaOstalo(profile, now = Date.now()) {
+  const do_ = profile?.clanCooldownUntil || 0
+  return Math.max(0, do_ - now)
+}
+
 export const IME_MIN = 3
 export const IME_MAX = 24
 export const TAG_MIN = 2
