@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { startSurvival, submitSurvivalAnswer } from '../services/quizApi'
+import { startSurvival, submitSurvivalAnswer, claimSurvivalChest } from '../services/quizApi'
 import { subscribeSurvivalLeaderboard, subscribeMyStreak } from '../services/survival'
 import {
   secondsUntilSurvivalReset,
@@ -9,12 +9,12 @@ import {
   survivalWeekKey,
 } from '../utils/periods'
 import { track } from '../services/analytics'
-import { markSurvivalChestOpened } from '../services/userProfile'
 import { levelFromXp } from '../utils/levels'
 import {
   CHEST_STEP,
   MAX_STEP,
   chestReward,
+  chestCount,
   openedThisWeek,
   unopenedChests,
 } from '../utils/survivalLadder'
@@ -42,7 +42,8 @@ export default function Prezivljavanje() {
   const [eventWindow, setEventWindow] = useState(null) // { openAt, closeAt } kad je zatvoreno
   const [rows, setRows] = useState([])
   const [badgeQueue, setBadgeQueue] = useState([])
-  const [chest, setChest] = useState(null) // prag čiji se kovčeg upravo otvara
+  const [chest, setChest] = useState(null) // { step, xp, nagrade } kovčega koji se otvara
+  const [otvaramKovceg, setOtvaramKovceg] = useState(null) // prag dok server izvlači žetone
   const [ladderStreak, setLadderStreak] = useState(0) // niz te sedmice (RTDB)
   const xpAtStartRef = useRef(0)
   const badgesRef = useRef([]) // skupljeni novi bedževi tokom run-a
@@ -141,13 +142,24 @@ export default function Prezivljavanje() {
   const opened = openedThisWeek(profile?.survivalChest, week)
   const pendingChests = unopenedChests(ladder, opened)
 
-  // Otvaranje kovčega je samo animacija — XP je server isplatio čim je niz
-  // dostigao prag. Oznaku upisujemo odmah (ne po zatvaranju overlaya) da se ne
-  // izgubi ako igrač zatvori aplikaciju usred animacije.
-  function handleOpenChest(step) {
-    setChest(step)
+  // Otvaranje kovčega. 300 XP je server isplatio čim je niz dostigao prag, a
+  // ovdje se izvlače ŽETONI — koliko ih prag nosi (10 → 1, 20 → 2 … 100 → 10).
+  // Izvlači server: klijent bi inače mogao ponavljati dok ne padne ono što mu
+  // treba. Overlay se otvara tek kad nagrade stignu, da se ne pokaže prazan
+  // kovčeg ako poziv padne.
+  async function handleOpenChest(step) {
+    if (chest || otvaramKovceg) return
+    setOtvaramKovceg(step)
     track('survival_chest_open', { step })
-    if (user?.uid) markSurvivalChestOpened(user.uid, week, step).catch(() => {})
+    try {
+      const r = await claimSurvivalChest(step)
+      setChest({ step, xp: r.xp, nagrade: r.nagrade || [] })
+    } catch {
+      // Nema konekcije ili je kovčeg već otvoren — ljestvica ostaje kakva je,
+      // igrač može pokušati ponovo.
+    } finally {
+      setOtvaramKovceg(null)
+    }
   }
 
   // Animacije imaju prednost nad sadržajem (bedž → ekran).
@@ -161,13 +173,15 @@ export default function Prezivljavanje() {
   }
 
   if (chest) {
-    const next = chest + CHEST_STEP
+    const next = chest.step + CHEST_STEP
     return (
       <ChestOpenOverlay
-        step={chest}
-        reward={chestReward(chest)}
+        step={chest.step}
+        reward={chest.xp}
+        nagrade={chest.nagrade}
         nextStep={next <= MAX_STEP ? next : 0}
         nextReward={next <= MAX_STEP ? chestReward(next) : 0}
+        nextCount={next <= MAX_STEP ? chestCount(next) : 0}
         onClose={() => setChest(null)}
       />
     )

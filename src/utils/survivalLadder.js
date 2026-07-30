@@ -9,9 +9,20 @@
 export const CHEST_STEP = 10
 export const MAX_STEP = 100
 
-// Niz 10 → 100 XP, 20 → 200 XP … 100 → 1000 XP.
-export function chestReward(step) {
-  return (step / CHEST_STEP) * 100
+// Svaki prag nosi FIKSNIH 300 XP (isto na 10 i na 100) — vidi
+// SURVIVAL_CHEST_XP na serveru.
+export const CHEST_XP = 300
+
+export function chestReward() {
+  return CHEST_XP
+}
+
+// Koliko kovčega sa žetonima nosi prag: 10 → 1, 20 → 2 … 100 → 10.
+// Žetone izvlači server pri otvaranju (claimSurvivalChest), ovdje se samo
+// prikazuje koliko ih čeka.
+export function chestCount(step) {
+  if (step % CHEST_STEP !== 0 || step <= 0 || step > MAX_STEP) return 0
+  return step / CHEST_STEP
 }
 
 // Svi pragovi: [10, 20 … 100].

@@ -177,6 +177,120 @@ const lb = await fetch(
 console.log(`✓ Leaderboard global: ${lb?.name} — ${lb?.xp} XP (level ${lb?.level})`)
 if (lb?.xp !== profile2.xp) throw new Error('Leaderboard XP se ne slaže!')
 
+// 9. Preživljavanje (izmjena 30.07.2026): 50 XP po koraku, a svaki 10. korak
+//    nosi fiksnih 300 XP + kovčege sa žetonima (10 → 1, 20 → 2 … 100 → 10).
+{
+  const s0 = await call('startSurvival', {})
+  if (s0.locked) throw new Error('Preživljavanje zaključano: ' + JSON.stringify(s0))
+
+  // Tačan odgovor se ČITA iz baze — test ne smije pogađati.
+  async function tacanZaTekuce() {
+    const run = (await db.doc(`survivalRuns/${uid}`).get()).data()
+    const tajna = await db.doc(`questionSecrets/${run.currentQid}`).get()
+    if (tajna.exists) return tajna.data().correctIndex
+    return (await db.doc(`questions/${run.currentQid}`).get()).data().correctIndex
+  }
+  const xpA = (await db.doc(`users/${uid}`).get()).data().xp
+  const r1 = await call('submitSurvivalAnswer', { answerIndex: await tacanZaTekuce() })
+  if (!r1.correct) throw new Error('Tačan odgovor u Preživljavanju nije priznat!')
+  if (r1.xpPerCorrect !== 50) throw new Error(`Korak nosi ${r1.xpPerCorrect} XP, očekivano 50`)
+  const xpB = (await db.doc(`users/${uid}`).get()).data().xp
+  if (xpB - xpA !== 50) throw new Error(`Upisano ${xpB - xpA} XP po koraku, očekivano 50`)
+  console.log('✓ Preživljavanje: korak nosi 50 XP')
+
+  // Prag 10. Niz se postavlja na 9 pa se odgovara tačno — banka u testu ima
+  // 10 pitanja, pa se `seen` čisti da izbor sljedećeg pitanja ne ostane prazan.
+  await db
+    .doc(`survivalRuns/${uid}`)
+    .update({ streak: 9, awaitingNext: true, currentQid: null, seen: [] })
+  await call('startSurvival', {})
+  const xpC = (await db.doc(`users/${uid}`).get()).data().xp
+  const r2 = await call('submitSurvivalAnswer', { answerIndex: await tacanZaTekuce() })
+  if (r2.streak !== 10) throw new Error(`Niz je ${r2.streak}, očekivano 10`)
+  if (r2.chestReward !== 300) throw new Error(`Prag nosi ${r2.chestReward} XP, očekivano 300`)
+  const xpD = (await db.doc(`users/${uid}`).get()).data().xp
+  if (xpD - xpC !== 350) throw new Error(`Prag je upisao ${xpD - xpC} XP, očekivano 350 (50+300)`)
+  console.log('✓ Preživljavanje: prag 10 nosi fiksnih 300 XP uz korak')
+
+  const zetonaPrije = (await db.doc(`users/${uid}`).get()).data().rewards || {}
+  const kovceg = await call('claimSurvivalChest', { step: 10 })
+  if (kovceg.nagrade.length !== 1) {
+    throw new Error(`Prag 10 dao ${kovceg.nagrade.length} žetona, očekivan 1`)
+  }
+  const zetonaPoslije = (await db.doc(`users/${uid}`).get()).data().rewards || {}
+  const vrsta = kovceg.nagrade[0].kind
+  if ((zetonaPoslije[vrsta] || 0) <= (zetonaPrije[vrsta] || 0)) {
+    throw new Error(`Žeton ${vrsta} nije upisan na profil!`)
+  }
+  console.log(`✓ claimSurvivalChest: prag 10 → 1 žeton (${kovceg.nagrade[0].label})`)
+
+  let dupli = false
+  try {
+    await call('claimSurvivalChest', { step: 10 })
+  } catch {
+    dupli = true
+  }
+  if (!dupli) throw new Error('Isti kovčeg se dao otvoriti dvaput!')
+
+  let rano = false
+  try {
+    await call('claimSurvivalChest', { step: 20 })
+  } catch {
+    rano = true
+  }
+  if (!rano) throw new Error('Otvoren kovčeg za prag koji nije osvojen!')
+  console.log('✓ claimSurvivalChest: dupli i neosvojeni prag odbijeni')
+}
+
+// 10. Izbor sedmičnih i mjesečnih questova + zamjena žetonom (30.07.2026).
+{
+  const izbor = await call('ensureDailyQuests', {})
+  if (!Array.isArray(izbor.pickedWeekly) || izbor.pickedWeekly.length === 0) {
+    throw new Error('ensureDailyQuests ne vraća sedmični izbor!')
+  }
+  if (!Array.isArray(izbor.pickedMonthly) || izbor.pickedMonthly.length === 0) {
+    throw new Error('ensureDailyQuests ne vraća mjesečni izbor!')
+  }
+  console.log(
+    `✓ Izbor questova: ${izbor.picked.length} dnevnih, ${izbor.pickedWeekly.length} sedmičnih, ${izbor.pickedMonthly.length} mjesečnih`
+  )
+
+  const sviSedmicni = (await db.collection('tasks').where('type', '==', 'weekly').get()).docs.map(
+    (d) => d.id
+  )
+  const vanIzbora = sviSedmicni.find((id) => !izbor.pickedWeekly.includes(id))
+  if (!vanIzbora) throw new Error('Test traži bar jedan sedmični quest van izbora.')
+
+  let odbijen = false
+  try {
+    await call('claimTask', { taskId: vanIzbora })
+  } catch {
+    odbijen = true
+  }
+  if (!odbijen) throw new Error('Quest van izbora se dao preuzeti!')
+  console.log('✓ Sedmični quest van izbora ispravno ODBIJEN')
+
+  // Zamjena troši ŽETON SVOG TIPA — dnevni žeton ne smije mijenjati sedmični.
+  await db.doc(`users/${uid}`).update({ 'rewards.questReroll': 5, 'rewards.questRerollWeekly': 0 })
+  const meta = izbor.pickedWeekly[0]
+  let bezZetona = false
+  try {
+    await call('rerollDailyQuest', { taskId: meta })
+  } catch {
+    bezZetona = true
+  }
+  if (!bezZetona) throw new Error('Sedmični quest zamijenjen dnevnim žetonom!')
+
+  await db.doc(`users/${uid}`).update({ 'rewards.questRerollWeekly': 1 })
+  const zam = await call('rerollDailyQuest', { taskId: meta })
+  if (zam.tip !== 'weekly') throw new Error(`Zamjena je vratila tip ${zam.tip}`)
+  if (zam.preostaloZetona !== 0) throw new Error('Sedmični žeton nije potrošen!')
+  const noviIzbor = (await db.doc(`users/${uid}`).get()).data().taskProgress.weekly.picked
+  if (noviIzbor.includes(meta)) throw new Error('Zamijenjeni quest je ostao u izboru!')
+  if (!noviIzbor.includes(zam.noviTaskId)) throw new Error('Novi quest nije ušao u izbor!')
+  console.log('✓ Zamjena sedmičnog questa: troši svoj žeton, izbor se mijenja')
+}
+
 console.log('\n══════════════════════════════════')
 console.log('SVI TESTOVI PROŠLI ✓ Server-side bodovanje radi.')
 process.exit(0)

@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { CHEST_STEP, MAX_STEP, chestReward, nextChest } from '../utils/survivalLadder'
+import { CHEST_STEP, MAX_STEP, chestReward, chestCount, nextChest } from '../utils/survivalLadder'
 
 // Ljestvica Preživljavanja (battle-pass stil, vertikalno) — dokle je igrač
 // stigao u nizu TE sedmice, korak 1 → 100. Najdalji korak je gore.
-// Na svakom 10. koraku stoji kovčeg s bonus XP-om; XP je server već isplatio
-// u trenutku kad je niz dostigao prag (functions/index.js,
-// survivalChestReward), pa je otvaranje čista animacija.
+// Na svakom 10. koraku stoji kovčeg: 300 XP (server ga isplati čim niz dostigne
+// prag) plus žetoni koje server izvuče pri otvaranju — 1 na koraku 10, 2 na 20,
+// 3 na 30 … 10 na 100. Otvaranje zato više NIJE čista animacija.
 //
 // Ovo NIJE globalni level igrača — niz se resetuje srijedom.
 //
@@ -92,9 +92,11 @@ function StepRow({ step, reached, isCurrent, rowRef }) {
   )
 }
 
-// Prag — kovčeg s bonus XP-om.
+// Prag — kovčeg s bonus XP-om i žetonima (10 → 1 žeton, 20 → 2 … 100 → 10).
 function ChestRow({ step, reached, isCurrent, isOpened, isClaimable, rowRef, onOpen }) {
   const reward = chestReward(step)
+  const zetona = chestCount(step)
+  const opis = `+${reward} XP i ${zetona} ${zetona === 1 ? 'žeton' : 'žetona'}`
 
   return (
     <div ref={rowRef} className="relative flex items-center gap-3 py-1.5">
@@ -137,11 +139,11 @@ function ChestRow({ step, reached, isCurrent, isOpened, isClaimable, rowRef, onO
         )}
         <p className="text-xs text-slate-400">
           {isClaimable ? (
-            <span className="font-bold text-amber-600">Pritisni kovčeg → +{reward} XP</span>
+            <span className="font-bold text-amber-600">Pritisni kovčeg → {opis}</span>
           ) : isOpened ? (
-            <>+{reward} XP osvojeno</>
+            <>{opis} osvojeno</>
           ) : (
-            <>Nagrada: +{reward} XP</>
+            <>Nagrada: {opis}</>
           )}
         </p>
       </div>
@@ -164,7 +166,8 @@ function CurrentLabel({ step, reached }) {
         {left > 0 ? (
           <>
             još {left} {left === 1 ? 'tačan odgovor' : 'tačnih odgovora'} do kovčega (+
-            {chestReward(target)} XP)
+            {chestReward(target)} XP i {chestCount(target)}{' '}
+            {chestCount(target) === 1 ? 'žeton' : 'žetona'})
           </>
         ) : (
           'prošao/la si cijelu ljestvicu!'

@@ -4,14 +4,32 @@ import Confetti from './Confetti'
 
 // Animacija otvaranja kovčega na ljestvici Preživljavanja.
 // XP je server već isplatio u trenutku kad je niz dostigao prag
-// (functions/index.js, survivalChestReward) — ovo je prikaz nagrade, ne
-// isplata. Zato tekst govori "osvojio si", ne "dobijaš".
+// (functions/index.js, survivalChestReward), a ŽETONE je izvukao pri otvaranju
+// (claimSurvivalChest) — ovo je prikaz nagrade, ne isplata.
 //
-// props: step (prag niza, npr. 10), reward (bonus XP), nextStep, nextReward,
+// props: step (prag niza, npr. 10), reward (bonus XP), nagrade (izvučeni
+//        žetoni: [{ kind, amount, label }]), nextStep, nextReward, nextCount,
 //        onClose. nextStep = 0 kad je ovo posljednji kovčeg na ljestvici.
 const SHAKE_MS = 1100
 
-export default function ChestOpenOverlay({ step, reward, nextStep = 0, nextReward = 0, onClose }) {
+// Ikone žetona — iste kao na kovčegu za level (LevelUpOverlay).
+const ZETON_IKONA = {
+  quizRefill: '🎟️',
+  questReroll: '🔄',
+  questRerollWeekly: '📅',
+  questRerollMonthly: '🗓️',
+  streakFreeze: '🧊',
+}
+
+export default function ChestOpenOverlay({
+  step,
+  reward,
+  nagrade = [],
+  nextStep = 0,
+  nextReward = 0,
+  nextCount = 0,
+  onClose,
+}) {
   const [open, setOpen] = useState(false)
 
   // Kovčeg se prvo trese, pa "pukne". Dodir preskače čekanje.
@@ -75,15 +93,36 @@ export default function ChestOpenOverlay({ step, reward, nextStep = 0, nextRewar
           >
             +{reward} XP
           </motion.p>
+
+          {/* Žetoni iz kovčega — koliko ih prag nosi, toliko ih je izvučeno. */}
+          {nagrade.length > 0 && (
+            <motion.div
+              className="mt-4 flex w-full max-w-xs flex-col gap-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+            >
+              {nagrade.map((n, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold text-teal-50"
+                >
+                  <span className="text-lg leading-none">{ZETON_IKONA[n.kind] || '🎁'}</span>
+                  {n.label}
+                </span>
+              ))}
+            </motion.div>
+          )}
+
           <motion.p
             className="mt-3 max-w-xs text-center text-sm text-teal-100"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            Bonus ti je već upisan na račun.{' '}
+            Sve ti je već upisano na račun.{' '}
             {nextStep
-              ? `Svaki 10. tačan odgovor zaredom nosi kovčeg — sljedeći je na nizu ${nextStep} (+${nextReward} XP).`
+              ? `Sljedeći kovčeg je na nizu ${nextStep} — nosi +${nextReward} XP i ${nextCount} ${nextCount === 1 ? 'žeton' : 'žetona'}.`
               : 'Otvorio/la si posljednji kovčeg na ljestvici — svaka čast!'}
           </motion.p>
           <motion.button

@@ -37,6 +37,10 @@ export function rewardCounts(profile) {
   return {
     quizRefill: r.quizRefill || 0,
     questReroll: r.questReroll || 0,
+    // Zamjena sedmičnog/mjesečnog questa — zasebni žetoni, jer ti questovi nose
+    // znatno veće nagrade od dnevnih (vidi CHEST_REWARDS na serveru).
+    questRerollWeekly: r.questRerollWeekly || 0,
+    questRerollMonthly: r.questRerollMonthly || 0,
     streakFreeze: r.streakFreeze || 0,
   }
 }

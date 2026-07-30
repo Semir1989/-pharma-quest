@@ -71,37 +71,57 @@ export function taskValue(progress, task) {
   return progress[task.metric] || 0
 }
 
-// Današnja tri dnevna questa za ovog igrača (iz zamrznutog izbora na serveru).
-// Ako izbor još ne postoji (prvi ulazak u danu), traži ga od Cloud Functiona —
-// server tada uzme u obzir koji su eventi za igrača živi. Vraća null dok traje
-// učitavanje, da UI ne trepne pogrešnom listom.
-export async function dailyTasksFor(allDaily, profile) {
-  const progress = progressForType(profile, 'daily')
+// Questovi jednog tipa za ovog igrača, iz zamrznutog izbora na serveru.
+// Ako izbor još ne postoji (prvi ulazak u periodu), traži ga od Cloud Functiona
+// — server tada uzme u obzir koji su eventi za igrača živi. Vraća [] samo kad
+// server nije dostupan: radije ništa nego pogrešna lista.
+//
+// Od 30.07.2026. izbor postoji i za sedmične i mjesečne questove, pa se ista
+// funkcija koristi za sva tri tipa. Polja u odgovoru servera: `picked` (dnevni,
+// ime zadržano zbog starijih klijenata), `pickedWeekly`, `pickedMonthly`.
+const POLJE_IZBORA = { daily: 'picked', weekly: 'pickedWeekly', monthly: 'pickedMonthly' }
+
+export async function tasksFor(all, profile, type) {
+  const progress = progressForType(profile, type)
   let picked = progress.picked
   if (!Array.isArray(picked) || picked.length === 0) {
     try {
-      picked = (await ensureDailyQuests()).picked
+      picked = (await ensureDailyQuests())[POLJE_IZBORA[type]]
     } catch {
-      return [] // bez servera nema izbora — radije ništa nego pogrešna lista
+      return []
     }
   }
-  const byId = new Map(allDaily.map((t) => [t.id, t]))
-  return picked
+  const byId = new Map(all.map((t) => [t.id, t]))
+  return (picked || [])
     .map((id) => byId.get(id))
     .filter(Boolean)
     .sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
+// Zadržano ime za dnevne — koristi ga i Home ekran.
+export async function dailyTasksFor(allDaily, profile) {
+  return tasksFor(allDaily, profile, 'daily')
+}
+
+// Filtriranje po VEĆ zamrznutom izboru, bez poziva servera. Za mjesta koja ne
+// smiju čekati mrežu (brojač na početnoj). Dok izbor ne postoji, vraća sve —
+// tako brojač ne pokazuje 0 prije nego se izbor prvi put zamrzne.
+export function izabrani(profile, sviTipa, type) {
+  const picked = progressForType(profile, type).picked
+  if (!Array.isArray(picked) || picked.length === 0) return sviTipa || []
+  return (sviTipa || []).filter((t) => picked.includes(t.id))
+}
+
 // Ukupan XP koji igrač može odmah preuzeti — zadatak je završen, a nagrada
 // nije podignuta. Početna time zna da li da ponudi "Preuzmi" umjesto "Pogledaj".
-// Dnevni se broje SAMO iz današnjeg izbora (ostali dnevni questovi za igrača
-// tog dana ne postoje), sedmični i mjesečni svi.
+// Broje se SAMO questovi iz igračevog izbora, za sva tri perioda — ostali za
+// njega tog perioda ne postoje.
 export function claimableXp(profile, tasks, dailyPicks) {
   if (!profile || !tasks) return 0
   const groups = [
     ['daily', dailyPicks || []],
-    ['weekly', tasks.weekly || []],
-    ['monthly', tasks.monthly || []],
+    ['weekly', izabrani(profile, tasks.weekly, 'weekly')],
+    ['monthly', izabrani(profile, tasks.monthly, 'monthly')],
   ]
   let total = 0
   for (const [type, list] of groups) {

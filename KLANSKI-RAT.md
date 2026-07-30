@@ -58,7 +58,14 @@ s **tačno dva** mjesta:
 | Mjesto | XP koji ulazi | Kategorija |
 |---|---|---|
 | kraj kviza (`submitAnswer`) | `awardedXp` (poslije dnevnog capa) | raspodjela po pitanjima |
-| tačan odgovor u Preživljavanju | 3 XP + kovčeg | kategorija pitanja |
+| tačan odgovor u Preživljavanju | 50 XP + kovčeg (300 XP na svakom 10. koraku) | kategorija pitanja |
+
+> Od 30.07.2026. Preživljavanje nosi 50 XP po koraku umjesto 3, i to **punim
+> iznosom ulazi u rat** (svjesna odluka). Niz od 30 tako vrijedi ~2400 CP, dok
+> cijeli dan kvizova nosi ~300. Rat se time premješta s kvizova na
+> Preživljavanje; jedina kočnica je `DNEVNI_CP_STROP` (1000 XP po igraču
+> dnevno). Ako poredak ikad postane "ko je bolji u Preživljavanju", ovo je
+> mjesto na koje treba gledati.
 
 ### U rat ulazi samo odigrano, ne pokupljeno
 

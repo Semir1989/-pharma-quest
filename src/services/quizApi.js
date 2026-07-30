@@ -166,6 +166,14 @@ export async function claimSurvivalRecordChest() {
   return (await claimSurvivalRecordChestFn({})).data
 }
 
+// Otvaranje kovčega na ljestvici Preživljavanja (prag 10, 20 … 100)
+// → { step, xp, nagrade: [{ id, kind, amount, label }], preostalo }
+// 300 XP je već isplaćeno pri dostizanju praga; ovim se izvlače žetoni.
+const claimSurvivalChestFn = httpsCallable(functions, 'claimSurvivalChest')
+export async function claimSurvivalChest(step) {
+  return (await claimSurvivalChestFn({ step })).data
+}
+
 // Trošenje žetona za pokušaj kviza → { energy, preostaloZetona }
 const spendQuizRefillFn = httpsCallable(functions, 'spendQuizRefill')
 export async function spendQuizRefill() {

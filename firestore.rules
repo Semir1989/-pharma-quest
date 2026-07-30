@@ -22,9 +22,10 @@ service cloud.firestore {
     //                           SVOJ dokument, pa najgore što može je da sebi
     //                           pokvari notifikacije.
     //   notifOn, notifPrefs   — je li pretplaćen i koje tipove poruka želi
-    //   survivalChest         — "animaciju kovčega sam vidio". Bonus isplaćuje
-    //                           server čim niz dostigne prag; falsifikovanje
-    //                           ove oznake ne donosi ništa.
+    //   (survivalChest je od 30.07.2026. IZBAČEN iz ove liste: kovčeg na
+    //    ljestvici Preživljavanja od tada nosi i žetone, pa ga otvara server
+    //    kroz claimSurvivalChest. Da je oznaka ostala otvorena klijentu, igrač
+    //    bi je mogao vratiti unazad i izvlačiti žetone iznova.)
     //   featuredBadges        — koji se od OSVOJENIH bedževa vide na avataru
     //   cosmetics.frame       — koji se od OSVOJENIH okvira nosi
     // -----------------------------------------------------------------------
@@ -71,7 +72,7 @@ service cloud.firestore {
 
       allow update: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['displayName', 'avatar', 'survivalChest',
+                         .hasOnly(['displayName', 'avatar',
                                    'featuredBadges', 'cosmetics',
                                    'fcmTokens', 'notifOn', 'notifPrefs'])
                     && validFeaturedBadges()

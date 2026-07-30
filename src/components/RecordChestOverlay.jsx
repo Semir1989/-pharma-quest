@@ -13,6 +13,8 @@ import Confetti from './Confetti'
 const REWARD_EMOJI = {
   quizRefill: '🎟️',
   questReroll: '🔄',
+  questRerollWeekly: '📅',
+  questRerollMonthly: '🗓️',
   streakFreeze: '🧊',
 }
 

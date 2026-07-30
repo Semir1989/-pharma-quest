@@ -58,12 +58,7 @@ export async function equipCosmetic(uid, kind, id) {
   await updateDoc(doc(db, 'users', uid), { [`cosmetics.${kind}`]: id || null })
 }
 
-// Pamti da je igrač OTVORIO kovčeg na ljestvici Preživljavanja.
-// Nije XP polje — bonus isplaćuje server u istom trenutku kad niz dostigne
-// prag (submitSurvivalAnswer); ovo samo bilježi da je animaciju vidio, da mu
-// se ne nudi ponovo. Zato je jedino ovo polje uz displayName/avatar otvoreno
-// klijentu u firestore.rules: falsifikovanje ne donosi nikakav XP.
-// Uz prag se pamti i sedmica, jer se nizovi (pa i kovčezi) resetuju srijedom.
-export async function markSurvivalChestOpened(uid, week, step) {
-  await updateDoc(doc(db, 'users', uid), { survivalChest: { week, opened: step } })
-}
+// NAPOMENA: oznaku o otvorenom kovčegu na ljestvici Preživljavanja klijent
+// više ne upisuje. Od 30.07.2026. kovčeg nosi i žetone, pa ga otvara server
+// (claimSurvivalChest u services/quizApi.js) — on upisuje i `survivalChest` i
+// izvučene žetone. Ovdje je ostala samo ova bilješka da se funkcija ne vrati.

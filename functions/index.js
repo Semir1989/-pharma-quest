@@ -112,20 +112,31 @@ const QUIZ_ENERGY_MAX = 3
 const QUIZ_REGEN_MS = 4 * 3600 * 1000
 
 // Preživljavanje (Etapa 8): endless mod, +3 XP po tačnom, kraj na prvu grešku.
-const SURVIVAL_XP_PER_CORRECT = 3
+const SURVIVAL_XP_PER_CORRECT = 50 // do 30.07.2026. bilo 3
 const SURVIVAL_SECONDS = 20 // kraći tajmer — napetost; istek = kraj run-a
 
-// Kovčezi na ljestvici niza: svaki 10. tačan odgovor zaredom nosi bonus
-// (niz 10 → +100 XP, 20 → +200 … 100 → +1000). Nizovi se resetuju srijedom,
-// pa se i nagrade mogu osvojiti iznova svake sedmice. Ne miješati s
-// awardLevelMilestones — to je bonus za GLOBALNI level, sasvim druga stvar.
+// Kovčezi na ljestvici niza: svaki 10. tačan odgovor zaredom nosi FIKSNIH
+// 300 XP (isto na svakom pragu) plus kovčege sa žetonima — 1 na koraku 10,
+// 2 na 20, 3 na 30 … 10 na 100. Žetoni su isti bubanj kao kod kovčega za level
+// (CHEST_REWARDS), a izvlači ih server pri otvaranju.
+//
+// Nizovi se resetuju srijedom, pa se i nagrade mogu osvojiti iznova svake
+// sedmice. Ne miješati s awardLevelMilestones — to je bonus za GLOBALNI level,
+// sasvim druga stvar.
 const SURVIVAL_CHEST_STEP = 10
 const SURVIVAL_MAX_STEP = 100
+const SURVIVAL_CHEST_XP = 300
 
 function survivalChestReward(streak) {
   if (streak % SURVIVAL_CHEST_STEP !== 0) return 0
   if (streak > SURVIVAL_MAX_STEP) return 0
-  return (streak / SURVIVAL_CHEST_STEP) * 100
+  return SURVIVAL_CHEST_XP
+}
+
+// Koliko kovčega sa žetonima nosi prag: korak 10 → 1, 20 → 2 … 100 → 10.
+function survivalChestCount(step) {
+  if (step % SURVIVAL_CHEST_STEP !== 0 || step <= 0 || step > SURVIVAL_MAX_STEP) return 0
+  return step / SURVIVAL_CHEST_STEP
 }
 
 // ---------------------------------------------------------------------------
@@ -351,12 +362,25 @@ async function applyProgress(uid, delta) {
 // ---------------------------------------------------------------------------
 // Rotacija dnevnih questova — svaki igrač dobije 3 zadatka iz bazena
 // ---------------------------------------------------------------------------
-// Izbor je determinističan po (uid, dan) i ZAMRZNE se u users/{uid}
-// .taskProgress.daily.picked, pa se ne mijenja tokom dana. Ako je za igrača
-// aktivan neki event (Preživljavanje / turnir), tačno jedan od tri zadatka je
-// vezan za taj event. Igrač koji je ispao iz Preživljavanja NE dobija survival
-// zadatak — a ako ispadne usred dana, zadatak mu se zamijeni običnim.
-const DAILY_TASK_COUNT = 3
+// Izbor je determinističan po (uid, period) i ZAMRZNE se u users/{uid}
+// .taskProgress.{tip}.picked, pa se ne mijenja tokom perioda. Ako je za igrača
+// aktivan neki event (Preživljavanje / turnir), tačno jedan zadatak je vezan za
+// taj event. Igrač koji je ispao iz Preživljavanja NE dobija survival zadatak —
+// a ako ispadne usred dana, dnevni zadatak mu se zamijeni običnim.
+//
+// Od 30.07.2026. isto važi i za SEDMIČNE i MJESEČNE questove. Ranije je igrač
+// dobijao sve odreda, pa žeton "zamjena questa" tamo nije imao šta ponuditi —
+// igrač je već imao svaki quest. Izborom se dobija i prostor za odluku: koji
+// zadatak mi se isplati, a koji mijenjam.
+const TASK_COUNT = { daily: 3, weekly: 5, monthly: 4 }
+
+// Žeton kojim se mijenja quest tog tipa. Svaki tip ima svoj — sedmični i
+// mjesečni su rjeđi u kovčezima jer nose veće nagrade.
+const REROLL_KIND = {
+  daily: 'questReroll',
+  weekly: 'questRerollWeekly',
+  monthly: 'questRerollMonthly',
+}
 
 let tasksCache = null
 let tasksCacheAt = 0
@@ -428,22 +452,70 @@ async function setEventStatus(uid, patch) {
   await db.doc(`users/${uid}`).update(updates).catch(() => {})
 }
 
-function pickDailyTaskIds(pool, uid, day, events) {
-  const daily = pool.filter((t) => t.type === 'daily')
-  const base = daily.filter((t) => !t.event)
-  const eventTasks = daily.filter((t) => t.event && events.includes(t.event))
-  const seed = seedFrom(`${uid}|${day}`)
+function pickTaskIds(pool, uid, type, period, events) {
+  const svi = pool.filter((t) => t.type === type)
+  const base = svi.filter((t) => !t.event)
+  const eventTasks = svi.filter((t) => t.event && events.includes(t.event))
+  // Sjeme je (uid, period) — periodi različitih tipova su različiti stringovi
+  // ('2026-07-30', '2026-W31', '2026-07'), pa se izbori ne poklapaju.
+  const seed = seedFrom(`${uid}|${period}`)
+  const koliko = TASK_COUNT[type] || 3
   const chosen = eventTasks.length > 0 ? seededPick(eventTasks, 1, seed ^ 0x9e3779b9) : []
-  chosen.push(...seededPick(base, DAILY_TASK_COUNT - chosen.length, seed))
+  chosen.push(...seededPick(base, koliko - chosen.length, seed))
   return chosen.sort((a, b) => (a.order || 0) - (b.order || 0)).map((t) => t.id)
 }
 
-// Vrati (i po potrebi zamrzni) današnji izbor dnevnih questova za igrača.
-async function ensureDailyPicks(uid) {
-  const day = dailyKey()
+// Vrati (i po potrebi zamrzni) izbor questova jednog tipa za igrača.
+async function ensurePicksZaTip(uid, type, pool, events) {
+  const period = periodKey(type)
   const userRef = db.doc(`users/${uid}`)
   const snap = await userRef.get()
   if (!snap.exists) return []
+
+  const existing = snap.data().taskProgress?.[type]
+  if (existing?.period === period && Array.isArray(existing.picked) && existing.picked.length > 0) {
+    return existing.picked
+  }
+
+  const picked = pickTaskIds(pool, uid, type, period, events)
+  let final = picked
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(userRef)
+    if (!s.exists) return
+    const cur = s.data().taskProgress?.[type]
+    if (cur?.period === period && Array.isArray(cur.picked) && cur.picked.length > 0) {
+      final = cur.picked
+      return
+    }
+    // Zatečeni napredak se NE oduzima. U izbor ulaze i questovi koje je igrač
+    // u ovom periodu već preuzeo ILI već ispunio a nije preuzeo — bez toga bi
+    // prelazak na izbor (30.07.2026.) usred sedmice nekome pojeo nagradu koju
+    // je pošteno zaradio. Vrijedi samo za period u kojem se prelazi; sljedeći
+    // kreće s čistim izborom.
+    const stvarni = pool.filter((t) => t.type === type)
+    const zasluzeni = stvarni
+      .filter((t) => {
+        if (cur?.claimed?.[t.id]) return true
+        const value =
+          t.metric === 'correct' && t.category
+            ? cur?.byCategory?.[t.category] || 0
+            : cur?.[t.metric] || 0
+        return value >= t.goal
+      })
+      .map((t) => t.id)
+    const spojeno = [...new Set([...picked, ...zasluzeni])]
+    final = spojeno
+    const base = cur?.period === period ? { ...emptyProgress(period), ...cur } : emptyProgress(period)
+    tx.update(userRef, { [`taskProgress.${type}`]: { ...base, period, picked: spojeno } })
+  })
+  return final
+}
+
+// Zamrzni izbor za sva tri perioda i osvježi status eventa.
+async function ensureDailyPicks(uid) {
+  const userRef = db.doc(`users/${uid}`)
+  const snap = await userRef.get()
+  if (!snap.exists) return { daily: [], weekly: [], monthly: [] }
 
   // Status eventa se osvježava pri SVAKOM pozivu, ne samo kad se pravi novi
   // izbor questova. Ranije je stajao ispod ranog izlaza, pa je bio dnevni
@@ -455,28 +527,12 @@ async function ensureDailyPicks(uid) {
     tournament: events.includes('tournament'),
   })
 
-  const existing = snap.data().taskProgress?.daily
-  if (existing?.period === day && Array.isArray(existing.picked) && existing.picked.length > 0) {
-    return existing.picked
-  }
-  // Izbor se pravi izvan transakcije (čita config i survivalRuns), pa se
-  // transakcijom samo upisuje — i to tek ako ga u međuvremenu niko nije upisao.
   const pool = await getActiveTasks()
-  const picked = pickDailyTaskIds(pool, uid, day, events)
-  let final = picked
-  await db.runTransaction(async (tx) => {
-    const s = await tx.get(userRef)
-    if (!s.exists) return
-    const p = s.data()
-    const cur = p.taskProgress?.daily
-    if (cur?.period === day && Array.isArray(cur.picked) && cur.picked.length > 0) {
-      final = cur.picked
-      return
-    }
-    const base = cur?.period === day ? { ...emptyProgress(day), ...cur } : emptyProgress(day)
-    tx.update(userRef, { 'taskProgress.daily': { ...base, period: day, picked } })
-  })
-  return final
+  return {
+    daily: await ensurePicksZaTip(uid, 'daily', pool, events),
+    weekly: await ensurePicksZaTip(uid, 'weekly', pool, events),
+    monthly: await ensurePicksZaTip(uid, 'monthly', pool, events),
+  }
 }
 
 // Igrač je ispao iz eventa usred dana → nezavršeni event-quest zamijeni običnim,
@@ -503,12 +559,19 @@ async function dropEventPicks(uid, event) {
   })
 }
 
-// Klijent zove pri otvaranju Questova/Home-a ako današnji izbor još ne postoji.
+// Klijent zove pri otvaranju Questova/Home-a ako izbor još ne postoji.
+// Ime je historijsko — od 30.07.2026. zamrzava i sedmični i mjesečni izbor.
 export const ensureDailyQuests = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
-  const picked = await ensureDailyPicks(uid)
-  return { picked, day: dailyKey(), resetsAt: nextDailyResetAt() }
+  const izbor = await ensureDailyPicks(uid)
+  return {
+    picked: izbor.daily, // stariji klijenti čitaju samo ovo polje
+    pickedWeekly: izbor.weekly,
+    pickedMonthly: izbor.monthly,
+    day: dailyKey(),
+    resetsAt: nextDailyResetAt(),
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -1296,8 +1359,12 @@ export const claimTask = onCall(async (request) => {
     if (!stored || stored.period !== periodKey(task.type)) {
       throw new HttpsError('failed-precondition', 'Task nije ispunjen u ovom periodu.')
     }
-    if (task.type === 'daily' && !(stored.picked || []).includes(taskId)) {
-      throw new HttpsError('failed-precondition', 'Ovaj quest danas nije među tvojim zadacima.')
+    // Izbor se provjerava za sva tri tipa. Kad izbor još nije zamrznut (stariji
+    // profil, prvi poziv u periodu), propušta se — inače bi igrač ostao bez
+    // nagrade koju je pošteno ispunio dok se izbor tek uvodio.
+    const izbor = stored.picked
+    if (Array.isArray(izbor) && izbor.length > 0 && !izbor.includes(taskId)) {
+      throw new HttpsError('failed-precondition', 'Ovaj quest nije među tvojim zadacima.')
     }
     const value =
       task.metric === 'correct' && task.category
@@ -2196,12 +2263,18 @@ export const survivalWeeklyReset = onSchedule(
 // prazan. Zato +3 nikad ne propada ni kad su pokušaji puni.
 //
 // Šanse prate vrijednost: lakše i češće nagrade na vrhu, najvrednija na dnu.
+// Zbir šansi je 100 — nije uslov (rollChestReward normalizuje), ali je jedini
+// način da se raspodjela čita bez računanja.
 const CHEST_REWARDS = [
-  { id: 'quiz1', kind: 'quizRefill', amount: 1, chance: 32, label: '+1 pokušaj za kviz' },
-  { id: 'reroll', kind: 'questReroll', amount: 1, chance: 30, label: 'Zamjena dnevnog questa' },
-  { id: 'quiz2', kind: 'quizRefill', amount: 2, chance: 20, label: '+2 pokušaja za kviz' },
-  { id: 'freeze', kind: 'streakFreeze', amount: 1, chance: 12, label: 'Zaštita streaka' },
-  { id: 'quiz3', kind: 'quizRefill', amount: 3, chance: 6, label: '+3 pokušaja za kviz' },
+  { id: 'quiz1', kind: 'quizRefill', amount: 1, chance: 30, label: '+1 pokušaj za kviz' },
+  { id: 'reroll', kind: 'questReroll', amount: 1, chance: 27, label: 'Zamjena dnevnog questa' },
+  { id: 'quiz2', kind: 'quizRefill', amount: 2, chance: 18, label: '+2 pokušaja za kviz' },
+  { id: 'freeze', kind: 'streakFreeze', amount: 1, chance: 11, label: 'Zaštita streaka' },
+  // Sedmični i mjesečni quest nose 80–500 XP, pa su im žetoni srazmjerno rjeđi:
+  // sedmični je srednje težak, mjesečni je najteža nagrada u bubnju.
+  { id: 'rerollW', kind: 'questRerollWeekly', amount: 1, chance: 8, label: 'Zamjena sedmičnog questa' },
+  { id: 'quiz3', kind: 'quizRefill', amount: 3, chance: 4, label: '+3 pokušaja za kviz' },
+  { id: 'rerollM', kind: 'questRerollMonthly', amount: 1, chance: 2, label: 'Zamjena mjesečnog questa' },
 ]
 
 function rollChestReward() {
@@ -2282,6 +2355,59 @@ export const claimSurvivalRecordChest = onCall(async (request) => {
   return rezultat
 })
 
+// Otvaranje kovčega na ljestvici Preživljavanja (prag 10, 20 … 100).
+//
+// Do 30.07.2026. je otvaranje bilo ČISTA ANIMACIJA — XP je legao pri dostizanju
+// praga, a klijent je sam upisivao `survivalChest`. Sada kovčeg nosi i žetone,
+// pa izvlačenje mora na server (klijent bi inače ponavljao dok ne padne ono
+// što mu treba). 300 XP i dalje legne odmah pri pragu; ovdje se izvlače SAMO
+// žetoni, i to svi za taj prag odjednom (korak 10 → 1 žeton, 20 → 2 … 100 → 10).
+//
+// Zaštita od ponovnog otvaranja: `survivalChest.opened` je najviši otvoreni
+// prag, pa prag koji nije veći od njega prolazi kao "već otvoren".
+export const claimSurvivalChest = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+  const { step } = request.data || {}
+  if (!Number.isInteger(step) || survivalChestCount(step) === 0) {
+    throw new HttpsError('invalid-argument', 'Neispravan prag kovčega.')
+  }
+
+  const week = survivalWeekKey()
+  // Niz se čita iz run-a, ne od klijenta: klijent ne smije tvrditi dokle je stigao.
+  const runSnap = await db.doc(`survivalRuns/${uid}`).get()
+  const run = runSnap.exists ? runSnap.data() : null
+  const niz = run && run.week === week ? run.streak || 0 : 0
+  if (step > niz) throw new HttpsError('failed-precondition', 'Taj prag još nije osvojen.')
+
+  const ref = db.doc(`users/${uid}`)
+  let rezultat = null
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const p = snap.data()
+    const otvoreno = p.survivalChest?.week === week ? p.survivalChest.opened || 0 : 0
+    if (step <= otvoreno) throw new HttpsError('failed-precondition', 'Taj kovčeg je već otvoren.')
+
+    const koliko = survivalChestCount(step)
+    const nagrade = []
+    const zbir = {}
+    for (let i = 0; i < koliko; i++) {
+      const n = rollChestReward()
+      nagrade.push({ id: n.id, kind: n.kind, amount: n.amount, label: n.label })
+      zbir[n.kind] = (zbir[n.kind] || 0) + n.amount
+    }
+    const izmjene = { survivalChest: { week, opened: step } }
+    for (const [kind, amount] of Object.entries(zbir)) {
+      izmjene[`rewards.${kind}`] = (p.rewards?.[kind] || 0) + amount
+    }
+    tx.update(ref, izmjene)
+    rezultat = { step, xp: SURVIVAL_CHEST_XP, nagrade, preostalo: Math.floor(niz / SURVIVAL_CHEST_STEP) - step / SURVIVAL_CHEST_STEP }
+  })
+
+  return rezultat
+})
+
 // Trošenje žetona za pokušaj kviza. Puni spremnik za 1, nikad iznad stropa —
 // ako su pokušaji već puni, žeton se NE troši (inače bi nagrada nestala uzalud).
 export const spendQuizRefill = onCall(async (request) => {
@@ -2311,8 +2437,13 @@ export const spendQuizRefill = onCall(async (request) => {
   return rezultat
 })
 
-// Zamjena jednog današnjeg dnevnog questa drugim iz bazena.
+// Zamjena jednog questa drugim iz bazena — dnevnog, sedmičnog ili mjesečnog.
 // Namjerno ZAMJENA, ne reset: reset bi značio da isti quest nosi XP dvaput.
+//
+// Tip se čita IZ SAMOG QUESTA, ne iz poziva: klijent tako ne može žetonom za
+// dnevni quest mijenjati mjesečni. Svaki tip troši svoj žeton (REROLL_KIND).
+// Ime funkcije je historijsko (`rerollDailyQuest`) — mijenjanje imena bi
+// prekinulo klijente koji su u tom trenutku otvoreni.
 export const rerollDailyQuest = onCall(async (request) => {
   const uid = request.auth?.uid
   if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
@@ -2321,8 +2452,14 @@ export const rerollDailyQuest = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'Nedostaje taskId.')
   }
 
-  const day = dailyKey()
   const [pool, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
+  const zadatak = pool.find((t) => t.id === taskId)
+  if (!zadatak) throw new HttpsError('not-found', 'Taj quest ne postoji.')
+  const type = zadatak.type
+  const kind = REROLL_KIND[type]
+  if (!kind) throw new HttpsError('invalid-argument', 'Nepoznat tip questa.')
+
+  const period = periodKey(type)
   const ref = db.doc(`users/${uid}`)
   let rezultat = null
 
@@ -2330,39 +2467,39 @@ export const rerollDailyQuest = onCall(async (request) => {
     const snap = await tx.get(ref)
     if (!snap.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
     const p = snap.data()
-    const zetona = p.rewards?.questReroll || 0
+    const zetona = p.rewards?.[kind] || 0
     if (zetona <= 0) throw new HttpsError('failed-precondition', 'Nemaš žetona za zamjenu.')
 
-    const dnevni = p.taskProgress?.daily
-    if (dnevni?.period !== day || !Array.isArray(dnevni.picked)) {
-      throw new HttpsError('failed-precondition', 'Današnji questovi nisu spremni.')
+    const stanje = p.taskProgress?.[type]
+    if (stanje?.period !== period || !Array.isArray(stanje.picked)) {
+      throw new HttpsError('failed-precondition', 'Questovi nisu spremni.')
     }
-    if (!dnevni.picked.includes(taskId)) {
-      throw new HttpsError('failed-precondition', 'Taj quest nije među današnjim.')
+    if (!stanje.picked.includes(taskId)) {
+      throw new HttpsError('failed-precondition', 'Taj quest nije među tvojim zadacima.')
     }
-    if (dnevni.claimed?.[taskId]) {
+    if (stanje.claimed?.[taskId]) {
       throw new HttpsError('failed-precondition', 'Nagrada za taj quest je već preuzeta.')
     }
 
-    // Kandidati: aktivni dnevni questovi koji danas nisu u igri, i čiji je
-    // event živ (ili ga uopšte nemaju).
+    // Kandidati: aktivni questovi istog tipa koji nisu u igri, i čiji je event
+    // živ (ili ga uopšte nemaju).
     const kandidati = pool.filter(
       (t) =>
-        t.type === 'daily' &&
-        !dnevni.picked.includes(t.id) &&
+        t.type === type &&
+        !stanje.picked.includes(t.id) &&
         (!t.event || events.includes(t.event))
     )
     if (kandidati.length === 0) {
       throw new HttpsError('failed-precondition', 'Nema drugog questa za zamjenu.')
     }
     const novi = kandidati[Math.floor(Math.random() * kandidati.length)]
-    const picked = dnevni.picked.map((id) => (id === taskId ? novi.id : id))
+    const picked = stanje.picked.map((id) => (id === taskId ? novi.id : id))
 
     tx.update(ref, {
-      'rewards.questReroll': zetona - 1,
-      'taskProgress.daily.picked': picked,
+      [`rewards.${kind}`]: zetona - 1,
+      [`taskProgress.${type}.picked`]: picked,
     })
-    rezultat = { noviTaskId: novi.id, preostaloZetona: zetona - 1 }
+    rezultat = { noviTaskId: novi.id, tip: type, preostaloZetona: zetona - 1 }
   })
 
   return rezultat
@@ -3818,10 +3955,18 @@ function ratOtvoren(cfg, now = Date.now()) {
 // config/content.version kod taskova.
 const klanBonusKes = new Map() // uid → { at, clanId, clan, bonusi }
 const KLAN_KES_TTL = 5 * 60 * 1000
+// Vidi klanZaIgraca: "nema klan" se pamti kratko, da pridruživanje usred rata
+// odmah počne nositi CP.
+const KLAN_KES_TTL_BEZ_KLANA = 20 * 1000
 
 async function klanZaIgraca(uid) {
   const zapisKes = klanBonusKes.get(uid)
-  if (zapisKes && Date.now() - zapisKes.at < KLAN_KES_TTL) return zapisKes
+  // Igrač BEZ klana se pamti kratko. Ko se pridruži klanu usred rata pa odmah
+  // odigra kviz, njegov CP bi inače propao do 5 minuta — a upravo su ti prvi
+  // bodovi razlog zbog kojeg se i pridružio. Igrač S klanom se i dalje drži
+  // pun TTL: tu se mijenjaju samo nivoi Okruga, a to trpi zastoj.
+  const ttl = zapisKes?.clanId ? KLAN_KES_TTL : KLAN_KES_TTL_BEZ_KLANA
+  if (zapisKes && Date.now() - zapisKes.at < ttl) return zapisKes
   const m = await clanMemberRef(uid).get()
   const clanId = m.exists ? m.data().clanId : null
   let clan = null

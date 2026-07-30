@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getTasks, progressForType, taskValue, claimTask, dailyTasksFor } from '../services/tasks'
+import { getTasks, progressForType, taskValue, claimTask, tasksFor } from '../services/tasks'
 import { rerollDailyQuest } from '../services/quizApi'
 import { rewardCounts } from '../utils/quizEnergy'
 import { levelFromXp } from '../utils/levels'
@@ -23,7 +23,8 @@ export default function Questovi() {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
-  const [dailyPicks, setDailyPicks] = useState(null) // 3 današnja dnevna questa
+  // Izbor po periodu: 3 dnevna, 5 sedmičnih, 4 mjesečna (server zamrzava).
+  const [picks, setPicks] = useState({ daily: null, weekly: null, monthly: null })
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
   const [rerolling, setRerolling] = useState(null) // id questa koji se mijenja
@@ -32,12 +33,20 @@ export default function Questovi() {
     getTasks().then(setTasks).catch(() => setTasks({ daily: [], weekly: [], monthly: [] }))
   }, [])
 
-  // Današnji izbor: iz profila ako postoji, inače ga server napravi i zamrzne.
-  const pickedKey = (profile?.taskProgress?.daily?.picked || []).join(',')
+  // Izbor: iz profila ako postoji, inače ga server napravi i zamrzne. Ključ
+  // pokriva sva tri perioda, pa se lista osvježi i poslije zamjene žetonom.
+  const tp = profile?.taskProgress
+  const pickedKey = ['daily', 'weekly', 'monthly']
+    .map((t) => (tp?.[t]?.picked || []).join(','))
+    .join('|')
   useEffect(() => {
     if (!tasks || !profile) return
     let alive = true
-    dailyTasksFor(tasks.daily, profile).then((list) => alive && setDailyPicks(list))
+    Promise.all([
+      tasksFor(tasks.daily, profile, 'daily'),
+      tasksFor(tasks.weekly, profile, 'weekly'),
+      tasksFor(tasks.monthly, profile, 'monthly'),
+    ]).then(([daily, weekly, monthly]) => alive && setPicks({ daily, weekly, monthly }))
     return () => {
       alive = false
     }
@@ -66,8 +75,9 @@ export default function Questovi() {
     }
   }
 
-  // Zamjena dnevnog questa žetonom iz kovčega. Namjerno ZAMJENA, ne reset:
-  // reset bi značio da isti quest nosi XP dvaput.
+  // Zamjena questa žetonom iz kovčega — dnevnog, sedmičnog ili mjesečnog.
+  // Namjerno ZAMJENA, ne reset: reset bi značio da isti quest nosi XP dvaput.
+  // Svaki period troši svoj žeton; server ga bira po tipu samog questa.
   async function handleReroll(task) {
     if (rerolling) return
     setRerolling(task.id)
@@ -118,7 +128,7 @@ export default function Questovi() {
       ) : (
         <div className="mt-4 flex flex-col gap-4">
           <DailySection
-            tasks={dailyPicks}
+            tasks={picks.daily}
             profile={profile}
             claiming={claiming}
             onClaim={handleClaim}
@@ -133,10 +143,13 @@ export default function Questovi() {
             type="weekly"
             color="#0f766e"
             bgClass="bg-teal-50"
-            tasks={tasks.weekly}
+            tasks={picks.weekly}
             profile={profile}
             claiming={claiming}
             onClaim={handleClaim}
+            onReroll={handleReroll}
+            rerolling={rerolling}
+            zetona={rewardCounts(profile).questRerollWeekly}
           />
           <PeriodSection
             title="Mjesečni"
@@ -145,10 +158,13 @@ export default function Questovi() {
             type="monthly"
             color="#d97706"
             bgClass="bg-amber-50"
-            tasks={tasks.monthly}
+            tasks={picks.monthly}
             profile={profile}
             claiming={claiming}
             onClaim={handleClaim}
+            onReroll={handleReroll}
+            rerolling={rerolling}
+            zetona={rewardCounts(profile).questRerollMonthly}
           />
         </div>
       )}
@@ -218,9 +234,23 @@ function DailySection({ tasks, profile, claiming, onClaim, onReroll, rerolling, 
 // Event zadatak koji igraču više nije dostupan (npr. ispao iz Preživljavanja)
 // ostaje vidljiv samo ako je na njemu već nešto zaradio — da može preuzeti
 // nagradu — ali s jasnom oznakom da mu je event zatvoren.
-function PeriodSection({ title, icon, renewText, type, color, bgClass, tasks, profile, claiming, onClaim }) {
+function PeriodSection({
+  title,
+  icon,
+  renewText,
+  type,
+  color,
+  bgClass,
+  tasks,
+  profile,
+  claiming,
+  onClaim,
+  onReroll,
+  rerolling,
+  zetona = 0,
+}) {
   const progress = progressForType(profile, type)
-  const visible = tasks.filter(
+  const visible = (tasks || []).filter(
     (t) => !t.event || eventLive(profile, t.event) || taskValue(progress, t) > 0
   )
 
@@ -234,18 +264,30 @@ function PeriodSection({ title, icon, renewText, type, color, bgClass, tasks, pr
         </div>
       </div>
 
+      {zetona > 0 && (
+        <p className="mt-2 rounded-xl bg-white/70 px-3 py-1.5 text-xs text-slate-600">
+          🎟️ Imaš {zetona} {zetona === 1 ? 'žeton' : 'žetona'} za zamjenu ovog perioda.
+        </p>
+      )}
+
       <div className="mt-3 flex flex-col gap-2">
-        {visible.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            progress={progress}
-            color={color}
-            claiming={claiming}
-            onClaim={onClaim}
-            eventClosed={!!task.event && !eventLive(profile, task.event)}
-          />
-        ))}
+        {tasks === null ? (
+          <p className="py-4 text-center text-sm text-slate-400">Biram zadatke…</p>
+        ) : (
+          visible.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              progress={progress}
+              color={color}
+              claiming={claiming}
+              onClaim={onClaim}
+              eventClosed={!!task.event && !eventLive(profile, task.event)}
+              onReroll={zetona > 0 ? onReroll : null}
+              rerolling={rerolling === task.id}
+            />
+          ))
+        )}
       </div>
     </section>
   )
