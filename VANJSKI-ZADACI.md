@@ -16,7 +16,7 @@ Datum: 31.07.2026. · Stanje koda: commit `71535e1`
 | Sedmični: 10 komentara — 300 XP, 3 žetona, 5 zelenih | ✅ živo, stalni |
 | Sedmični: 30 lajkova — 500 XP, 4 žetona, 10 zelenih | ✅ živo, stalni |
 | Mjesečni: 1 post — 750 XP, 5 žetona, 15 zelenih, 1 oživljavanje | ✅ živo, stalni |
-| Dnevni: razgovor s članom iz druge države — 100 XP, 1 žeton | ✅ živo, rotira se |
+| Dnevni: razgovor s članom iz druge države — 100 XP, 1 žeton | ✅ upisan, **kreće 01.08.** |
 | Admin sekcija za ručnu potvrdu | ✅ živo |
 | Žeton za oživljavanje u Preživljavanju | ✅ živo |
 | Mjesečni period produžen do 31.08.2026. | ✅ živo |
@@ -47,10 +47,23 @@ zadao. Reci ako želiš drugi iznos.
 ### Napomena o ovom periodu
 
 Igrači koji već imaju zamrznut izbor dobili su nove zadatke **odmah**, bez
-gubitka napretka. Posljedica: sedmičnih ovaj period ima **7 umjesto 6** (zatečenih
-5 + 2 obavezna EPC). Od ponedjeljka 03.08. je normalnih 6. Uklanjanje petog
-zatečenog questa bi igraču oduzelo nešto na čemu je već radio, pa je višak
-namjerno propušten.
+gubitka napretka — migracijom `npm run dopuni-izbore` (pokrenuta 31.07.2026,
+dopunila 28 od 43 igrača; ostali su imali prazan ili istekao izbor, pa im ga
+server pravi iz nule po novim pravilima).
+
+Posljedica: sedmičnih ovaj period ima **7 umjesto 6** (zatečenih 5 + 2 obavezna
+EPC). Od ponedjeljka 03.08. je normalnih 6. Uklanjanje petog zatečenog questa bi
+igraču oduzelo nešto na čemu je već radio, pa je višak namjerno propušten.
+
+**Dnevni EPC razgovor kreće 01.08.** (`odDatuma` u `taskovi-lista.js`) — dnevni
+zadatak ubačen usred dana ostavlja igraču par sati do ponoći, a traži rad na
+drugoj platformi.
+
+> **Za ubuduće:** kad god se promijeni `TASK_COUNT` ili doda `always` quest,
+> poslije `npm run postavi-taskove` mora ići i **`npm run dopuni-izbore --stvarno`**.
+> Server dopunjava izbor sam, ali tek kad ga neko pozove — a klijent poziva
+> `ensureDailyQuests` samo kad je izbor prazan. Bez skripte zatečeni igrači
+> promjenu vide tek na sljedeći period.
 
 ---
 
