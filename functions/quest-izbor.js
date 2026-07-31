@@ -13,10 +13,27 @@
  *                     žetonom (vanjski EPC zadaci — vidi postavi-taskove.js)
  *   - `event: '...'`  ulaze samo dok je taj event živ za igrača; najviše JEDAN
  *   - ostali          obični bazen iz kojeg se dopunjava do punog broja
+ *
+ * Uz to, `odDatuma: 'YYYY-MM-DD'` odgađa quest do tog dana — quest postoji u
+ * bazi i aktivan je, ali ne ulazi u ponudu ranije. Koristi se kad se novi
+ * zadatak najavi unaprijed ili kad ne treba da upadne usred tekućeg dana.
  */
 
 // Od 31.07.2026.: 5 / 6 / 7 (bilo 3 / 5 / 4).
 export const TASK_COUNT = { daily: 5, weekly: 6, monthly: 7 }
+
+// Je li quest već "krenuo". `odDatuma` je BiH dan u obliku 'YYYY-MM-DD', pa se
+// poredi kao string — format je sortabilan i nema vremenskih zona u igri.
+export function dostupanOd(task, danas) {
+  return !task.odDatuma || !danas || task.odDatuma <= danas
+}
+
+// Ponuda za današnji dan: bazen bez questova koji tek treba da krenu.
+// Filtrira se JEDNOM, na izvoru (ensureDailyPicks, rerollDailyQuest), da se
+// odgođeni quest ne provuče ni kroz izbor ni kroz zamjenu žetonom.
+export function ponuda(pool, danas) {
+  return pool.filter((t) => dostupanOd(t, danas))
+}
 
 export function seedFrom(str) {
   let h = 2166136261

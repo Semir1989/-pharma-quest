@@ -54,7 +54,11 @@ export const TASKS = [
   // Vanjski zadatak na EPC platformi — rotira se kao i ostali dnevni (nije
   // `always`). Nagrada je veća od kviz-zadataka jer traži rad izvan igrice;
   // 100 XP ≈ trećina dnevnog stropa iz kvizova.
-  { id: 'daily-epc-razgovor', type: 'daily', title: 'Započni razgovor na EPC platformi sa članom iz druge države', shortTitle: 'EPC razgovor', metric: 'manual', goal: 1, reward: 100, tokens: { quizRefill: 1 }, order: 9 },
+  //
+  // `odDatuma`: kreće 01.08.2026. (odluka korisnika 31.07.). Sedmični i mjesečni
+  // EPC zadaci su dati odmah, ali dnevni koji upadne u već započet dan ostavlja
+  // igraču samo par sati do ponoći — a zadatak traži rad na drugoj platformi.
+  { id: 'daily-epc-razgovor', type: 'daily', title: 'Započni razgovor na EPC platformi sa članom iz druge države', shortTitle: 'EPC razgovor', metric: 'manual', goal: 1, reward: 100, tokens: { quizRefill: 1 }, odDatuma: '2026-08-01', order: 9 },
 
   // ---- Dnevni bazen: event zadaci (samo dok je event živ za igrača) ----
   { id: 'daily-survival-3', type: 'daily', event: 'survival', title: 'Preživljavanje: 3 tačna odgovora danas', shortTitle: '3 u nizu', metric: 'survivalCorrect', goal: 3, reward: 40, order: 10 },

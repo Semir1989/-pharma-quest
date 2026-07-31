@@ -26,6 +26,7 @@ import {
   seededPick,
   pickTaskIds,
   dopuniIzbor,
+  ponuda,
   smijeSeZamijeniti,
 } from './quest-izbor.js'
 import {
@@ -528,7 +529,8 @@ async function ensureDailyPicks(uid) {
     tournament: events.includes('tournament'),
   })
 
-  const pool = await getActiveTasks()
+  // Questovi s `odDatuma` u budućnosti se ne nude — ni u izboru ni u dopuni.
+  const pool = ponuda(await getActiveTasks(), dailyKey())
   return {
     daily: await ensurePicksZaTip(uid, 'daily', pool, events),
     weekly: await ensurePicksZaTip(uid, 'weekly', pool, events),
@@ -2618,7 +2620,9 @@ export const rerollDailyQuest = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'Nedostaje taskId.')
   }
 
-  const [pool, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
+  // Zamjena ne smije podijeliti quest koji tek treba da krene (`odDatuma`).
+  const [sviTaskovi, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
+  const pool = ponuda(sviTaskovi, dailyKey())
   const zadatak = pool.find((t) => t.id === taskId)
   if (!zadatak) throw new HttpsError('not-found', 'Taj quest ne postoji.')
   // Vanjski EPC zadaci su obećani kao "uvijek prisutni" — zamjena bi ih uklonila
@@ -2889,7 +2893,9 @@ export const adminQuestStanje = onCall(async (request) => {
   const uid = request.data?.uid
   if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje uid.')
 
-  const pool = await getActiveTasks()
+  // Odgođeni questovi se ne nude ni u panelu: napredak upisan na quest koji
+  // igrač još nema u izboru ionako ne bi mogao biti preuzet (claimTask ga odbija).
+  const pool = ponuda(await getActiveTasks(), dailyKey())
   const rucni = pool
     .filter((t) => t.metric === 'manual')
     .sort((a, b) => (a.type || '').localeCompare(b.type || '') || (a.order || 0) - (b.order || 0))

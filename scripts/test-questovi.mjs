@@ -10,6 +10,8 @@ import {
   TASK_COUNT,
   pickTaskIds,
   dopuniIzbor,
+  dostupanOd,
+  ponuda,
   smijeSeZamijeniti,
 } from '../functions/quest-izbor.js'
 import { TASKS } from './taskovi-lista.js'
@@ -263,6 +265,61 @@ jednako(
   TASK_COUNT.weekly,
   'ugašen quest se nadoknađuje važećim'
 )
+
+// ---------------------------------------------------------------------------
+console.log('10. Odgođeni questovi (odDatuma)')
+// ---------------------------------------------------------------------------
+const JUCE = '2026-07-31'
+const SUTRA = '2026-08-01'
+
+jednako(dostupanOd({ id: 'x' }, JUCE), true, 'quest bez odDatuma je uvijek dostupan')
+jednako(dostupanOd({ odDatuma: SUTRA }, JUCE), false, 'odgođen quest nije dostupan ranije')
+jednako(dostupanOd({ odDatuma: SUTRA }, SUTRA), true, 'odgođen quest kreće na svoj dan')
+jednako(dostupanOd({ odDatuma: SUTRA }, '2026-09-15'), true, 'odgođen quest ostaje dostupan poslije')
+
+// Dnevni EPC razgovor: 31.07. ga niko ne smije dobiti, 01.08. ulazi u ponudu.
+const razgovor = byId.get('daily-epc-razgovor')
+jednako(razgovor?.odDatuma, SUTRA, 'dnevni EPC razgovor kreće 01.08.2026.')
+
+const danasnjaPonuda = ponuda(TASKS, JUCE)
+ok(
+  !danasnjaPonuda.some((t) => t.id === 'daily-epc-razgovor'),
+  '31.07. razgovor nije u ponudi'
+)
+ok(
+  ponuda(TASKS, SUTRA).some((t) => t.id === 'daily-epc-razgovor'),
+  '01.08. razgovor jeste u ponudi'
+)
+
+for (const uid of UIDS) {
+  const danas = pickTaskIds(danasnjaPonuda, uid, 'daily', JUCE, ['survival'])
+  ok(!danas.includes('daily-epc-razgovor'), `${uid}: 31.07. ne dobija razgovor`)
+  jednako(danas.length, TASK_COUNT.daily, `${uid}: 31.07. i dalje dobija pun broj dnevnih`)
+
+  // Dopuna zatečenog izbora isto ne smije ubaciti odgođeni quest.
+  const dopunjen = dopuniIzbor(STARI.daily, danasnjaPonuda, uid, 'daily', JUCE)
+  ok(!dopunjen.includes('daily-epc-razgovor'), `${uid}: dopuna 31.07. ne ubacuje razgovor`)
+}
+
+// Sedmični i mjesečni EPC zadaci NISU odgođeni — idu odmah.
+for (const id of ['weekly-epc-komentari-10', 'weekly-epc-lajkovi-30', 'monthly-epc-post-1']) {
+  jednako(byId.get(id)?.odDatuma, undefined, `${id} nije odgođen — kreće odmah`)
+  ok(
+    danasnjaPonuda.some((t) => t.id === id),
+    `${id} je u ponudi već 31.07.`
+  )
+}
+
+// Bazen bez odgođenih mora i dalje zadovoljavati TASK_COUNT.
+for (const tip of TIPOVI) {
+  const svi = danasnjaPonuda.filter((t) => t.type === tip)
+  const always = svi.filter((t) => t.always && !t.event).length
+  const rotirajuci = svi.filter((t) => !t.event && !t.always).length
+  ok(
+    always + rotirajuci >= TASK_COUNT[tip],
+    `${tip}: bazen bez odgođenih daje ${always + rotirajuci}, treba ${TASK_COUNT[tip]}`
+  )
+}
 
 // ---------------------------------------------------------------------------
 console.log(`\n${prosao} prošlo, ${pao} palo`)
