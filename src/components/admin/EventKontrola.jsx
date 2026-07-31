@@ -2,21 +2,26 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   adminEventStatus,
   adminSetTournamentConfig,
+  adminSetXpRaceConfig,
   adminSetSurvivalConfig,
-  adminForceResolveRound,
-  adminRebuildBracket,
   adminCancelTournament,
   adminFinalizeXpRaceNow,
   adminUnfinalizeXpRace,
 } from '../../services/quizApi'
 import { invalidateTournamentConfig } from '../../services/tournament'
+import { invalidateXpRaceConfig } from '../../services/xpTrka'
 
-// Kontrola vikend eventa iz admin panela (Prioritet 1).
+// Prozori eventa u admin panelu (Prioritet 1).
 //
 // Vikend eventi su jedino u igri što ima ROK. Do sada se prozor mijenjao samo
-// skriptom s računara — ako nešto zapne u subotu uveče, to je prekasno. Ovdje
-// su poluge: prozor, pomjeranje, prisilno zatvaranje runde, ponovna izgradnja
-// bracketa, otkazivanje i finalizacija XP trke.
+// skriptom s računara — ako nešto zapne u subotu uveče, to je prekasno.
+//
+// XP trka i 1v1 turnir su ODVOJENI eventi, svaki sa svojim prozorom: trka može
+// trajati i kad duela nema, i obrnuto. Dok config/xpRace ne postoji, trka radi
+// po prozoru turnira (server pada nazad na njega) — prvi upis je razdvaja.
+//
+// Sve što se radi NAD tekućim turnirom (rezultati, rokovi rundi, pobjednici,
+// zaglavljeni dueli) stoji u TurnirKontrola.jsx.
 //
 // Sve termine unosiš i vidiš po BiH vremenu; prema serveru idu kao ms epoch.
 
@@ -51,6 +56,7 @@ export default function EventKontrola() {
   const [poruka, setPoruka] = useState('')
   const [radi, setRadi] = useState('')
   const [t, setT] = useState(null) // radna kopija prozora turnira
+  const [x, setX] = useState(null) // radna kopija prozora XP trke
   const [s, setS] = useState(null) // radna kopija prozora Preživljavanja
 
   const ucitaj = useCallback(async () => {
@@ -64,6 +70,13 @@ export default function EventKontrola() {
       regCloseAt: st.tournament?.regCloseAt || 0,
       openAt: st.tournament?.openAt || 0,
       closeAt: st.tournament?.closeAt || 0,
+    })
+    setX({
+      enabled: st.xpRace?.enabled !== false,
+      key: st.xpRace?.key || '',
+      label: st.xpRace?.label || 'XP trka',
+      openAt: st.xpRace?.openAt || 0,
+      closeAt: st.xpRace?.closeAt || 0,
     })
     setS({
       enabled: st.survival?.enabled !== false,
@@ -83,6 +96,7 @@ export default function EventKontrola() {
     try {
       await fn()
       invalidateTournamentConfig()
+      invalidateXpRaceConfig()
       await ucitaj()
       setPoruka(uspjeh)
     } catch (e) {
@@ -92,7 +106,7 @@ export default function EventKontrola() {
     }
   }
 
-  if (!stanje || !t || !s) {
+  if (!stanje || !t || !x || !s) {
     return (
       <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
         <p className="text-sm text-slate-400">Učitavam stanje eventa…</p>
@@ -126,7 +140,7 @@ export default function EventKontrola() {
 
   return (
     <section className="mt-4 rounded-2xl border border-teal-200 bg-teal-50 p-4">
-      <h2 className="font-title text-lg font-extrabold text-teal-900">📅 Kontrola eventa</h2>
+      <h2 className="font-title text-lg font-extrabold text-teal-900">📅 Prozori eventa</h2>
       <p className="mt-0.5 text-xs text-teal-700">
         Server kešira config 30 s — izmjena stupa na snagu najkasnije za pola minute.
       </p>
@@ -206,71 +220,126 @@ export default function EventKontrola() {
         </button>
       </div>
 
-      {/* --- Bracket --- */}
+      {/* --- Otkazivanje turnira. Sve ostalo nad bracketom (rezultati, rokovi
+              rundi, pobjednici, zaglavljeni dueli) je u „1v1 turnir" ispod. --- */}
       <div className="mt-2 rounded-xl bg-white p-3">
-        <p className="text-sm font-bold text-slate-800">Bracket</p>
+        <p className="text-sm font-bold text-slate-800">Otkazivanje turnira</p>
         <p className="mt-0.5 text-xs text-slate-500">
           {stanje.turnir
-            ? `status: ${stanje.turnir.status}${stanje.turnir.cancelled ? ' (otkazan)' : ''} · runda ${stanje.turnir.currentRound}/${stanje.turnir.rounds} · ${stanje.prijava} prijavljenih`
-            : `još nije napravljen · ${stanje.prijava} prijavljenih`}
+            ? `bracket: ${stanje.turnir.status}${stanje.turnir.cancelled ? ' (otkazan)' : ''} · runda ${stanje.turnir.currentRound}/${stanje.turnir.rounds} · ${stanje.prijava} prijavljenih`
+            : `bracket još nije napravljen · ${stanje.prijava} prijavljenih`}
         </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Dugme
-            radi={radi === 'round'}
-            onClick={() =>
-              pokreni('round', adminForceResolveRound, 'Runda zatvorena.')
-            }
-          >
-            Zatvori rundu
-          </Dugme>
-          <Dugme
-            radi={radi === 'rebuild'}
-            tip="tamno"
-            onClick={() =>
-              pokreni('rebuild', adminRebuildBracket, 'Bracket napravljen nanovo.')
-            }
-          >
-            Napravi bracket nanovo
-          </Dugme>
-        </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <Dugme
             radi={radi === 'cancel'}
             tip="opasno"
-            onClick={() =>
+            onClick={() => {
+              if (!window.confirm('Turnir se gasi, bracket se označava otkazanim. Nastaviti?')) return
               pokreni('cancel', () => adminCancelTournament(false), 'Turnir otkazan i ugašen.')
-            }
+            }}
           >
             Otkaži turnir
           </Dugme>
           <Dugme
             radi={radi === 'cancelp'}
             tip="opasno"
-            onClick={() =>
+            onClick={() => {
+              if (!window.confirm('Turnir se gasi i SVE prijave se brišu. Nastaviti?')) return
               pokreni(
                 'cancelp',
                 () => adminCancelTournament(true),
                 'Turnir otkazan, prijave obrisane.'
               )
-            }
+            }}
           >
             Otkaži + obriši prijave
           </Dugme>
         </div>
       </div>
 
-      {/* --- XP trka --- */}
+      {/* --- XP trka: zaseban event, zaseban prozor --- */}
       <div className="mt-2 rounded-xl bg-white p-3">
-        <p className="text-sm font-bold text-slate-800">XP trka</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold text-slate-800">XP trka</p>
+          <span
+            className={`rounded-lg px-2 py-0.5 text-[11px] font-bold ${
+              stanje.xpOdvojen ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+            }`}
+          >
+            {stanje.xpOdvojen ? 'zaseban event' : 'dijeli prozor s turnirom'}
+          </span>
+        </div>
         <p className="mt-0.5 text-xs text-slate-500">
-          {stanje.xpTrka?.finalized ? 'finalizovana ✓' : 'nije finalizovana'}
+          {stanje.xpTrka?.finalized ? 'finalizovana ✓' : 'nije finalizovana'} ·{' '}
+          {stanje.xpTrka?.ucesnika ?? 0} na ljestvici
         </p>
+        {!stanje.xpOdvojen && (
+          <p className="mt-1.5 rounded-lg bg-amber-50 p-2 text-xs font-medium text-amber-700">
+            Trka još nema vlastiti prozor pa prati turnir. Spremanjem ispod je odvajaš — od tada je
+            možeš produžiti ili ugasiti bez diranja duela.
+          </p>
+        )}
+
+        <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+          <Polje label="Trka od" value={x.openAt} onChange={(v) => setX({ ...x, openAt: v })} />
+          <Polje label="Trka do" value={x.closeAt} onChange={(v) => setX({ ...x, closeAt: v })} />
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500">Pomjeri kraj:</span>
+          {[-24, -6, 6, 24].map((h) => (
+            <button
+              key={h}
+              onClick={() => setX((y) => ({ ...y, closeAt: y.closeAt + h * H }))}
+              className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-bold text-slate-600 active:bg-slate-50"
+            >
+              {h > 0 ? `+${h}h` : `${h}h`}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <label className="text-xs font-semibold text-slate-500">
+            Ključ trke
+            <input
+              value={x.key}
+              onChange={(e) => setX({ ...x, key: e.target.value })}
+              className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800 outline-none focus:border-teal-500"
+            />
+          </label>
+          <label className="mt-5 flex items-center gap-2 text-xs font-bold text-slate-600">
+            <input
+              type="checkbox"
+              checked={x.enabled}
+              onChange={(e) => setX({ ...x, enabled: e.target.checked })}
+              className="h-4 w-4"
+            />
+            Uključena
+          </label>
+        </div>
+
+        {stanje.xpRace?.key && x.key !== stanje.xpRace.key && (
+          <p className="mt-2 rounded-lg bg-amber-50 p-2 text-xs font-medium text-amber-700">
+            Mijenjaš ključ — ljestvica trke živi pod ključem, pa ovo pravi NOVU trku od nule. Stari
+            rezultati ostaju pod „{stanje.xpRace.key}".
+          </p>
+        )}
+
+        <button
+          onClick={() => pokreni('xcfg', () => adminSetXpRaceConfig(x), 'Prozor XP trke spremljen.')}
+          disabled={!!radi}
+          className="mt-2 w-full rounded-xl bg-amber-600 py-2.5 text-sm font-bold text-white active:bg-amber-700 disabled:opacity-50"
+        >
+          {radi === 'xcfg' ? 'Spremam…' : 'Spremi prozor XP trke'}
+        </button>
+
         <div className="mt-2 flex flex-wrap gap-2">
           <Dugme
             radi={radi === 'fin'}
-            onClick={() =>
+            onClick={() => {
+              if (!window.confirm('Nagrade (500/300/150 XP) se isplaćuju odmah. Nastaviti?')) return
               pokreni('fin', adminFinalizeXpRaceNow, 'XP trka finalizovana, nagrade isplaćene.')
-            }
+            }}
           >
             Finalizuj odmah
           </Dugme>

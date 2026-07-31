@@ -304,3 +304,56 @@ export async function adminFinalizeXpRaceNow() {
 export async function adminUnfinalizeXpRace() {
   return (await adminUnfinalizeXpRaceFn({ confirmDoublePay: true })).data
 }
+
+// --- Admin: XP trka kao zaseban event ---------------------------------------
+const adminSetXpRaceConfigFn = httpsCallable(functions, 'adminSetXpRaceConfig')
+
+export async function adminSetXpRaceConfig(cfg) {
+  return (await adminSetXpRaceConfigFn(cfg)).data
+}
+
+// --- Admin: 1v1 turnir, poluge tokom eventa ---------------------------------
+const adminTurnirPregledFn = httpsCallable(functions, 'adminTurnirPregled')
+const adminSetRoundDeadlinesFn = httpsCallable(functions, 'adminSetRoundDeadlines')
+const adminPruneEmptyMatchesFn = httpsCallable(functions, 'adminPruneEmptyMatches')
+const adminSetMatchWinnerFn = httpsCallable(functions, 'adminSetMatchWinner')
+const adminResetDuelFn = httpsCallable(functions, 'adminResetDuel')
+const adminZatvoriZaglavljeneFn = httpsCallable(functions, 'adminZatvoriZaglavljene')
+const adminSetParticipantFn = httpsCallable(functions, 'adminSetParticipant')
+const adminPodsjetiNeodigraleFn = httpsCallable(functions, 'adminPodsjetiNeodigrale')
+
+// → { tid, bracket, status, currentRound, rounds, roundDeadlines, ucesnici,
+//     mecevi, zaglavljene, neodigrali, problemi, now }
+export async function adminTurnirPregled() {
+  return (await adminTurnirPregledFn({})).data
+}
+
+// `auto: true` iznova računa rokove po BiH terminima (08/14/20).
+export async function adminSetRoundDeadlines(arg) {
+  const data = arg === 'auto' ? { auto: true } : { roundDeadlines: arg }
+  return (await adminSetRoundDeadlinesFn(data)).data
+}
+
+export async function adminPruneEmptyMatches() {
+  return (await adminPruneEmptyMatchesFn({})).data
+}
+
+export async function adminSetMatchWinner(matchId, winner) {
+  return (await adminSetMatchWinnerFn({ matchId, winner })).data
+}
+
+export async function adminResetDuel(uid, matchId) {
+  return (await adminResetDuelFn({ uid, matchId })).data
+}
+
+export async function adminZatvoriZaglavljene() {
+  return (await adminZatvoriZaglavljeneFn({})).data
+}
+
+export async function adminSetParticipant(uid, dodaj = true) {
+  return (await adminSetParticipantFn({ uid, dodaj })).data
+}
+
+export async function adminPodsjetiNeodigrale() {
+  return (await adminPodsjetiNeodigraleFn({})).data
+}

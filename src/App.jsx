@@ -16,6 +16,7 @@ import Arena from './pages/Arena'
 import Okviri from './pages/Okviri'
 import Prezivljavanje from './pages/Prezivljavanje'
 import Turnir from './pages/Turnir'
+import XpTrka from './pages/XpTrka'
 import Duel from './pages/Duel'
 import Klan from './pages/Klan'
 import Profil from './pages/Profil'
@@ -71,6 +72,7 @@ function App() {
               <Route path="/okviri" element={<Okviri />} />
               <Route path="/prezivljavanje" element={<Prezivljavanje />} />
               <Route path="/turnir" element={<Turnir />} />
+              <Route path="/xp-trka" element={<XpTrka />} />
               <Route path="/duel" element={<Duel />} />
               <Route path="/klan" element={<Klan />} />
               <Route path="/profil" element={<Profil />} />

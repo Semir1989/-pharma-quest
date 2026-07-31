@@ -14,6 +14,7 @@
     "test-notifikacije": "node scripts/test-notifikacije.mjs",
     "test-klanovi": "node scripts/test-klanovi.mjs",
     "test-duel": "node scripts/test-duel.mjs",
+    "test-raspored": "node scripts/test-raspored.mjs",
     "test-klanrat": "node scripts/test-klanrat.mjs",
     "test-questovi": "node scripts/test-questovi.mjs",
     "pokreni-rat": "node scripts/pokreni-klanski-rat.js",
@@ -26,7 +27,8 @@
     "postavi-rekord": "node scripts/postavi-survival-rekord.js",
     "restartuj-survival": "node scripts/restartuj-survival-sedmicu.js",
     "postavi-admina": "node scripts/postavi-admina.js",
-    "postavi-turnir": "node scripts/postavi-turnir-config.js"
+    "postavi-turnir": "node scripts/postavi-turnir-config.js",
+    "popravi-turnir": "node scripts/popravi-turnir.js"
   },
   "dependencies": {
     "firebase": "^12.16.0",

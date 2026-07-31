@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   getTournamentConfig,
-  getXpRace,
-  subscribeTournamentLeaderboard,
   subscribeTournament,
   subscribeParticipants,
   subscribeMatches,
@@ -13,21 +11,25 @@ import {
 } from '../services/tournament'
 import { registerForDuel } from '../services/quizApi'
 import { track } from '../services/analytics'
-import Avatar from '../components/Avatar'
+import { formatCountdownLong } from '../utils/periods'
+import { useNow } from '../utils/useNow'
 import Bracket from '../components/Bracket'
 
-// Vikend turnir (Faza 2): XP trka + 1v1 duel bracket.
+// 1v1 ARENA — samo dueli.
+//
+// XP trka je odvojena u vlastiti event (/xp-trka). Ranije su dijelile ovaj
+// ekran, pa je ispod bracketa stajala ljestvica koja s duelima nema veze i
+// gurala je stablo turnira uvis.
 export default function Turnir() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const now = useNow()
   const [cfg, setCfg] = useState(undefined)
-  const [rows, setRows] = useState([])
   const [tour, setTour] = useState(null)
   const [participants, setParticipants] = useState({})
   const [matches, setMatches] = useState([])
   const [registering, setRegistering] = useState(false)
   const [regError, setRegError] = useState('')
-  const [xpRace, setXpRace] = useState(null)
   const [amRegistered, setAmRegistered] = useState(false)
   const [participantCount, setParticipantCount] = useState(0)
 
@@ -37,15 +39,9 @@ export default function Turnir() {
 
   useEffect(() => {
     if (!cfg?.key) return
-    getXpRace(cfg.key).then(setXpRace).catch(() => setXpRace(null))
-  }, [cfg?.key])
-
-  useEffect(() => {
-    if (!cfg?.key) return
-    const u1 = subscribeTournamentLeaderboard(cfg.key, setRows)
-    const u2 = subscribeTournament(cfg.key, setTour)
-    const u3 = subscribeMatches(cfg.key, setMatches)
-    return () => { u1(); u2(); u3() }
+    const u1 = subscribeTournament(cfg.key, setTour)
+    const u2 = subscribeMatches(cfg.key, setMatches)
+    return () => { u1(); u2() }
   }, [cfg?.key])
 
   // Imena i avatari učesnika trebaju SAMO bracketu. Dok se bracket ne napravi
@@ -73,10 +69,12 @@ export default function Turnir() {
     osvjeziPrijavu()
   }, [osvjeziPrijavu])
 
-  const now = Date.now()
-  const playState = !cfg || !cfg.enabled ? 'off' : now < cfg.openAt ? 'soon' : now > cfg.closeAt ? 'ended' : 'live'
+  // Kraj turnira je rok POSLJEDNJE runde, a ne closeAt iz configa: raspored
+  // rundi ide po BiH terminima i ne mora se poklopiti s prozorom eventa.
+  const kraj = tour?.roundDeadlines?.[(tour?.rounds || 1) - 1] || cfg?.closeAt
+  const playState =
+    !cfg || !cfg.enabled ? 'off' : now < cfg.openAt ? 'soon' : now > (kraj || 0) ? 'ended' : 'live'
   const regState = !cfg ? 'off' : now < cfg.regOpenAt ? 'soon' : now > cfg.regCloseAt ? 'closed' : 'open'
-  const rewardMap = Object.fromEntries((xpRace?.top || []).map((t) => [t.uid, t.reward]))
 
   async function register() {
     setRegError('')
@@ -98,27 +96,53 @@ export default function Turnir() {
       ? matches.find((m) => m.round === tour.currentRound && (m.p1 === user?.uid || m.p2 === user?.uid))
       : null
   const iPlayed = myMatch ? (myMatch.p1 === user?.uid ? myMatch.p1Played : myMatch.p2Played) : false
+  const protivnik = myMatch
+    ? participants[myMatch.p1 === user?.uid ? myMatch.p2 : myMatch.p1]?.name
+    : null
+  const rokRunde = tour?.roundDeadlines?.[(tour?.currentRound || 1) - 1]
 
   return (
     <div className="p-4">
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/arena')}
         className="mb-3 flex items-center gap-1 text-sm font-bold text-slate-500 active:text-slate-700"
       >
-        ← Nazad
+        ← Arena
       </button>
 
       {/* Zaglavlje */}
       <div className="rounded-3xl p-5 text-white shadow" style={{ background: 'linear-gradient(180deg, #0f5750 0%, #0a3b36 100%)' }}>
-        <h1 className="font-title text-2xl font-extrabold">Vikend turnir</h1>
-        <p className="text-sm text-teal-100">XP trka i 1v1 dueli</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-title text-2xl font-extrabold">⚔️ 1v1 Arena</h1>
+            <p className="text-sm text-teal-100">Turnir na ispadanje, 10 pitanja po duelu</p>
+          </div>
+          {tour?.status === 'active' && (
+            <span className="shrink-0 rounded-xl bg-white/15 px-2.5 py-1 text-[11px] font-bold">
+              Runda {tour.currentRound}/{tour.rounds}
+            </span>
+          )}
+        </div>
+
         <div className="mt-4 rounded-2xl bg-white/10 p-4 text-center">
           {cfg === undefined ? (
             <p className="text-sm text-teal-100">Učitavam…</p>
+          ) : playState === 'live' && tour?.status === 'active' && rokRunde ? (
+            <>
+              <p className="text-xs font-semibold text-teal-100">Runda {tour.currentRound} se zatvara za</p>
+              <p className="font-title text-2xl font-extrabold tabular-nums">
+                {formatCountdownLong((rokRunde - now) / 1000)}
+              </p>
+              <p className="mt-1 text-[11px] text-teal-200">{dugo(rokRunde)}</p>
+            </>
           ) : playState === 'live' ? (
-            <p className="text-sm text-teal-100">Turnir je u toku — završava <b className="text-amber-300">{fmt(cfg.closeAt)}</b></p>
+            <p className="text-sm text-teal-100">
+              Turnir je u toku — parovi se izvlače uskoro
+            </p>
           ) : playState === 'soon' ? (
-            <p className="text-sm text-teal-100">Igra počinje <b className="text-amber-300">{fmt(cfg.openAt)}</b></p>
+            <p className="text-sm text-teal-100">
+              Borbe počinju <b className="text-amber-300">{dugo(cfg.openAt)}</b>
+            </p>
           ) : playState === 'ended' ? (
             <p className="text-sm text-teal-100">Turnir je završen</p>
           ) : (
@@ -130,21 +154,19 @@ export default function Turnir() {
       {/* Duel sekcija */}
       {cfg?.enabled && (
         <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="font-title text-lg font-extrabold text-slate-900">1v1 Dueli</h2>
-
           {/* Prijave */}
           {!tour && regState === 'soon' && (
-            <p className="mt-2 text-sm text-slate-500">Prijave se otvaraju {fmt(cfg.regOpenAt)}.</p>
+            <p className="text-sm text-slate-500">Prijave se otvaraju {dugo(cfg.regOpenAt)}.</p>
           )}
           {!tour && regState === 'open' && (
             amRegistered ? (
-              <p className="mt-2 text-sm text-teal-700 font-semibold">
-                Prijavljen ✓ · {participantCount} učesnika · bracket se pravi {fmt(cfg.regCloseAt)}
+              <p className="text-sm font-semibold text-teal-700">
+                Prijavljen ✓ · {participantCount} učesnika · parovi se izvlače {dugo(cfg.regCloseAt)}
               </p>
             ) : (
               <>
-                <p className="mt-2 text-sm text-slate-500">
-                  Prijavi se do {fmt(cfg.regCloseAt)}. Nasumično ćeš biti uparen s protivnikom.
+                <p className="text-sm text-slate-500">
+                  Prijavi se do {dugo(cfg.regCloseAt)}. Nasumično ćeš biti uparen s protivnikom.
                 </p>
                 <button
                   onClick={register}
@@ -158,20 +180,25 @@ export default function Turnir() {
             )
           )}
           {!tour && regState === 'closed' && (
-            <p className="mt-2 text-sm text-slate-500">Prijave su zatvorene — bracket se generiše uskoro.</p>
+            <p className="text-sm text-slate-500">Prijave su zatvorene — parovi se izvlače uskoro.</p>
           )}
 
           {/* Otkazan */}
           {tour?.status === 'finished' && tour?.cancelled && (
-            <p className="mt-2 text-sm text-slate-500">Turnir je otkazan — premalo prijava.</p>
+            <p className="text-sm text-slate-500">Turnir je otkazan — premalo prijava.</p>
           )}
 
           {/* Aktivan */}
           {tour?.status === 'active' && (
-            <div className="mt-2">
+            <>
               {myMatch && !iPlayed ? (
                 <>
-                  <p className="text-sm font-semibold text-teal-700">Tvoj duel je spreman — runda {tour.currentRound}!</p>
+                  <p className="text-sm font-semibold text-teal-700">
+                    Tvoj duel je spreman{protivnik ? ` — protiv: ${protivnik}` : ''}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    10 pitanja, 2 minute za cijeli duel. Ko ne odigra do roka, gubi bez borbe.
+                  </p>
                   <button
                     onClick={() => navigate('/duel')}
                     className="mt-3 w-full rounded-2xl bg-teal-700 py-3.5 font-title font-extrabold text-white active:bg-teal-800"
@@ -181,81 +208,62 @@ export default function Turnir() {
                 </>
               ) : myMatch && iPlayed ? (
                 <p className="text-sm text-slate-500">
-                  Odigrao si duel. Rezultat protivnika je skriven — runda se zatvara {fmt(tour.roundDeadlines?.[tour.currentRound - 1])}.
+                  Odigrao/la si duel. Rezultat protivnika je skriven — runda se zatvara{' '}
+                  {dugo(rokRunde)}.
                 </p>
               ) : amRegistered ? (
-                <p className="text-sm text-slate-500">Ispao si iz turnira. Prati bracket ispod.</p>
+                <p className="text-sm text-slate-500">
+                  {matches.some((m) => m.winner === user?.uid)
+                    ? 'Ispao/la si iz turnira. Prati bracket ispod.'
+                    : 'Nemaš meč u ovoj rundi — čekaj sljedeću ili prati bracket ispod.'}
+                </p>
               ) : (
                 <p className="text-sm text-slate-500">Nisi u ovom turniru. Prati bracket ispod.</p>
               )}
-            </div>
+            </>
           )}
 
           {/* Pobjednik */}
           {tour?.status === 'finished' && !tour?.cancelled && tour?.winnerUid && (
-            <p className="mt-2 text-sm font-semibold text-teal-700">
-              {tour.winnerUid === user?.uid ? '🏆 Ti si šampion turnira!' : `Šampion: ${participants[tour.winnerUid]?.name || '—'}`}
+            <p className="text-sm font-semibold text-teal-700">
+              {tour.winnerUid === user?.uid
+                ? '🏆 Ti si šampion turnira!'
+                : `🏆 Šampion: ${participants[tour.winnerUid]?.name || '—'}`}
             </p>
-          )}
-
-          {/* Bracket */}
-          {matches.length > 0 && (
-            <div className="mt-4">
-              <Bracket matches={matches} participants={participants} myUid={user?.uid} />
-            </div>
           )}
         </section>
       )}
 
-      {/* XP trka leaderboard */}
-      <section className="mt-5">
-        <h2 className="mb-2 px-1 font-title text-lg font-extrabold text-slate-900">
-          XP trka — poredak
-          {xpRace?.finalized && <span className="ml-2 text-sm font-medium text-teal-600">· nagrade dodijeljene</span>}
-        </h2>
-        {rows.length === 0 ? (
-          <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-400 shadow-sm">
-            {playState === 'live' ? 'Još niko nije osvojio XP — budi prvi!' : 'Nema rezultata.'}
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {rows.map((r, i) => {
-              const reward = rewardMap[r.uid]
-              return (
-                <div
-                  key={r.uid}
-                  className={`flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ${r.uid === user?.uid ? 'ring-2 ring-teal-500' : ''}`}
-                >
-                  <span className={`w-6 text-center font-extrabold ${medal(i)}`}>{i + 1}</span>
-                  <Avatar id={r.avatar} size={36} />
-                  <span className="min-w-0 flex-1 truncate font-semibold text-slate-800">{r.name}</span>
-                  {reward > 0 && (
-                    <span className="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">+{reward}</span>
-                  )}
-                  <span className="font-title font-extrabold text-amber-600">{r.xp} XP</span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+      {/* Bracket */}
+      {matches.length > 0 && (
+        <section className="mt-5">
+          <h2 className="mb-2 px-1 font-title text-lg font-extrabold text-slate-900">
+            Bracket
+            <span className="ml-2 text-sm font-medium text-slate-400">
+              {tour?.participantCount || participantCount} učesnika
+            </span>
+          </h2>
+          <Bracket
+            matches={matches}
+            participants={participants}
+            myUid={user?.uid}
+            currentRound={tour?.currentRound || 0}
+            roundDeadlines={tour?.roundDeadlines || []}
+          />
+        </section>
+      )}
     </div>
   )
 }
 
-function medal(i) {
-  if (i === 0) return 'text-amber-500'
-  if (i === 1) return 'text-slate-400'
-  if (i === 2) return 'text-orange-400'
-  return 'text-slate-400'
-}
-
-// "26.07. u 18:00" — evropski format, 24h, BiH vrijeme (bez oslanjanja na locale).
-function fmt(ms) {
+// "petak, 01.08. u 08:00" — evropski format, 24h, BiH vrijeme (bez oslanjanja
+// na locale pregledača).
+function dugo(ms) {
   if (!ms) return ''
   const p = Object.fromEntries(
     new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Europe/Sarajevo',
+      weekday: 'long',
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -265,5 +273,6 @@ function fmt(ms) {
       .formatToParts(new Date(ms))
       .map((x) => [x.type, x.value])
   )
-  return `${p.day}.${p.month}. u ${p.hour}:${p.minute}`
+  const dan = { Monday: 'ponedjeljak', Tuesday: 'utorak', Wednesday: 'srijeda', Thursday: 'četvrtak', Friday: 'petak', Saturday: 'subota', Sunday: 'nedjelja' }[p.weekday] || ''
+  return `${dan}, ${p.day}.${p.month}. u ${p.hour}:${p.minute}`
 }

@@ -59,6 +59,7 @@ import {
   duelPreostalo,
   resolveMatch,
 } from './duel-pravila.js'
+import { rasporedRundi, brojRundi, paroviPrveRunde } from './turnir-raspored.js'
 // Klanski rat. Prefiks `rat*` je namjeran: imena poput `bonusi` ili `mnozilac`
 // su preopšta za fajl od 4600 linija, a `objekat`/`resolveMatch` bi se sudarili
 // s postojećim funkcijama.
@@ -443,12 +444,9 @@ async function activeEventsFor(uid) {
     const eliminated = run && run.week === survivalWeekKey() && run.active === false
     if (!eliminated) events.push('survival')
   }
-  // Turnir: unutar prozora eventa.
-  const t = await getTournamentConfig()
-  const now = Date.now()
-  if (t?.enabled && t.key && !(t.openAt && now < t.openAt) && !(t.closeAt && now > t.closeAt)) {
-    events.push('tournament')
-  }
+  // Questovi tipa "osvoji XP tokom eventa" prate prozor XP TRKE, jer se mjere
+  // metrikom tournamentXp koju puni addWeekendXp.
+  if (xpRacePoTeku(await getXpRaceConfig())) events.push('tournament')
   return events
 }
 
@@ -753,7 +751,7 @@ async function purgeFromBoards(uid) {
   const updates = { [`leaderboard/global/${uid}`]: null }
   updates[`leaderboard/weekly/${weeklyKey()}/${uid}`] = null
   updates[`survival/${survivalWeekKey()}/${uid}`] = null
-  const cfg = await getTournamentConfig()
+  const cfg = await getXpRaceConfig()
   if (cfg?.key) updates[`tournament/${cfg.key}/${uid}`] = null
   await rtdb.ref().update(updates)
 }
@@ -1485,10 +1483,34 @@ async function getTournamentConfig() {
   return tournamentConfigCache
 }
 
-// Dodaj osvojeni XP na turnirsku listu ako smo unutar prozora eventa.
+// XP trka je ZASEBAN event od 1v1 turnira: svoj prozor, svoj ključ, svoje
+// gašenje. Do sada su dijelili config/tournament, pa se trka nije mogla
+// produžiti ni ugasiti bez diranja duela.
+//
+// Dok config/xpRace ne postoji, trka pada nazad na prozor turnira — tako
+// zatečeni event nastavi raditi i prije nego admin postavi novi prozor.
+let xpRaceConfigCache = null
+let xpRaceConfigAt = 0
+async function getXpRaceConfig() {
+  if (xpRaceConfigCache && Date.now() - xpRaceConfigAt < 30000) return xpRaceConfigCache
+  const snap = await db.doc('config/xpRace').get()
+  xpRaceConfigCache = snap.exists ? snap.data() : await getTournamentConfig()
+  xpRaceConfigAt = Date.now()
+  return xpRaceConfigCache
+}
+
+// Je li trka trenutno otvorena (unutar prozora i uključena).
+function xpRacePoTeku(cfg, now = Date.now()) {
+  if (!cfg || !cfg.enabled || !cfg.key) return false
+  if (cfg.openAt && now < cfg.openAt) return false
+  if (cfg.closeAt && now > cfg.closeAt) return false
+  return true
+}
+
+// Dodaj osvojeni XP na listu XP trke ako smo unutar prozora eventa.
 async function addWeekendXp(uid, delta) {
   if (!delta || delta <= 0) return
-  const cfg = await getTournamentConfig()
+  const cfg = await getXpRaceConfig()
   if (!cfg || !cfg.enabled || !cfg.key) return
   const now = Date.now()
   if ((cfg.openAt && now < cfg.openAt) || (cfg.closeAt && now > cfg.closeAt)) return
@@ -1604,6 +1626,15 @@ export const registerForDuel = onCall(async (request) => {
 })
 
 // Generisanje bracketa iz prijavljenih (na kraju prozora prijava).
+//
+// Bracket se kroji po broju prijavljenih: višak mjesta do potencije dvojke
+// postaje BYE (igrač bez protivnika u prvoj rundi), a ne prazan meč. Ranije se
+// popunjavalo redom, pa je 20 prijavljenih davalo 10 punih i 6 potpuno praznih
+// mečeva — praznine su visile u prikazu i gurale stvarne mečeve van ekrana.
+// Vidi paroviPrveRunde() u turnir-raspored.js.
+//
+// Rokovi rundi idu u ljudske termine po BiH vremenu (08/14/20), ne na jednake
+// dijelove prozora — vidi rasporedRundi().
 async function buildBracket(tid, cfg) {
   const tRef = db.doc(`tournaments/${tid}`)
   const partSnap = await db.collection(`tournaments/${tid}/participants`).get()
@@ -1616,10 +1647,9 @@ async function buildBracket(tid, cfg) {
     return
   }
   participants = shuffle(participants)
-  let size = 2
-  while (size < participants.length) size *= 2
-  const rounds = Math.round(Math.log2(size))
-  const seats = [...participants, ...Array(size - participants.length).fill(null)]
+  const rounds = brojRundi(participants.length)
+  const size = 2 ** rounds
+  const parovi = paroviPrveRunde(participants)
 
   const qids = (await getActiveQuestions()).map((q) => q.id)
   const pickQs = () => shuffle(qids).slice(0, DUEL_QUESTIONS)
@@ -1629,19 +1659,15 @@ async function buildBracket(tid, cfg) {
   for (let r = 1; r <= rounds; r++) {
     const count = size / 2 ** r
     for (let s = 0; s < count; s++) {
-      const p1 = r === 1 ? seats[s * 2] || null : null
-      const p2 = r === 1 ? seats[s * 2 + 1] || null : null
+      const [p1, p2] = r === 1 ? parovi[s] : [null, null]
       batch.set(mcol.doc(`r${r}s${s}`), {
-        round: r, slot: s, p1, p2, questionIds: pickQs(),
+        round: r, slot: s, p1: p1 || null, p2: p2 || null, questionIds: pickQs(),
         p1Score: null, p2Score: null, p1Played: false, p2Played: false,
         winner: null, status: 'pending',
       })
     }
   }
-  const start = cfg.openAt || Date.now()
-  const end = cfg.closeAt || Date.now() + 48 * 3600000
-  const step = (end - start) / rounds
-  const roundDeadlines = Array.from({ length: rounds }, (_, i) => Math.round(start + step * (i + 1)))
+  const roundDeadlines = rasporedRundi(cfg.openAt || Date.now(), rounds)
   batch.set(
     tRef,
     { status: 'active', key: tid, rounds, size, participantCount: participants.length, currentRound: 1, roundDeadlines, builtAt: FieldValue.serverTimestamp() },
@@ -1652,9 +1678,21 @@ async function buildBracket(tid, cfg) {
 }
 
 // Prosljeđivanje pobjednika u sljedeću rundu (fiksni bracket).
+//
+// Meč iznad može nedostajati ako je počišćen kao prazan (adminPruneEmptyMatches).
+// To se po definiciji dešava samo iznad grana bez ijednog igrača, pa nema šta ni
+// proslijediti — ali update() bi na nepostojećem dokumentu bacio grešku i srušio
+// zatvaranje CIJELE runde, pa se izostanak ovdje samo preskoči.
 async function propagate(tid, round, slot, winner) {
+  if (!winner) return
   const field = slot % 2 === 0 ? 'p1' : 'p2'
-  await db.doc(`tournaments/${tid}/matches/r${round + 1}s${Math.floor(slot / 2)}`).update({ [field]: winner })
+  const ref = db.doc(`tournaments/${tid}/matches/r${round + 1}s${Math.floor(slot / 2)}`)
+  const snap = await ref.get()
+  if (!snap.exists) {
+    console.warn(`propagate: meč r${round + 1}s${Math.floor(slot / 2)} ne postoji (${tid})`)
+    return
+  }
+  await ref.update({ [field]: winner })
 }
 
 // Riješi bye/prazne mečeve u rundi (igrač bez protivnika odmah prolazi).
@@ -1750,20 +1788,25 @@ async function awardDuelFrames(tid, rounds, winner) {
 }
 
 // Scheduled tick: gradi bracket i zatvara runde po rasporedu (svakih 30 min).
+//
+// Trka i turnir su ODVOJENI eventi s vlastitim prozorima, pa svaki ima svoju
+// granu: gašenje jednog ne smije zaustaviti drugi.
 export const tournamentTick = onSchedule('every 30 minutes', async () => {
-  const snap = await db.doc('config/tournament').get()
-  const cfg = snap.exists ? snap.data() : null
-  if (!cfg || !cfg.enabled || !cfg.key) return
-  const tid = cfg.key
   const now = Date.now()
 
-  // XP trka: finalizacija na kraju prozora (jednom, nezavisno od duela).
-  if (cfg.closeAt && now >= cfg.closeAt) {
-    const xr = await db.doc(`xpRaces/${tid}`).get()
-    if (!xr.exists || !xr.data().finalized) await finalizeXpRace(tid)
+  // --- XP trka: finalizacija na kraju vlastitog prozora (jednom) ---
+  const xcfgSnap = await db.doc('config/xpRace').get()
+  const tcfgSnap = await db.doc('config/tournament').get()
+  const xcfg = xcfgSnap.exists ? xcfgSnap.data() : tcfgSnap.exists ? tcfgSnap.data() : null
+  if (xcfg?.enabled && xcfg.key && xcfg.closeAt && now >= xcfg.closeAt) {
+    const xr = await db.doc(`xpRaces/${xcfg.key}`).get()
+    if (!xr.exists || !xr.data().finalized) await finalizeXpRace(xcfg.key)
   }
 
-  // Duel bracket.
+  // --- Duel bracket ---
+  const cfg = tcfgSnap.exists ? tcfgSnap.data() : null
+  if (!cfg || !cfg.enabled || !cfg.key) return
+  const tid = cfg.key
   const tSnap = await db.doc(`tournaments/${tid}`).get()
   if (!tSnap.exists) {
     if (cfg.regCloseAt && now >= cfg.regCloseAt) await buildBracket(tid, cfg)
@@ -3201,8 +3244,8 @@ export const adminCancelTournament = onCall(async (request) => {
 // već finalizovana — dvostruka isplata nagrada ide samo preko poništavanja.
 export const adminFinalizeXpRaceNow = onCall(async (request) => {
   const uid = requireAdmin(request)
-  const cfg = await getTournamentConfig()
-  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const cfg = await getXpRaceConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivne XP trke.')
   const xr = await db.doc(`xpRaces/${cfg.key}`).get()
   if (xr.exists && xr.data().finalized) {
     throw new HttpsError('failed-precondition', 'XP trka je već finalizovana.')
@@ -3220,11 +3263,37 @@ export const adminUnfinalizeXpRace = onCall(async (request) => {
   if (request.data?.confirmDoublePay !== true) {
     throw new HttpsError('failed-precondition', 'Potrebna je izričita potvrda dvostruke isplate.')
   }
-  const cfg = await getTournamentConfig()
-  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const cfg = await getXpRaceConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivne XP trke.')
   await db.doc(`xpRaces/${cfg.key}`).delete()
   await adminLog(uid, 'unfinalizeXpRace', { tid: cfg.key })
   return { ok: true }
+})
+
+// Prozor XP trke (config/xpRace) — od sada nezavisan od duel turnira.
+// Prvi upis ujedno "otcjepljuje" trku: dok dokument ne postoji, server je vodi
+// po prozoru turnira.
+export const adminSetXpRaceConfig = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const d = request.data || {}
+  const key = typeof d.key === 'string' && d.key.trim() ? d.key.trim() : null
+  if (!key) throw new HttpsError('invalid-argument', 'Nedostaje ključ XP trke.')
+  const openAt = Number(d.openAt)
+  const closeAt = Number(d.closeAt)
+  if (!Number.isFinite(openAt) || !Number.isFinite(closeAt) || openAt <= 0 || openAt >= closeAt) {
+    throw new HttpsError('invalid-argument', 'Prozor trke mora biti rastući par termina.')
+  }
+  await db.doc('config/xpRace').set({
+    enabled: d.enabled !== false,
+    openAt,
+    closeAt,
+    key,
+    label: typeof d.label === 'string' && d.label.trim() ? d.label.trim() : 'XP trka',
+    updatedAt: FieldValue.serverTimestamp(),
+  })
+  xpRaceConfigCache = null
+  await adminLog(uid, 'setXpRaceConfig', { key, openAt, closeAt })
+  return { ok: true, key }
 })
 
 // Trenutno stanje eventa za panel — jedan poziv umjesto pet čitanja s klijenta.
@@ -3232,14 +3301,17 @@ export const adminEventStatus = onCall(async (request) => {
   requireAdmin(request)
   const cfg = await getTournamentConfig()
   const sur = await getSurvivalConfig()
+  const xcfg = await getXpRaceConfig()
+  // Dok config/xpRace ne postoji, getXpRaceConfig vraća prozor turnira. Panel
+  // to mora znati, da ne prikaže "odvojeno" ono što još dijeli isti prozor.
+  const xpOdvojen = (await db.doc('config/xpRace').get()).exists
+
   let turnir = null
   let prijava = 0
-  let xpTrka = null
   if (cfg?.key) {
-    const [tSnap, pSnap, xSnap] = await Promise.all([
+    const [tSnap, pSnap] = await Promise.all([
       db.doc(`tournaments/${cfg.key}`).get(),
       db.collection(`tournaments/${cfg.key}/participants`).count().get(),
-      db.doc(`xpRaces/${cfg.key}`).get(),
     ])
     turnir = tSnap.exists
       ? {
@@ -3247,13 +3319,409 @@ export const adminEventStatus = onCall(async (request) => {
           currentRound: tSnap.data().currentRound || 0,
           rounds: tSnap.data().rounds || 0,
           cancelled: !!tSnap.data().cancelled,
+          winnerUid: tSnap.data().winnerUid || null,
           roundDeadlines: tSnap.data().roundDeadlines || [],
         }
       : null
     prijava = pSnap.data().count
-    xpTrka = xSnap.exists ? { finalized: !!xSnap.data().finalized } : null
   }
-  return { tournament: cfg || null, survival: sur || null, turnir, prijava, xpTrka, now: Date.now() }
+
+  let xpTrka = null
+  if (xcfg?.key) {
+    const xSnap = await db.doc(`xpRaces/${xcfg.key}`).get()
+    const lb = await rtdb.ref(`tournament/${xcfg.key}`).get()
+    xpTrka = {
+      finalized: xSnap.exists ? !!xSnap.data().finalized : false,
+      ucesnika: Object.keys(lb.val() || {}).length,
+    }
+  }
+  return {
+    tournament: cfg || null,
+    xpRace: xcfg || null,
+    xpOdvojen,
+    survival: sur || null,
+    turnir,
+    prijava,
+    xpTrka,
+    now: Date.now(),
+  }
+})
+
+// ---------------------------------------------------------------------------
+// ADMIN — 1v1 turnir: poluge za sve što može poći po zlu tokom eventa.
+//
+// Turnir je jedini dio igre gdje greška ima ROK: ako runda propadne, propali su
+// i mečevi u njoj. Zato panel mora moći sve što do sada tražilo ručnu izmjenu u
+// bazi — vidjeti ko je odigrao, pomjeriti rok, proglasiti pobjednika, vratiti
+// zaglavljen duel i počistiti bracket.
+// ---------------------------------------------------------------------------
+
+// Zajednički uvod za sve poluge: aktivan turnir + njegov dokument.
+async function turnirZaAdmina() {
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const snap = await db.doc(`tournaments/${cfg.key}`).get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Bracket još nije napravljen.')
+  return { tid: cfg.key, cfg, t: snap.data() }
+}
+
+// Živi pregled turnira: svi mečevi s imenima, brojem tačnih i vremenom
+// završetka + popis problema.
+//
+// Ovo je odgovor na "hoću vidjeti čim neko odigra koliko je tačno odgovorio":
+// skor je u meču od trenutka predaje, samo ga do sada niko nije prikazivao
+// adminu (igračima ostaje skriven do zatvaranja runde — to se ne mijenja).
+export const adminTurnirPregled = onCall(async (request) => {
+  requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) return { nema: true }
+  const tid = cfg.key
+  const [tSnap, pSnap, mSnap] = await Promise.all([
+    db.doc(`tournaments/${tid}`).get(),
+    db.collection(`tournaments/${tid}/participants`).get(),
+    db.collection(`tournaments/${tid}/matches`).get(),
+  ])
+  const imena = {}
+  for (const d of pSnap.docs) imena[d.id] = d.data().name || 'Farmaceut'
+  const ucesnici = pSnap.docs
+    .map((d) => ({ uid: d.id, ime: imena[d.id] }))
+    .sort((a, b) => a.ime.localeCompare(b.ime, 'bs'))
+
+  if (!tSnap.exists) {
+    return { tid, bracket: false, ucesnici, mecevi: [], problemi: [], now: Date.now() }
+  }
+  const t = tSnap.data()
+  const mecevi = mSnap.docs
+    .map((d) => {
+      const m = d.data()
+      return {
+        id: d.id,
+        round: m.round,
+        slot: m.slot,
+        status: m.status,
+        winner: m.winner || null,
+        winnerIme: m.winner ? imena[m.winner] || '—' : null,
+        p1: m.p1 || null,
+        p2: m.p2 || null,
+        p1Ime: m.p1 ? imena[m.p1] || '—' : null,
+        p2Ime: m.p2 ? imena[m.p2] || '—' : null,
+        p1Score: m.p1Score ?? null,
+        p2Score: m.p2Score ?? null,
+        p1Played: !!m.p1Played,
+        p2Played: !!m.p2Played,
+        p1FinishedAt: m.p1FinishedAt || null,
+        p2FinishedAt: m.p2FinishedAt || null,
+        pitanja: (m.questionIds || []).length,
+      }
+    })
+    .sort((a, b) => a.round - b.round || a.slot - b.slot)
+
+  // --- Dijagnostika: šta je već pošlo po zlu ---
+  const now = Date.now()
+  const problemi = []
+  const prazni = mecevi.filter((m) => !m.p1 && !m.p2)
+  if (prazni.length > 0) {
+    problemi.push({
+      tip: 'prazni',
+      tekst: `${prazni.length} mečeva bez ijednog igrača — višak bracketa. Očisti ih.`,
+    })
+  }
+  const rok = (t.roundDeadlines || [])[(t.currentRound || 1) - 1]
+  if (t.status === 'active' && rok && now > rok + 45 * 60000) {
+    problemi.push({
+      tip: 'rok',
+      tekst: `Rok runde ${t.currentRound} je prošao prije više od 45 min, a runda još nije zatvorena. Tick ide svakih 30 min — ako i dalje stoji, zatvori je ručno.`,
+    })
+  }
+  if (t.status === 'active' && (t.roundDeadlines || []).length < (t.rounds || 0)) {
+    problemi.push({ tip: 'raspored', tekst: 'Rokovi nisu postavljeni za sve runde.' })
+  }
+  const nerastuci = (t.roundDeadlines || []).some((d, i, a) => i > 0 && d <= a[i - 1])
+  if (nerastuci) problemi.push({ tip: 'raspored', tekst: 'Rokovi rundi nisu rastući.' })
+  const pitanjaFale = mecevi.filter((m) => (m.p1 || m.p2) && m.pitanja < DUEL_QUESTIONS)
+  if (pitanjaFale.length > 0) {
+    problemi.push({
+      tip: 'pitanja',
+      tekst: `${pitanjaFale.length} mečeva nema punih ${DUEL_QUESTIONS} pitanja.`,
+    })
+  }
+
+  // Zaglavljene sesije: duel otvoren, vrijeme davno isteklo, a skor nije upisan.
+  const sesije = await db.collection('duelSessions').get()
+  const zaglavljene = []
+  for (const d of sesije.docs) {
+    const s = d.data()
+    if (s.tid !== tid || s.finished) continue
+    const proteklo = (now - (s.startedAt || now)) / 1000
+    if (proteklo > DUEL_TOTAL_SECONDS + 300) {
+      zaglavljene.push({
+        uid: s.uid,
+        ime: imena[s.uid] || '—',
+        matchId: s.matchId,
+        odgovoreno: (s.answers || []).length,
+        minuta: Math.round(proteklo / 60),
+      })
+    }
+  }
+  if (zaglavljene.length > 0) {
+    problemi.push({
+      tip: 'sesije',
+      tekst: `${zaglavljene.length} duela je otvoreno, a vrijeme im je davno isteklo. Skor se upisuje tek kad igrač otvori ekran — zatvori ih ručno ili zatvori rundu.`,
+    })
+  }
+
+  // Ko u tekućoj rundi još nije odigrao (za podsjetnik).
+  const neodigrali = []
+  if (t.status === 'active') {
+    for (const m of mecevi.filter((x) => x.round === t.currentRound && x.status !== 'done')) {
+      if (m.p1 && m.p2) {
+        if (!m.p1Played) neodigrali.push({ uid: m.p1, ime: m.p1Ime })
+        if (!m.p2Played) neodigrali.push({ uid: m.p2, ime: m.p2Ime })
+      }
+    }
+  }
+
+  return {
+    tid,
+    bracket: true,
+    status: t.status,
+    currentRound: t.currentRound || 0,
+    rounds: t.rounds || 0,
+    cancelled: !!t.cancelled,
+    winnerUid: t.winnerUid || null,
+    roundDeadlines: t.roundDeadlines || [],
+    ucesnici,
+    mecevi,
+    zaglavljene,
+    neodigrali,
+    problemi,
+    now,
+  }
+})
+
+// Rokovi rundi. `auto: true` ih iznova izračuna po BiH terminima (08/14/20)
+// od početka eventa — poluga kad je bracket napravljen po starom rasporedu i
+// runde padaju usred noći.
+export const adminSetRoundDeadlines = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { tid, t } = await turnirZaAdmina()
+  const rounds = t.rounds || 0
+  let rokovi
+  if (request.data?.auto === true) {
+    const cfg = await getTournamentConfig()
+    rokovi = rasporedRundi(Number(request.data?.pocetak) || cfg.openAt || Date.now(), rounds)
+  } else {
+    rokovi = (request.data?.roundDeadlines || []).map(Number)
+  }
+  if (rokovi.length !== rounds) {
+    throw new HttpsError('invalid-argument', `Treba tačno ${rounds} rokova, stiglo ${rokovi.length}.`)
+  }
+  if (rokovi.some((x) => !Number.isFinite(x) || x <= 0)) {
+    throw new HttpsError('invalid-argument', 'Svi rokovi moraju biti brojevi (ms).')
+  }
+  if (rokovi.some((x, i) => i > 0 && x <= rokovi[i - 1])) {
+    throw new HttpsError('invalid-argument', 'Rokovi moraju rasti od runde do runde.')
+  }
+  await db.doc(`tournaments/${tid}`).update({ roundDeadlines: rokovi })
+  await adminLog(uid, 'setRoundDeadlines', { tid, rokovi, auto: request.data?.auto === true })
+  return { ok: true, roundDeadlines: rokovi }
+})
+
+// Brisanje mečeva čija grana nema NIJEDNOG igrača.
+//
+// Bracket građen po starom pravilu je 20 prijavljenih smjestio u 32 mjesta tako
+// da je šest mečeva prve runde ostalo prazno; prazno se penje kroz stablo i
+// pravi kolone bez ijednog imena. Ovo ih briše, a mečeve s igračima i sve
+// upisane skorove ne dira.
+export const adminPruneEmptyMatches = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { tid, t } = await turnirZaAdmina()
+  // Bez broja rundi se ne zna dokle ide stablo — a pogrešan odgovor ovdje briše
+  // cijeli bracket. Radije stani.
+  if (!t.rounds) throw new HttpsError('failed-precondition', 'Turnir nema upisan broj rundi.')
+  const snap = await db.collection(`tournaments/${tid}/matches`).get()
+  const po = {}
+  for (const d of snap.docs) po[d.id] = { ref: d.ref, ...d.data() }
+
+  // Grana je prazna ako ni meč ni ijedan njegov predak-hranilac nema igrača.
+  // Ide se od prve runde naviše, pa je odgovor za hranioce već poznat.
+  const imaIgraca = {}
+  for (let r = 1; r <= (t.rounds || 0); r++) {
+    for (const id of Object.keys(po)) {
+      const m = po[id]
+      if (m.round !== r) continue
+      const svoji = !!(m.p1 || m.p2)
+      const ispod =
+        r === 1 ? false : !!(imaIgraca[`r${r - 1}s${m.slot * 2}`] || imaIgraca[`r${r - 1}s${m.slot * 2 + 1}`])
+      imaIgraca[id] = svoji || ispod
+    }
+  }
+
+  const zaBrisanje = Object.keys(po).filter((id) => !imaIgraca[id])
+  if (zaBrisanje.length === 0) return { ok: true, obrisano: 0 }
+  const batch = db.batch()
+  for (const id of zaBrisanje) batch.delete(po[id].ref)
+  await batch.commit()
+  await adminLog(uid, 'pruneEmptyMatches', { tid, obrisano: zaBrisanje.length, ids: zaBrisanje })
+  return { ok: true, obrisano: zaBrisanje.length, ids: zaBrisanje }
+})
+
+// Ručno proglašavanje pobjednika jednog meča (i prosljeđivanje dalje).
+// Za slučaj žalbe, pokvarenog pitanja ili meča koji se zaglavio.
+export const adminSetMatchWinner = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { tid, t } = await turnirZaAdmina()
+  const matchId = String(request.data?.matchId || '')
+  const winner = request.data?.winner ? String(request.data.winner) : null
+  const mRef = db.doc(`tournaments/${tid}/matches/${matchId}`)
+  const mSnap = await mRef.get()
+  if (!mSnap.exists) throw new HttpsError('not-found', 'Taj meč ne postoji.')
+  const m = mSnap.data()
+  if (winner && winner !== m.p1 && winner !== m.p2) {
+    throw new HttpsError('invalid-argument', 'Taj igrač nije u ovom meču.')
+  }
+  await mRef.update({ winner, status: 'done', rucnoOdlucen: true })
+  if (m.round < (t.rounds || 0)) await propagate(tid, m.round, m.slot, winner)
+  await adminLog(uid, 'setMatchWinner', { tid, matchId, winner })
+  return { ok: true }
+})
+
+// Vraćanje igračevog duela na početak: briše sesiju i njegov skor u meču.
+//
+// Za slučaj kad duel padne na pola (mreža, pokvareno pitanje) pa igrač ostane s
+// upisanim skorom koji nije odigrao. NE dira protivnika i NE dira mečeve koji
+// su već zatvoreni.
+export const adminResetDuel = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { tid } = await turnirZaAdmina()
+  const igrac = String(request.data?.uid || '')
+  const matchId = String(request.data?.matchId || '')
+  if (!igrac || !matchId) throw new HttpsError('invalid-argument', 'Treba igrač i meč.')
+  const mRef = db.doc(`tournaments/${tid}/matches/${matchId}`)
+  const mSnap = await mRef.get()
+  if (!mSnap.exists) throw new HttpsError('not-found', 'Taj meč ne postoji.')
+  const m = mSnap.data()
+  if (m.status === 'done') {
+    throw new HttpsError('failed-precondition', 'Meč je zatvoren — prvo vrati pobjednika ili sačekaj novu rundu.')
+  }
+  const patch =
+    m.p1 === igrac
+      ? { p1Score: null, p1Played: false, p1FinishedAt: FieldValue.delete() }
+      : m.p2 === igrac
+        ? { p2Score: null, p2Played: false, p2FinishedAt: FieldValue.delete() }
+        : null
+  if (!patch) throw new HttpsError('invalid-argument', 'Taj igrač nije u ovom meču.')
+  await mRef.update(patch)
+  await db.doc(`duelSessions/${tid}_${igrac}`).delete().catch(() => {})
+  await adminLog(uid, 'resetDuel', { tid, igrac, matchId })
+  return { ok: true }
+})
+
+// Zatvaranje zaglavljenih duela: igraču kojem je vrijeme isteklo, a nije se
+// vratio na ekran, upisuje se skor iz onoga što je stigao odgovoriti.
+//
+// Bez ovoga skor uđe u meč tek kad igrač ponovo otvori duel; ako to ne uradi do
+// zatvaranja runde, prolazi kao da nije ni igrao.
+export const adminZatvoriZaglavljene = onCall(async (request) => {
+  const uid = requireAdmin(request)
+  const { tid } = await turnirZaAdmina()
+  const snap = await db.collection('duelSessions').get()
+  const now = Date.now()
+  let zatvoreno = 0
+  for (const d of snap.docs) {
+    const s = d.data()
+    if (s.tid !== tid || s.finished) continue
+    if ((now - (s.startedAt || now)) / 1000 <= DUEL_TOTAL_SECONDS + 300) continue
+    await zavrsiDuel(s.uid, tid, d.ref, s, s.answers || [])
+    zatvoreno++
+  }
+  await adminLog(uid, 'zatvoriZaglavljene', { tid, zatvoreno })
+  return { ok: true, zatvoreno }
+})
+
+// Dodavanje i uklanjanje prijave. Radi samo dok bracket nije napravljen —
+// poslije toga bi promjena sastava značila novi bracket (Napravi bracket nanovo).
+export const adminSetParticipant = onCall(async (request) => {
+  const admin = requireAdmin(request)
+  const cfg = await getTournamentConfig()
+  if (!cfg?.key) throw new HttpsError('failed-precondition', 'Nema aktivnog turnira.')
+  const tid = cfg.key
+  const igrac = String(request.data?.uid || '')
+  const dodaj = request.data?.dodaj !== false
+  if (!igrac) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+  if ((await db.doc(`tournaments/${tid}`).get()).exists) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Bracket je već napravljen — promijeni sastav pa pokreni „Napravi bracket nanovo".'
+    )
+  }
+  if (dodaj) {
+    const us = await db.doc(`users/${igrac}`).get()
+    if (!us.exists) throw new HttpsError('not-found', 'Taj igrač ne postoji.')
+    const p = us.data()
+    await db.doc(`tournaments/${tid}/participants/${igrac}`).set(
+      { name: p.displayName || 'Farmaceut', avatar: p.avatar || 'a1', registeredAt: FieldValue.serverTimestamp(), dodaoAdmin: true },
+      { merge: true }
+    )
+  } else {
+    await db.doc(`tournaments/${tid}/participants/${igrac}`).delete()
+  }
+  await adminLog(admin, 'setParticipant', { tid, igrac, dodaj })
+  return { ok: true }
+})
+
+// Podsjetnik igračima koji u tekućoj rundi još nisu odigrali.
+//
+// Namjerno nije obična objava: ide SAMO onima kojima meč istječe, i nosi rok u
+// tekstu. Odjava od notifikacija se poštuje kao i svugdje.
+export const adminPodsjetiNeodigrale = onCall(async (request) => {
+  const admin = requireAdmin(request)
+  const { tid, t } = await turnirZaAdmina()
+  if (t.status !== 'active') throw new HttpsError('failed-precondition', 'Turnir nije aktivan.')
+  const round = t.currentRound
+  const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
+  const kome = new Set()
+  for (const d of snap.docs) {
+    const m = d.data()
+    if (m.status === 'done' || !m.p1 || !m.p2) continue
+    if (!m.p1Played) kome.add(m.p1)
+    if (!m.p2Played) kome.add(m.p2)
+  }
+  const rok = (t.roundDeadlines || [])[round - 1]
+  const kada = rok
+    ? new Intl.DateTimeFormat('bs-BA', { timeZone: 'Europe/Sarajevo', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(rok))
+    : 'uskoro'
+  const poruka = {
+    title: `Tvoj duel čeka — runda ${round}`,
+    body: `Odigraj do ${kada} ili prolazi protivnik.`,
+    url: '/turnir',
+    tip: 'turnir',
+    tag: `duel-podsjetnik-${tid}-r${round}`,
+  }
+
+  let poslano = 0
+  let bezUredjaja = 0
+  let odjavljenih = 0
+  for (const igrac of kome) {
+    const us = await db.doc(`users/${igrac}`).get()
+    if (!us.exists) continue
+    const p = us.data()
+    if (p.notifPrefs?.turnir === false) {
+      odjavljenih++
+      continue
+    }
+    const tokeni = p.fcmTokens || []
+    if (tokeni.length === 0) {
+      bezUredjaja++
+      continue
+    }
+    if (await posaljiNotifikaciju(igrac, tokeni, poruka)) {
+      poslano++
+      await us.ref.update({ lastNotifAt: Date.now(), lastNotifTip: 'turnir' }).catch(() => {})
+    }
+  }
+  await adminLog(admin, 'podsjetiNeodigrale', { tid, round, kome: kome.size, poslano })
+  return { ok: true, kome: kome.size, poslano, bezUredjaja, odjavljenih }
 })
 
 // ---------------------------------------------------------------------------

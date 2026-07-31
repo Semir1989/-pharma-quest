@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getTournamentConfig, isRegisteredForDuel } from '../services/tournament'
+import { getXpRaceConfig, xpTrkaUToku } from '../services/xpTrka'
 import { subscribeSurvivalConfig, survivalOpen } from '../services/survival'
 import { survivalWeekKey } from './periods'
 import { useNow } from './useNow'
@@ -54,16 +55,15 @@ function survivalSignal(profile, scfg, now) {
   return survivalOpen(scfg, now) && !ispao
 }
 
-function computeSignals({ profile, cfg, scfg, registered, now }) {
+function computeSignals({ profile, cfg, xcfg, scfg, registered, now }) {
   const signals = []
   if (survivalSignal(profile, scfg, now)) signals.push('survival')
   if (cfg?.enabled && cfg.key) {
     if (now >= cfg.regOpenAt && now <= cfg.regCloseAt && !registered) signals.push('duel-reg')
-    if (now >= cfg.openAt && now <= cfg.closeAt) {
-      if (registered) signals.push('duel-play')
-      signals.push('xp-race')
-    }
+    if (now >= cfg.openAt && now <= cfg.closeAt && registered) signals.push('duel-play')
   }
+  // XP trka ima vlastiti prozor — gori i kad duel turnira nema.
+  if (xpTrkaUToku(xcfg, now)) signals.push('xp-race')
   return signals
 }
 
@@ -72,6 +72,7 @@ export function useArenaAlert() {
   const uid = user?.uid
   const now = useNow(30000) // faze eventa se mjere minutama, ne sekundama
   const [cfg, setCfg] = useState(null)
+  const [xcfg, setXcfg] = useState(null) // prozor XP trke (zaseban event)
   const [scfg, setScfg] = useState(undefined) // prozor Preživljavanja (živo)
   const [registered, setRegistered] = useState(false)
   const [tick, setTick] = useState(0)
@@ -80,6 +81,9 @@ export function useArenaAlert() {
     let alive = true
     getTournamentConfig()
       .then((c) => alive && setCfg(c))
+      .catch(() => {})
+    getXpRaceConfig()
+      .then((c) => alive && setXcfg(c))
       .catch(() => {})
     return () => {
       alive = false
@@ -104,6 +108,6 @@ export function useArenaAlert() {
     return () => listeners.delete(fn)
   }, [])
 
-  const signals = computeSignals({ profile, cfg, scfg, registered, now })
+  const signals = computeSignals({ profile, cfg, xcfg, scfg, registered, now })
   return { active: signals.length > 0, signals }
 }

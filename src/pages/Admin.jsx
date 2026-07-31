@@ -14,6 +14,7 @@ import {
 import { COSMETICS } from '../data/cosmetics'
 import { levelFromXp } from '../utils/levels'
 import EventKontrola from '../components/admin/EventKontrola'
+import TurnirKontrola from '../components/admin/TurnirKontrola'
 import RatKontrola from '../components/admin/RatKontrola'
 import {
   normalizeCategory,
@@ -101,6 +102,8 @@ export default function Admin() {
       </p>
 
       <EventKontrola />
+
+      <TurnirKontrola />
 
       <RatKontrola />
 

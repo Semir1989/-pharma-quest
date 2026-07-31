@@ -1,12 +1,13 @@
-import { ref, onValue, query, orderByChild, limitToLast } from 'firebase/database'
 import { doc, getDoc, getCountFromServer, collection, onSnapshot } from 'firebase/firestore'
-import { rtdb, db } from '../firebase'
+import { db } from '../firebase'
 
-// Vikend turnir — XP trka (Faza 2, korak B). Klijent SAMO ČITA; XP sabira server.
-// Prozor i ključ eventa žive u Firestore config/tournament; leaderboard u RTDB
-// tournament/{key}/{uid} → { name, avatar, xp }.
+// 1v1 DUEL TURNIR — prozor i ključ eventa žive u Firestore config/tournament,
+// bracket u tournaments/{key}. Klijent SAMO ČITA.
+//
+// XP trka je od 31.07.2026. zaseban event sa svojim servisom
+// (services/xpTrka.js) — ovdje je nema, iako su do tada dijelile ovaj config.
 
-// Config čitaju i Home (dvije kartice) i /turnir, pa se drži u kešu za sesiju
+// Config čitaju i Arena (kartica duela) i /turnir, pa se drži u kešu za sesiju
 // — isti pristup kao getTasks/getBadges. Admin izmjena prozora vidi se poslije
 // reloada.
 let configCache = null
@@ -46,13 +47,6 @@ export async function countDuelParticipants(tid) {
   }
 }
 
-// Rezultati/nagrade XP trke (poslije finalizacije) — { finalized, top: [...] }.
-export async function getXpRace(tid) {
-  if (!tid) return null
-  const snap = await getDoc(doc(db, 'xpRaces', tid))
-  return snap.exists() ? snap.data() : null
-}
-
 // --- Duel turnir (Faza 2, korak C) ---
 
 // Live praćenje turnir doc-a (status, currentRound, rounds, winnerUid...).
@@ -81,29 +75,6 @@ export function subscribeMatches(tid, callback) {
   return onSnapshot(
     collection(db, 'tournaments', tid, 'matches'),
     (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-    () => callback([])
-  )
-}
-
-// Live praćenje turnirske liste za dati ključ — vraća unsubscribe funkciju.
-export function subscribeTournamentLeaderboard(key, callback) {
-  if (!key) {
-    callback([])
-    return () => {}
-  }
-  const q = query(ref(rtdb, `tournament/${key}`), orderByChild('xp'), limitToLast(50))
-  return onValue(
-    q,
-    (snap) => {
-      const rows = []
-      // Tijelo MORA biti u vitičastim zagradama: forEach prekida obilazak čim
-      // callback vrati nešto istinito, a rows.push vraća dužinu niza (1).
-      snap.forEach((child) => {
-        rows.push({ uid: child.key, ...child.val() })
-      })
-      rows.reverse()
-      callback(rows)
-    },
     () => callback([])
   )
 }

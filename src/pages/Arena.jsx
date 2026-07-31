@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import DuelCard from '../components/DuelCard'
 import XpRaceCard from '../components/XpRaceCard'
 import { getTournamentConfig } from '../services/tournament'
+import { getXpRaceConfig, xpTrkaFaza } from '../services/xpTrka'
 import { useArenaAlert } from '../utils/useArenaAlert'
 
 // Arena — stalno mjesto za sva takmičenja: vikend dueli, XP trka i sedmično
@@ -15,6 +16,9 @@ export default function Arena() {
   // undefined = još učitavam, null = nema configa. Bez te razlike bi prazno
   // stanje bljesnulo na svakom ulasku prije nego config stigne.
   const [cfg, setCfg] = useState(undefined)
+  // XP trka je zaseban event s vlastitim prozorom (config/xpRace) — može teći i
+  // kad duela nema, i obrnuto. Zato dva configa, ne jedan.
+  const [xcfg, setXcfg] = useState(undefined)
   const { signals } = useArenaAlert()
 
   useEffect(() => {
@@ -22,13 +26,17 @@ export default function Arena() {
     getTournamentConfig()
       .then((c) => alive && setCfg(c))
       .catch(() => alive && setCfg(null))
+    getXpRaceConfig()
+      .then((c) => alive && setXcfg(c))
+      .catch(() => alive && setXcfg(null))
     return () => {
       alive = false
     }
   }, [])
 
-  const weekendLive = !!cfg?.enabled && !!cfg?.key
-  const cfgLoaded = cfg !== undefined
+  const duelLive = !!cfg?.enabled && !!cfg?.key
+  const trkaLive = xpTrkaFaza(xcfg) !== 'off'
+  const cfgLoaded = cfg !== undefined && xcfg !== undefined
 
   return (
     <div className="p-4">
@@ -58,14 +66,14 @@ export default function Arena() {
         </span>
       </div>
 
-      {/* Vikend event (Faza 2) — dvije odvojene kartice, jer su to dva
-          različita takmičenja: duel traži prijavu unaprijed, XP trka ne. */}
+      {/* Dva ODVOJENA eventa, svaki sa svojim prozorom: duel traži prijavu
+          unaprijed i vodi na bracket, XP trka nema prijave i vodi na ljestvicu. */}
       <DuelCard cfg={cfg} uid={user?.uid} />
-      <XpRaceCard cfg={cfg} />
+      <XpRaceCard cfg={xcfg} />
 
-      {cfgLoaded && !weekendLive && (
+      {cfgLoaded && !duelLive && !trkaLive && (
         <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white/60 p-4 text-center">
-          <p className="text-sm font-semibold text-slate-500">Vikend event nije aktivan</p>
+          <p className="text-sm font-semibold text-slate-500">Vikend eventi nisu aktivni</p>
           <p className="mt-1 text-xs text-slate-400">
             Dueli i XP trka otvaraju se vikendom.
           </p>

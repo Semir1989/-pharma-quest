@@ -61,13 +61,24 @@ export default function DuelQuestionScreen({
         <span className="text-sm font-bold text-slate-500">
           Pitanje {question.index + 1}/{total}
         </span>
-        <span
-          className={`rounded-xl px-3 py-1 font-mono text-lg font-bold tabular-nums ${
-            zadnjih15 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
-          }`}
-        >
-          {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
-        </span>
+        <div className="flex flex-col items-end">
+          <span
+            className={`rounded-xl px-3 py-1 font-mono text-lg font-bold tabular-nums ${
+              zadnjih15 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'
+            }`}
+          >
+            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+          </span>
+          {/* Bez ove napomene igrači misle da je sat po pitanju (kao u kvizu) pa
+              se zadržavaju na prvom, a onda ostanu bez vremena na kraju. */}
+          <span
+            className={`mt-0.5 text-[10px] font-bold uppercase tracking-wide ${
+              zadnjih15 ? 'text-red-500' : 'text-slate-400'
+            }`}
+          >
+            za svih {total} pitanja
+          </span>
+        </div>
       </div>
 
       {/* Traka ukupnog vremena — jedina mjera napretka u duelu */}
@@ -79,6 +90,13 @@ export default function DuelQuestionScreen({
           style={{ width: `${udio * 100}%` }}
         />
       </div>
+
+      {/* Isto rečeno riječima ispod trake — traka bez natpisa se čita kao
+          napredak kroz pitanja, a ovdje mjeri vrijeme. */}
+      <p className="mt-1.5 text-center text-[11px] font-semibold text-slate-400">
+        ⏱ Jedan sat za cijeli duel — {Math.floor((totalSeconds || 120) / 60)} min na svih {total} pitanja,
+        ne po pitanju.
+      </p>
 
       {/* Kartica pitanja */}
       <div className="mt-6 rounded-2xl bg-white px-5 py-8 text-center shadow-sm">

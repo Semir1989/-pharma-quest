@@ -18,7 +18,8 @@ const RUTE = [
   ['/kviz', 'Kviz'],
   ['/questovi', 'Questovi'],
   ['/prezivljavanje', 'Preživljavanje'],
-  ['/turnir', 'Turnir'],
+  ['/turnir', '1v1 Arena'],
+  ['/xp-trka', 'XP trka'],
   ['/leaderboard', 'Ljestvica'],
 ]
 

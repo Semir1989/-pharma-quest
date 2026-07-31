@@ -2,17 +2,19 @@ import { Link } from 'react-router-dom'
 import { TrophyIcon } from './icons'
 import { formatCountdownLong } from '../utils/periods'
 import { useNow } from '../utils/useNow'
+import { xpTrkaFaza } from '../services/xpTrka'
 
-// Kartica XP trke na početnoj. Nema prijave — sav XP osvojen tokom prozora se
-// sam sabira (server, addWeekendXp), pa igraču treba samo odbrojavanje.
+// Kartica XP trke u Areni. Nema prijave — sav XP osvojen tokom prozora se sam
+// sabira (server, addWeekendXp), pa igraču treba odbrojavanje i put do poretka.
 //
-// props: cfg (config/tournament)
+// Vodi na /xp-trka (vlastita ljestvica eventa), a ne više na duel bracket.
+//
+// props: cfg (config/xpRace, uz fallback na config/tournament)
 export default function XpRaceCard({ cfg }) {
   const now = useNow()
+  const faza = xpTrkaFaza(cfg, now)
 
-  if (!cfg?.enabled || !cfg.key) return null
-
-  const phase = now < cfg.openAt ? 'pre' : now <= cfg.closeAt ? 'live' : 'ended'
+  if (faza === 'off') return null
 
   return (
     <div className="mt-4 rounded-2xl border-2 border-amber-500 bg-white p-4 shadow-sm">
@@ -23,40 +25,40 @@ export default function XpRaceCard({ cfg }) {
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold text-slate-800">XP trka</h2>
           <p className="text-xs text-slate-500">
-            {phase === 'live'
+            {faza === 'live'
               ? 'Sav XP koji osvojiš se broji — kviz, questovi, Preživljavanje'
               : 'Bez prijave — samo skupljaj XP dok traje'}
           </p>
         </div>
       </div>
 
-      {phase !== 'ended' && (
+      {faza !== 'ended' && (
         <div className="mt-3 flex items-baseline justify-between rounded-xl bg-slate-50 px-3 py-2.5">
           <span className="text-xs font-semibold text-slate-500">
-            {phase === 'pre' ? 'Počinje za' : 'Završava za'}
+            {faza === 'pre' ? 'Počinje za' : 'Završava za'}
           </span>
           <span className="font-title text-lg font-extrabold tabular-nums text-amber-600">
-            {formatCountdownLong(((phase === 'pre' ? cfg.openAt : cfg.closeAt) - now) / 1000)}
+            {formatCountdownLong(((faza === 'pre' ? cfg.openAt : cfg.closeAt) - now) / 1000)}
           </span>
         </div>
       )}
 
-      {phase === 'live' && (
+      {faza === 'live' && (
         <Link
-          to="/turnir"
+          to="/xp-trka"
           className="mt-3 block w-full rounded-2xl bg-amber-500 py-3.5 text-center font-title font-extrabold text-white active:bg-amber-600"
         >
           Pogledaj poredak →
         </Link>
       )}
 
-      {phase === 'ended' && (
+      {faza === 'ended' && (
         <Link
-          to="/turnir"
+          to="/xp-trka"
           className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 active:bg-slate-100"
         >
           <span className="text-sm font-semibold text-slate-600">Trka je završena</span>
-          <span className="text-sm font-bold text-teal-700">Rezultati →</span>
+          <span className="text-sm font-bold text-amber-600">Rezultati →</span>
         </Link>
       )}
     </div>
