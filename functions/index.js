@@ -22,6 +22,13 @@ import {
   notifUkljucen,
 } from './notif-odluka.js'
 import {
+  seedFrom,
+  seededPick,
+  pickTaskIds,
+  dopuniIzbor,
+  smijeSeZamijeniti,
+} from './quest-izbor.js'
+import {
   MAX_CLANOVA,
   MAX_SAVJETNIKA,
   MIN_LEVEL_OSNIVANJE,
@@ -187,9 +194,22 @@ function weeklyKey(d = new Date()) {
   return `${date.getUTCFullYear()}-W${pad(week)}`
 }
 
+// IZNIMKA (odluka 31.07.2026): mjesečni period jula je PRODUŽEN kroz august.
+// Jedan period traje 01.07. → 31.08.2026, a kalendarska logika se vraća
+// 01.09.2026. Mapa je 'stvarni mjesec → ključ perioda': august vraća ključ
+// jula, pa napredak i zamrznuti izbor questova prežive 01.08. netaknuti
+// umjesto da ih lijeni reset pobriše.
+//
+// Ne mijenjati u ključ tipa '2026-07+08': time bi se ključ promijenio ODMAH
+// i pojeo napredak koji igrači imaju u julu. Ključ mora ostati '2026-07'.
+// Kad iznimka prođe, objekat se prazni (`{}`), ne briše — client/periods.js
+// ima identičnu kopiju i oba moraju ostati u koraku.
+const MJESECNI_SPOJENI = { '2026-08': '2026-07' }
+
 function monthlyKey(d = new Date()) {
   const { y, m } = bihParts(d)
-  return `${y}-${pad(m)}`
+  const stvarni = `${y}-${pad(m)}`
+  return MJESECNI_SPOJENI[stvarni] || stvarni
 }
 
 // Trenutak sljedeće ponoći po BiH vremenu (ms) — klijent iz ovoga crta odbrojavanje.
@@ -298,6 +318,10 @@ function periodKey(type) {
 //   survivalBest    najduži niz u Preživljavanju u periodu (maksimum, ne zbir)
 //   duels           odigrani duel mečevi
 //   tournamentXp    XP osvojen tokom prozora vikend turnira
+//   manual          VANJSKI zadatak — igrica ga ne može izmjeriti, vrijednost
+//                   upisuje admin (adminSetQuestProgress). Stoji po questu u
+//                   `manual: { [taskId]: broj }`, ne kao jedan brojač: dva
+//                   ručna questa u istom periodu moraju biti nezavisna.
 function emptyProgress(period) {
   return {
     period,
@@ -312,9 +336,19 @@ function emptyProgress(period) {
     duels: 0,
     tournamentXp: 0,
     byCategory: {},
+    manual: {},
     claimed: {},
     picked: null,
   }
+}
+
+// Napredak igrača na jednom questu — jedno mjesto za sva tri načina mjerenja.
+// Ranije je isti izraz stajao prepisan u claimTask i ensurePicksZaTip, pa je
+// dodavanje metrike tražilo izmjenu na dva mjesta.
+function vrijednostQuesta(stored, task) {
+  if (task.metric === 'manual') return stored?.manual?.[task.id] || 0
+  if (task.metric === 'correct' && task.category) return stored?.byCategory?.[task.category] || 0
+  return stored?.[task.metric] || 0
 }
 
 // Novi taskProgress objekt s primijenjenim uvećanjima ("lijeni reset" po ključu
@@ -362,7 +396,7 @@ async function applyProgress(uid, delta) {
 }
 
 // ---------------------------------------------------------------------------
-// Rotacija dnevnih questova — svaki igrač dobije 3 zadatka iz bazena
+// Rotacija questova — svaki igrač dobije dio bazena, ne cijeli bazen
 // ---------------------------------------------------------------------------
 // Izbor je determinističan po (uid, period) i ZAMRZNE se u users/{uid}
 // .taskProgress.{tip}.picked, pa se ne mijenja tokom perioda. Ako je za igrača
@@ -374,7 +408,11 @@ async function applyProgress(uid, delta) {
 // dobijao sve odreda, pa žeton "zamjena questa" tamo nije imao šta ponuditi —
 // igrač je već imao svaki quest. Izborom se dobija i prostor za odluku: koji
 // zadatak mi se isplati, a koji mijenjam.
-const TASK_COUNT = { daily: 3, weekly: 5, monthly: 4 }
+//
+// Od 31.07.2026.: 5 / 6 / 7 (bilo 3 / 5 / 4). Sama pravila izbora (uključujući
+// "uvijek prisutne" vanjske zadatke) su u functions/quest-izbor.js i testiraju
+// se s `npm run test-questovi` — TASK_COUNT se uvozi odande da broj ne bi
+// postojao na dva mjesta.
 
 // Žeton kojim se mijenja quest tog tipa. Svaki tip ima svoj — sedmični i
 // mjesečni su rjeđi u kovčezima jer nose veće nagrade.
@@ -392,34 +430,6 @@ async function getActiveTasks() {
   tasksCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
   tasksCacheAt = Date.now()
   return tasksCache
-}
-
-function seedFrom(str) {
-  let h = 2166136261
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return h >>> 0
-}
-
-function mulberry32(a) {
-  return function () {
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-function seededPick(list, n, seed) {
-  const rnd = mulberry32(seed)
-  const a = [...list]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rnd() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a.slice(0, n)
 }
 
 // Koji su eventi ovog trenutka "živi" za konkretnog igrača.
@@ -454,19 +464,6 @@ async function setEventStatus(uid, patch) {
   await db.doc(`users/${uid}`).update(updates).catch(() => {})
 }
 
-function pickTaskIds(pool, uid, type, period, events) {
-  const svi = pool.filter((t) => t.type === type)
-  const base = svi.filter((t) => !t.event)
-  const eventTasks = svi.filter((t) => t.event && events.includes(t.event))
-  // Sjeme je (uid, period) — periodi različitih tipova su različiti stringovi
-  // ('2026-07-30', '2026-W31', '2026-07'), pa se izbori ne poklapaju.
-  const seed = seedFrom(`${uid}|${period}`)
-  const koliko = TASK_COUNT[type] || 3
-  const chosen = eventTasks.length > 0 ? seededPick(eventTasks, 1, seed ^ 0x9e3779b9) : []
-  chosen.push(...seededPick(base, koliko - chosen.length, seed))
-  return chosen.sort((a, b) => (a.order || 0) - (b.order || 0)).map((t) => t.id)
-}
-
 // Vrati (i po potrebi zamrzni) izbor questova jednog tipa za igrača.
 async function ensurePicksZaTip(uid, type, pool, events) {
   const period = periodKey(type)
@@ -476,7 +473,16 @@ async function ensurePicksZaTip(uid, type, pool, events) {
 
   const existing = snap.data().taskProgress?.[type]
   if (existing?.period === period && Array.isArray(existing.picked) && existing.picked.length > 0) {
-    return existing.picked
+    // Izbor je zamrznut, ali ga treba DOPUNITI ako je u međuvremenu porastao
+    // TASK_COUNT ili je dodan novi stalni quest (31.07.2026: 3/5/4 → 5/6/7 plus
+    // tri EPC zadatka). Bez ovoga bi igrači nove zadatke vidjeli tek na sljedeći
+    // period — mjesečni tek 01.09. Dopuna samo dodaje, nikad ne uklanja.
+    const dopunjen = dopuniIzbor(existing.picked, pool, uid, type, period)
+    if (!dopunjen) return existing.picked
+    await userRef
+      .update({ [`taskProgress.${type}.picked`]: dopunjen })
+      .catch(() => {}) // paralelni poziv je već dopunio — svejedno je, lista je ista
+    return dopunjen
   }
 
   const picked = pickTaskIds(pool, uid, type, period, events)
@@ -496,14 +502,7 @@ async function ensurePicksZaTip(uid, type, pool, events) {
     // kreće s čistim izborom.
     const stvarni = pool.filter((t) => t.type === type)
     const zasluzeni = stvarni
-      .filter((t) => {
-        if (cur?.claimed?.[t.id]) return true
-        const value =
-          t.metric === 'correct' && t.category
-            ? cur?.byCategory?.[t.category] || 0
-            : cur?.[t.metric] || 0
-        return value >= t.goal
-      })
+      .filter((t) => cur?.claimed?.[t.id] || vrijednostQuesta(cur, t) >= t.goal)
       .map((t) => t.id)
     const spojeno = [...new Set([...picked, ...zasluzeni])]
     final = spojeno
@@ -1390,14 +1389,16 @@ export const claimTask = onCall(async (request) => {
   if (!taskSnap.exists || !taskSnap.data().active) {
     throw new HttpsError('not-found', 'Task ne postoji.')
   }
-  const task = taskSnap.data()
+  // `id` mora ući u objekat: vrijednostQuesta ga traži za ručne zadatke
+  // (napredak im stoji pod ključem questa, ne pod imenom metrike).
+  const task = { id: taskId, ...taskSnap.data() }
 
   // Dnevni questovi se rotiraju — nagradu nosi samo zadatak iz današnjeg izbora.
   if (task.type === 'daily') await ensureDailyPicks(uid)
 
   const userRef = db.doc(`users/${uid}`)
   const cfg = await getLevelConfig()
-  let profileAfter, totalXp
+  let profileAfter, totalXp, zetoni, zeleni
 
   await db.runTransaction(async (tx) => {
     const userSnap = await tx.get(userRef)
@@ -1415,19 +1416,33 @@ export const claimTask = onCall(async (request) => {
     if (Array.isArray(izbor) && izbor.length > 0 && !izbor.includes(taskId)) {
       throw new HttpsError('failed-precondition', 'Ovaj quest nije među tvojim zadacima.')
     }
-    const value =
-      task.metric === 'correct' && task.category
-        ? stored.byCategory?.[task.category] || 0
-        : stored[task.metric] || 0
+    const value = vrijednostQuesta(stored, task)
     if (value < task.goal) throw new HttpsError('failed-precondition', 'Task još nije ispunjen.')
     if (stored.claimed?.[taskId]) throw new HttpsError('already-exists', 'Nagrada je već preuzeta.')
 
     totalXp = (profile.xp || 0) + task.reward
     profileAfter = profile
-    tx.update(userRef, {
+
+    // Nagrada može biti više od XP-a (vanjski EPC zadaci, od 31.07.2026.):
+    //   task.tokens   { quizRefill: 3, survivalRevive: 1, ... } → users.rewards.*
+    //   task.clanGold  zeleni bodovi za gradnju Zelenog Okruga → users.clanGold
+    // Sve ide u ISTU transakciju kao XP i oznaka preuzimanja — inače bi pad
+    // između dva upisa ostavio quest kao preuzet, a žetone neisplaćene.
+    const izmjene = {
       xp: totalXp,
       [`taskProgress.${task.type}.claimed.${taskId}`]: true,
-    })
+    }
+    zetoni = {}
+    for (const [kind, amount] of Object.entries(task.tokens || {})) {
+      const n = Number(amount)
+      if (!Number.isFinite(n) || n <= 0) continue
+      izmjene[`rewards.${kind}`] = (profile.rewards?.[kind] || 0) + n
+      zetoni[kind] = n
+    }
+    zeleni = Number(task.clanGold) > 0 ? Math.round(Number(task.clanGold)) : 0
+    if (zeleni > 0) izmjene.clanGold = (profile.clanGold || 0) + zeleni
+
+    tx.update(userRef, izmjene)
   })
 
   const levelBonus = await awardLevelMilestones(uid)
@@ -1445,6 +1460,8 @@ export const claimTask = onCall(async (request) => {
 
   return {
     reward: task.reward,
+    tokens: zetoni,
+    clanGold: zeleni,
     newLevel: levelFromXp(finalXp, cfg),
     levelBonus,
     newBadges,
@@ -2040,8 +2057,10 @@ export const startSurvival = onCall(async (request) => {
   const run = runSnap.exists ? runSnap.data() : null
 
   // Run je prekinut greškom → zaključano do srijede (izlazak NE zaključava).
+  // `revived` govori klijentu smije li ponuditi žeton za oživljavanje: jedno
+  // po run-u, pa se poslije iskorištenog žetona dugme više ne prikazuje.
   if (run && run.week === week && !run.active) {
-    return { locked: true, streak: run.streak || 0, week }
+    return { locked: true, streak: run.streak || 0, week, revived: run.revived === true }
   }
 
   if (run && run.week === week && run.active) {
@@ -2142,6 +2161,9 @@ export const submitSurvivalAnswer = onCall(async (request) => {
       finished: true,
       eliminated: true,
       streak: run.streak || 0,
+      // Je li žeton za oživljavanje već potrošen na ovom run-u — klijent na
+      // osnovu ovoga odlučuje hoće li ponuditi "Oživi".
+      revived: run.revived === true,
       newBadges,
     }
   }
@@ -2200,6 +2222,98 @@ export const submitSurvivalAnswer = onCall(async (request) => {
     levelBonus,
     newBadges,
     newFrames, // id-evi tek osvojenih okvira avatara
+  }
+})
+
+// ---------------------------------------------------------------------------
+// spendSurvivalRevive — žeton za oživljavanje (nagrada za mjesečni EPC post)
+// ---------------------------------------------------------------------------
+// Igrač je ispao. Umjesto da čeka srijedu, troši žeton: pitanje na kojem je pao
+// BROJI SE KAO PREĐENO (dobija XP za taj korak) i nastavlja na sljedećem.
+// Pitanje se ne ponavlja — već je u `run.seen` od trenutka kad mu je postavljeno.
+//
+// Granice, i zašto baš takve:
+//  - NAJVIŠE JEDNOM po run-u (`run.revived`). Bez toga bi igrač s više žetona
+//    prošao cijelu ljestvicu bez rizika, a Preživljavanje je zamišljeno kao
+//    jedna sedmična sudbina.
+//  - Vrijedi do sedmičnog restarta, ne samo odmah — ko ispadne uveče, može se
+//    predomisliti ujutro. Zato se gleda `run.week`, a ne vrijeme ispadanja.
+//  - Ako oživljeni korak padne na prag (10, 20 …), nosi i kovčeg. Korak je korak.
+//
+// POZNATO OGRANIČENJE: dnevni survival quest koji je pri ispadanju zamijenjen
+// običnim OSTAJE zamijenjen. Vraćanje bi značilo oduzimanje questa koji je igrač
+// u međuvremenu možda ispunio, što je gore od ove nedosljednosti.
+export const spendSurvivalRevive = onCall(async (request) => {
+  const uid = request.auth?.uid
+  if (!uid) throw new HttpsError('unauthenticated', 'Prijavi se.')
+
+  const week = survivalWeekKey()
+  if (await survivalWindowClosed()) {
+    throw new HttpsError('failed-precondition', 'Preživljavanje trenutno nije otvoreno.')
+  }
+
+  const runRef = db.doc(`survivalRuns/${uid}`)
+  const runSnap = await runRef.get()
+  if (!runSnap.exists) throw new HttpsError('failed-precondition', 'Nemaš pokušaj ove sedmice.')
+  const run = runSnap.data()
+  if (run.week !== week) throw new HttpsError('failed-precondition', 'Taj pokušaj je iz prošle sedmice.')
+  if (run.active) throw new HttpsError('failed-precondition', 'Još si u igri — nemaš šta oživljavati.')
+  if (run.revived) throw new HttpsError('failed-precondition', 'Oživljavanje si već iskoristio.')
+
+  const newStreak = (run.streak || 0) + 1
+  const chestReward = survivalChestReward(newStreak)
+  // Kategorija pitanja na kojem je pao — `currentQid` se pri ispadanju NE
+  // briše, pa CP za klanski rat dobija istu kategoriju kao da je odgovorio tačno.
+  const kategorija = run.currentQid ? (await getQuestionById(run.currentQid))?.category || null : null
+
+  const userRef = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const us = await tx.get(userRef)
+    if (!us.exists) throw new HttpsError('not-found', 'Profil ne postoji.')
+    const p = us.data()
+    const zetona = p.rewards?.survivalRevive || 0
+    if (zetona <= 0) throw new HttpsError('failed-precondition', 'Nemaš žeton za oživljavanje.')
+    // Trošenje žetona i XP za korak idu zajedno: da pad između dva upisa ne
+    // pojede žeton bez koraka, ni obrnuto.
+    tx.update(userRef, {
+      'rewards.survivalRevive': zetona - 1,
+      xp: (p.xp || 0) + SURVIVAL_XP_PER_CORRECT + chestReward,
+    })
+  })
+
+  await runRef.update({
+    streak: newStreak,
+    active: true,
+    awaitingNext: true, // sljedeće pitanje bira startSurvival, kao i inače
+    currentQid: null,
+    askedAt: null,
+    endedAt: null,
+    revived: true,
+    revivedAt: FieldValue.serverTimestamp(),
+  })
+
+  const levelBonus = await awardLevelMilestones(uid)
+  await addWeekendXp(uid, SURVIVAL_XP_PER_CORRECT)
+  await addClanWarCp(uid, SURVIVAL_XP_PER_CORRECT + chestReward, {
+    xpPoKategoriji: kategorija ? { [kategorija]: SURVIVAL_XP_PER_CORRECT + chestReward } : null,
+    izvor: 'survival',
+  })
+  await applyProgress(uid, { survivalCorrect: 1, survivalBest: newStreak })
+  await writeSurvivalLeaderboard(uid, week, newStreak)
+  // Bez ovoga igrač ostaje "ispao" za questove i za signal na Areni.
+  await setEventStatus(uid, { survival: true })
+  const newBadges = await awardBadges(uid)
+  const newFrames = SURVIVAL_FRAME_STEPS.includes(newStreak)
+    ? await awardCosmetics(uid, [`sv-${newStreak}`])
+    : []
+
+  return {
+    streak: newStreak,
+    xp: SURVIVAL_XP_PER_CORRECT,
+    chestReward,
+    levelBonus,
+    newBadges,
+    newFrames,
   }
 })
 
@@ -2507,6 +2621,12 @@ export const rerollDailyQuest = onCall(async (request) => {
   const [pool, events] = await Promise.all([getActiveTasks(), activeEventsFor(uid)])
   const zadatak = pool.find((t) => t.id === taskId)
   if (!zadatak) throw new HttpsError('not-found', 'Taj quest ne postoji.')
+  // Vanjski EPC zadaci su obećani kao "uvijek prisutni" — zamjena bi ih uklonila
+  // do kraja perioda i to obećanje pretvorila u laž. Klijent im ionako ne
+  // prikazuje dugme, ovo je brana za poziv koji zaobiđe UI.
+  if (!smijeSeZamijeniti(zadatak)) {
+    throw new HttpsError('failed-precondition', 'Ovaj quest je stalan i ne može se zamijeniti.')
+  }
   const type = zadatak.type
   const kind = REROLL_KIND[type]
   if (!kind) throw new HttpsError('invalid-argument', 'Nepoznat tip questa.')
@@ -2535,10 +2655,13 @@ export const rerollDailyQuest = onCall(async (request) => {
 
     // Kandidati: aktivni questovi istog tipa koji nisu u igri, i čiji je event
     // živ (ili ga uopšte nemaju).
+    // `always` questovi su već u izboru, pa ih ovdje ionako nema — filter je
+    // brana za slučaj da neki uđe u bazen a izbor je zamrznut od ranije.
     const kandidati = pool.filter(
       (t) =>
         t.type === type &&
         !stanje.picked.includes(t.id) &&
+        smijeSeZamijeniti(t) &&
         (!t.event || events.includes(t.event))
     )
     if (kandidati.length === 0) {
@@ -2745,6 +2868,102 @@ export const adminListPlayers = onCall(async (request) => {
     .sort((a, b) => a.ime.localeCompare(b.ime, 'bs'))
 
   return { igraci }
+})
+
+// ---------------------------------------------------------------------------
+// VANJSKI (EPC) ZADACI — ručna dodjela napretka
+// ---------------------------------------------------------------------------
+// IZUZETAK od pravila da admin alati rade samo nad vlastitim nalogom: ovo je,
+// uz adminBroadcast, jedina funkcija koja dira TUĐI profil. Mora — igrica ne
+// vidi šta se dešava na Circle platformi, komentare i lajkove vidi samo admin.
+//
+// NE ISPLAĆUJE nagradu. Upisuje SAMO napredak (npr. 10/10 komentara); XP,
+// žetone i zelene bodove igrač preuzima sam kroz claimTask, kao i kod svakog
+// drugog questa. Time nijedna provjera nije zaobiđena, animacija nagrade radi
+// normalno, i admin ne može slučajno isplatiti dvaput.
+
+// Popis ručnih questova i trenutne vrijednosti za jednog igrača — panel iz
+// jednog poziva zna i šta postoji i dokle je igrač stigao.
+export const adminQuestStanje = onCall(async (request) => {
+  requireAdmin(request)
+  const uid = request.data?.uid
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje uid.')
+
+  const pool = await getActiveTasks()
+  const rucni = pool
+    .filter((t) => t.metric === 'manual')
+    .sort((a, b) => (a.type || '').localeCompare(b.type || '') || (a.order || 0) - (b.order || 0))
+
+  const snap = await db.doc(`users/${uid}`).get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Taj igrač ne postoji.')
+  const tp = snap.data().taskProgress || {}
+
+  return {
+    ime: snap.data().displayName || '(bez imena)',
+    zadaci: rucni.map((t) => {
+      const stored = tp[t.type]
+      const vazi = stored?.period === periodKey(t.type)
+      return {
+        id: t.id,
+        type: t.type,
+        title: t.title,
+        goal: t.goal,
+        reward: t.reward,
+        tokens: t.tokens || null,
+        clanGold: t.clanGold || 0,
+        vrijednost: vazi ? stored?.manual?.[t.id] || 0 : 0,
+        preuzeto: vazi ? stored?.claimed?.[t.id] === true : false,
+        period: periodKey(t.type),
+      }
+    }),
+  }
+})
+
+export const adminSetQuestProgress = onCall(async (request) => {
+  const adminUid = requireAdmin(request)
+  const { uid, taskId } = request.data || {}
+  const value = Math.round(Number(request.data?.value))
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje uid.')
+  if (typeof taskId !== 'string' || !taskId) throw new HttpsError('invalid-argument', 'Nedostaje taskId.')
+  if (!Number.isFinite(value) || value < 0) {
+    throw new HttpsError('invalid-argument', 'Vrijednost mora biti broj ≥ 0.')
+  }
+
+  const taskSnap = await db.doc(`tasks/${taskId}`).get()
+  if (!taskSnap.exists || !taskSnap.data().active) {
+    throw new HttpsError('not-found', 'Task ne postoji.')
+  }
+  const task = taskSnap.data()
+  // Brana da se ovim ne može falsifikovati napredak mjerljivog questa (broj
+  // kvizova, tačni odgovori…). Ručno se dodjeljuje samo ono što se ručno i mjeri.
+  if (task.metric !== 'manual') {
+    throw new HttpsError('failed-precondition', 'Ovaj quest se mjeri automatski.')
+  }
+
+  // Izbor mora biti zamrznut prije upisa: bez toga bi period bio nepoznat, a
+  // `always` zadatak ne bi bio u igračevoj listi pa nagradu ne bi mogao preuzeti.
+  await ensureDailyPicks(uid)
+
+  const period = periodKey(task.type)
+  const ref = db.doc(`users/${uid}`)
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists) throw new HttpsError('not-found', 'Taj igrač ne postoji.')
+    const cur = snap.data().taskProgress?.[task.type]
+    // Cijeli podobjekat se prepisuje spojen sa zatečenim: dotted put bi ostavio
+    // brojače iz prošlog perioda da važe u novom.
+    const base = cur?.period === period ? cur : emptyProgress(period)
+    tx.update(ref, {
+      [`taskProgress.${task.type}`]: {
+        ...base,
+        period,
+        manual: { ...(base.manual || {}), [taskId]: value },
+      },
+    })
+  })
+
+  await adminLog(adminUid, 'setQuestProgress', { uid, taskId, value, period })
+  return { ok: true, uid, taskId, value, goal: task.goal, period }
 })
 
 // Reset sedmičnog pokušaja Preživljavanja — isto što radi scripts/reset-survival.js,

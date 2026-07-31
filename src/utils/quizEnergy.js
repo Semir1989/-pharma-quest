@@ -42,5 +42,8 @@ export function rewardCounts(profile) {
     questRerollWeekly: r.questRerollWeekly || 0,
     questRerollMonthly: r.questRerollMonthly || 0,
     streakFreeze: r.streakFreeze || 0,
+    // Oživljavanje u Preživljavanju — ne dolazi iz kovčega nego kao nagrada za
+    // mjesečni EPC post, pa je rijedak i vrijedan (vidi taskovi-lista.js).
+    survivalRevive: r.survivalRevive || 0,
   }
 }

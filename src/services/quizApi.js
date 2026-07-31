@@ -180,6 +180,16 @@ export async function spendQuizRefill() {
   return (await spendQuizRefillFn({})).data
 }
 
+// Žeton za oživljavanje u Preživljavanju (nagrada za mjesečni EPC post)
+// → { streak, xp, chestReward, levelBonus, newBadges, newFrames }
+// Pitanje na kojem je igrač pao broji se kao pređeno; nastavlja na sljedećem.
+// NAMJERNO nije u retry omotaču `poziv()`: ponovljeni poziv bi potrošio drugi
+// žeton, a server ga ne bi odbio jer bi run u međuvremenu već bio oživljen.
+const spendSurvivalReviveFn = httpsCallable(functions, 'spendSurvivalRevive')
+export async function spendSurvivalRevive() {
+  return (await spendSurvivalReviveFn({})).data
+}
+
 // Zamjena jednog današnjeg questa → { noviTaskId, preostaloZetona }
 const rerollDailyQuestFn = httpsCallable(functions, 'rerollDailyQuest')
 export async function rerollDailyQuest(taskId) {
@@ -188,7 +198,8 @@ export async function rerollDailyQuest(taskId) {
 
 // --- Admin alati (Etapa 9) — server traži custom claim admin:true -----------
 // Sve rade nad VLASTITIM nalogom; panel je alat za testiranje, ne za
-// mijenjanje tuđih rezultata.
+// mijenjanje tuđih rezultata. Dva su izuzetka i oba su namjerna:
+// adminBroadcast (objava) i adminSetQuestProgress (vanjski EPC zadaci).
 const adminResetSurvivalFn = httpsCallable(functions, 'adminResetSurvival')
 const adminSetXpFn = httpsCallable(functions, 'adminSetXp')
 const adminSetHiddenFn = httpsCallable(functions, 'adminSetHidden')
@@ -241,6 +252,23 @@ export async function adminEventStatus() {
 const adminBroadcastFn = httpsCallable(functions, 'adminBroadcast')
 export async function adminBroadcast({ naslov, tekst, url, test = false, komu = null }) {
   return (await adminBroadcastFn({ naslov, tekst, url, test, komu })).data
+}
+
+// --- Admin: vanjski (EPC) zadaci --------------------------------------------
+// Drugi izuzetak od "samo nad sobom": igrica ne vidi Circle platformu, pa
+// komentare, lajkove i postove potvrđuje admin. Upisuje se SAMO napredak —
+// XP, žetone i zelene bodove igrač preuzima sam kroz claimTask.
+const adminQuestStanjeFn = httpsCallable(functions, 'adminQuestStanje')
+const adminSetQuestProgressFn = httpsCallable(functions, 'adminSetQuestProgress')
+
+// → { ime, zadaci: [{ id, type, title, goal, reward, tokens, clanGold,
+//     vrijednost, preuzeto, period }] }
+export async function adminQuestStanje(uid) {
+  return (await adminQuestStanjeFn({ uid })).data
+}
+
+export async function adminSetQuestProgress(uid, taskId, value) {
+  return (await adminSetQuestProgressFn({ uid, taskId, value })).data
 }
 
 // Popis igrača sa stanjem pretplate — za biranje primaoca objave.

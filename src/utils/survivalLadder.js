@@ -9,6 +9,12 @@
 export const CHEST_STEP = 10
 export const MAX_STEP = 100
 
+// XP za svaki tačan odgovor u Preživljavanju — mora pratiti
+// SURVIVAL_XP_PER_CORRECT na serveru (od 30.07.2026. je 50, ranije 3).
+// Ekran je do 31.07.2026. i dalje pisao "+3 XP"; broj sada stoji na jednom
+// mjestu da tekst i isplata ne mogu opet otići svako na svoju stranu.
+export const XP_PO_KORAKU = 50
+
 // Svaki prag nosi FIKSNIH 300 XP (isto na 10 i na 100) — vidi
 // SURVIVAL_CHEST_XP na serveru.
 export const CHEST_XP = 300

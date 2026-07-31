@@ -17,13 +17,15 @@ import CircleProgress from '../components/CircleProgress'
 
 // Questovi ekran (Modul 6): dnevni / sedmični / mjesečni taskovi
 // s kružnim progresom i "Preuzmi" dugmetom za nagrade.
-// Dnevni se rotiraju — svaki dan tri zadatka iz bazena, a kad je event živ
-// jedan od njih je vezan za taj event (izbor pravi i zamrzne server).
+// Svi se rotiraju — od 31.07.2026. igrač dobija 5 dnevnih, 6 sedmičnih i 7
+// mjesečnih iz bazena (izbor pravi i zamrzne server). Kad je event živ, jedan
+// od njih je vezan za taj event. Vanjski EPC zadaci (`always`) su izuzetak:
+// uvijek su tu i ne mogu se zamijeniti žetonom.
 export default function Questovi() {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const [tasks, setTasks] = useState(null) // { daily, weekly, monthly }
-  // Izbor po periodu: 3 dnevna, 5 sedmičnih, 4 mjesečna (server zamrzava).
+  // Izbor po periodu: 5 dnevnih, 6 sedmičnih, 7 mjesečnih (server zamrzava).
   const [picks, setPicks] = useState({ daily: null, weekly: null, monthly: null })
   const [claiming, setClaiming] = useState(null) // id taska čija se nagrada upisuje
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
@@ -301,13 +303,30 @@ function eventLive(profile, event) {
 
 const EVENT_LABEL = { survival: '🔥 Preživljavanje', tournament: '🏆 Turnir' }
 
+// Kratka oznaka nagrade uz XP — žetoni i zeleni bodovi vanjskih zadataka.
+// Bez ovoga bi igrač vidio samo "+300 XP" i ne bi znao da uz to ide i 3 žetona
+// i 5 zelenih bodova, tj. najveći dio vrijednosti zadatka bi bio nevidljiv.
+function dodatneNagrade(task) {
+  const t = task.tokens || {}
+  const dijelovi = []
+  if (t.quizRefill) dijelovi.push(`🎫 ${t.quizRefill}`)
+  if (t.survivalRevive) dijelovi.push(`💚 ${t.survivalRevive}`)
+  if (t.streakFreeze) dijelovi.push(`🧊 ${t.streakFreeze}`)
+  if (task.clanGold) dijelovi.push(`🟩 ${task.clanGold}`)
+  return dijelovi
+}
+
 // Jedan red taska: kružić, naziv, XP oznaka ili Preuzmi/Preuzeto.
 function TaskRow({ task, progress, color, claiming, onClaim, eventClosed, onReroll, rerolling }) {
   const value = taskValue(progress, task)
   const done = value >= task.goal
   const claimed = !!progress.claimed[task.id]
-  // Zamjena ima smisla samo dok nagrada nije preuzeta.
-  const moze = !!onReroll && !claimed
+  // Zamjena ima smisla samo dok nagrada nije preuzeta — i nikad na stalnim
+  // (`always`) zadacima, koji su igraču obećani kao trajni. Server to i sam
+  // odbija; ovdje se dugme ni ne nudi da igrač ne troši žeton uzalud.
+  const moze = !!onReroll && !claimed && task.always !== true
+  const vanjski = task.metric === 'manual'
+  const dodatno = dodatneNagrade(task)
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm">
@@ -318,9 +337,19 @@ function TaskRow({ task, progress, color, claiming, onClaim, eventClosed, onRero
             {EVENT_LABEL[task.event] || task.event}
           </span>
         )}
+        {vanjski && (
+          <span className="text-[11px] font-bold uppercase tracking-wide text-indigo-600">
+            🌐 EPC platforma{task.always ? ' · stalni' : ''}
+          </span>
+        )}
         <p className="font-semibold leading-snug text-slate-800">{task.title}</p>
         {done && !claimed && <p className="text-sm font-bold text-green-600">Završeno!</p>}
         {claimed && <p className="text-sm text-slate-400">Nagrada preuzeta ✓</p>}
+        {vanjski && !done && !claimed && (
+          <p className="text-xs text-slate-500">
+            Uradi na EPC platformi — napredak upisuje admin nakon provjere.
+          </p>
+        )}
         {moze && !done && (
           <button
             onClick={() => onReroll(task)}
@@ -343,9 +372,16 @@ function TaskRow({ task, progress, color, claiming, onClaim, eventClosed, onRero
           {claiming === task.id ? '…' : '⭐ Preuzmi'}
         </button>
       ) : (
-        <span className={`rounded-xl border px-3 py-1 text-sm font-bold ${claimed ? 'border-slate-200 text-slate-300' : 'border-amber-300 bg-amber-50 text-amber-600'}`}>
-          +{task.reward} XP
-        </span>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className={`rounded-xl border px-3 py-1 text-sm font-bold ${claimed ? 'border-slate-200 text-slate-300' : 'border-amber-300 bg-amber-50 text-amber-600'}`}>
+            +{task.reward} XP
+          </span>
+          {dodatno.length > 0 && (
+            <span className={`text-[11px] font-bold ${claimed ? 'text-slate-300' : 'text-slate-500'}`}>
+              {dodatno.join(' ')}
+            </span>
+          )}
+        </div>
       )}
     </div>
   )

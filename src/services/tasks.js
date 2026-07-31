@@ -54,6 +54,7 @@ const EMPTY = {
   duels: 0,
   tournamentXp: 0,
   byCategory: {},
+  manual: {}, // vanjski (EPC) zadaci — vrijednost upisuje admin, po questu
   claimed: {},
   picked: null,
 }
@@ -62,11 +63,20 @@ const EMPTY = {
 export function progressForType(profile, type) {
   const stored = profile?.taskProgress?.[type]
   if (!stored || stored.period !== periodKey(type)) return { ...EMPTY, period: periodKey(type) }
-  return { ...EMPTY, ...stored, byCategory: stored.byCategory || {}, claimed: stored.claimed || {} }
+  return {
+    ...EMPTY,
+    ...stored,
+    byCategory: stored.byCategory || {},
+    manual: stored.manual || {},
+    claimed: stored.claimed || {},
+  }
 }
 
 // Koliko je korisnik napredovao na konkretnom tasku.
+// Ista logika kao vrijednostQuesta() na serveru — server ima konačnu riječ,
+// ovo je samo za prikaz.
 export function taskValue(progress, task) {
+  if (task.metric === 'manual') return progress.manual?.[task.id] || 0
   if (task.metric === 'correct' && task.category) return progress.byCategory[task.category] || 0
   return progress[task.metric] || 0
 }

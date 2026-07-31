@@ -1,22 +1,27 @@
 import { Link } from 'react-router-dom'
-import { progressForType, taskValue } from '../services/tasks'
+import { progressForType, taskValue, izabrani } from '../services/tasks'
 
 // Banner napretka questova na početnoj — dnevni, sedmični i mjesečni na jednom
-// mjestu, npr. "Dnevni 1/3". Igrač do sada nije imao uvid u sedmične i mjesečne
+// mjestu, npr. "Dnevni 1/5". Igrač do sada nije imao uvid u sedmične i mjesečne
 // bez ulaska u Questove.
 //
 // Kad negdje ima nepreuzeti XP, taj red SVIJETLI (amber pozadina + pulsirajuća
 // tačkica) — isti jezik kao signal na Areni: tačkica nosi informaciju i kad je
 // animacija ugašena.
 //
-// props: tasks ({ daily, weekly, monthly }), daily (današnja tri), profile
+// SVA TRI reda moraju brojati IGRAČEV IZBOR, ne cijeli bazen. Dnevni je to
+// radio (prima gotovu listu), a sedmični i mjesečni su do 31.07.2026. brojali
+// `tasks.weekly` / `tasks.monthly` — pa je početna javljala 0/7 i 0/6, a u
+// Questovima ih je stajalo 6 i 7. Ovdje uvijek ide kroz `izabrani()`.
+//
+// props: tasks ({ daily, weekly, monthly }), daily (današnji izbor), profile
 export default function QuestProgress({ tasks, daily, profile }) {
   if (!tasks) return null
 
   const redovi = [
     { tip: 'daily', naziv: 'Dnevni', lista: daily || [] },
-    { tip: 'weekly', naziv: 'Sedmični', lista: tasks.weekly || [] },
-    { tip: 'monthly', naziv: 'Mjesečni', lista: tasks.monthly || [] },
+    { tip: 'weekly', naziv: 'Sedmični', lista: izabrani(profile, tasks.weekly, 'weekly') },
+    { tip: 'monthly', naziv: 'Mjesečni', lista: izabrani(profile, tasks.monthly, 'monthly') },
   ].map((r) => {
     const progress = progressForType(profile, r.tip)
     let gotovo = 0

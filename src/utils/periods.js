@@ -54,10 +54,18 @@ export function weeklyKey(d = new Date()) {
   return `${date.getUTCFullYear()}-W${pad(week)}`
 }
 
+// IZNIMKA (odluka 31.07.2026): mjesečni period jula je PRODUŽEN kroz august —
+// jedan period traje 01.07. → 31.08.2026, kalendarska logika se vraća 01.09.
+// Mapa je 'stvarni mjesec → ključ perioda'. IDENTIČNA kopija stoji u
+// functions/index.js; ako se razidu, klijent i server bi različito računali
+// kad questovi ističu.
+const MJESECNI_SPOJENI = { '2026-08': '2026-07' }
+
 // '2026-07' (BiH mjesec)
 export function monthlyKey(d = new Date()) {
   const { y, m } = bihParts(d)
-  return `${y}-${pad(m)}`
+  const stvarni = `${y}-${pad(m)}`
+  return MJESECNI_SPOJENI[stvarni] || stvarni
 }
 
 export function periodKey(type, d = new Date()) {
@@ -135,8 +143,26 @@ export function daysUntilWeekEnd(d = new Date()) {
   return 8 - dow
 }
 
+// Spojeni period (vidi MJESECNI_SPOJENI) traje do kraja POSLJEDNJEG mjeseca
+// koji dijeli isti ključ — bez ovoga bi kartica 31.07. javila "obnavlja se
+// sutra", a questovi bi zapravo stajali još cijeli august.
 export function daysUntilMonthEnd(d = new Date()) {
   const { y, m, d: day } = bihParts(d)
-  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate()
-  return lastDay - day + 1
+  const kljuc = monthlyKey(d)
+
+  let gy = y
+  let gm = m
+  for (let i = 0; i < 12; i++) {
+    const sy = gm === 12 ? gy + 1 : gy
+    const sm = gm === 12 ? 1 : gm + 1
+    const sKljuc = `${sy}-${pad(sm)}`
+    if ((MJESECNI_SPOJENI[sKljuc] || sKljuc) !== kljuc) break
+    gy = sy
+    gm = sm
+  }
+
+  const zadnjiDan = new Date(Date.UTC(gy, gm, 0)).getUTCDate()
+  const kraj = Date.UTC(gy, gm - 1, zadnjiDan)
+  const danas = Date.UTC(y, m - 1, day)
+  return Math.round((kraj - danas) / 86400000) + 1
 }

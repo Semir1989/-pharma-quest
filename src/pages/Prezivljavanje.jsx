@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { startSurvival, submitSurvivalAnswer, claimSurvivalChest } from '../services/quizApi'
+import {
+  startSurvival,
+  submitSurvivalAnswer,
+  claimSurvivalChest,
+  spendSurvivalRevive,
+} from '../services/quizApi'
+import { rewardCounts } from '../utils/quizEnergy'
 import { subscribeSurvivalLeaderboard, subscribeMyStreak } from '../services/survival'
 import {
   secondsUntilSurvivalReset,
@@ -13,6 +19,7 @@ import { levelFromXp } from '../utils/levels'
 import {
   CHEST_STEP,
   MAX_STEP,
+  XP_PO_KORAKU as SURVIVAL_XP_PO_KORAKU,
   chestReward,
   chestCount,
   openedThisWeek,
@@ -45,6 +52,9 @@ export default function Prezivljavanje() {
   const [chest, setChest] = useState(null) // { step, xp, nagrade } kovčega koji se otvara
   const [otvaramKovceg, setOtvaramKovceg] = useState(null) // prag dok server izvlači žetone
   const [ladderStreak, setLadderStreak] = useState(0) // niz te sedmice (RTDB)
+  const [vecOzivljen, setVecOzivljen] = useState(false) // žeton potrošen na ovom run-u
+  const [ozivljavam, setOzivljavam] = useState(false)
+  const [greskaOziv, setGreskaOziv] = useState('')
   const xpAtStartRef = useRef(0)
   const badgesRef = useRef([]) // skupljeni novi bedževi tokom run-a
   const bonusRef = useRef(0) // skupljeni level-bonus XP tokom run-a
@@ -79,6 +89,7 @@ export default function Prezivljavanje() {
       if (res.locked) {
         setBestStreak(res.streak || 0)
         setExhausted(!!res.exhausted)
+        setVecOzivljen(!!res.revived)
         setPhase('locked')
         return
       }
@@ -118,6 +129,7 @@ export default function Prezivljavanje() {
       // Netačan odgovor ili istek → izazov zaključan do srijede.
       setBestStreak(feedback.streak)
       setExhausted(!!feedback.exhausted)
+      setVecOzivljen(!!feedback.revived)
       flushOverlays()
       setPhase('ended')
       return
@@ -127,6 +139,33 @@ export default function Prezivljavanje() {
     begin()
   }
 
+  // Žeton za oživljavanje — pitanje na kojem je igrač pao broji se kao pređeno
+  // (dobija XP za taj korak) i nastavlja na sljedećem. Jednom po run-u.
+  //
+  // Vrijedi do srijede, ne samo odmah: zato je dugme i na 'locked' ekranu, ne
+  // samo na 'ended' — ko ispadne uveče može se predomisliti ujutro.
+  async function ozivi() {
+    if (ozivljavam) return
+    setOzivljavam(true)
+    setGreskaOziv('')
+    try {
+      const res = await spendSurvivalRevive()
+      if (res.newBadges?.length) badgesRef.current.push(...res.newBadges)
+      if (res.levelBonus?.bonusXp) bonusRef.current += res.levelBonus.bonusXp
+      setStreak(res.streak)
+      setBestStreak(res.streak)
+      setVecOzivljen(true)
+      track('survival_revive', { streak: res.streak })
+      // Run je opet aktivan i čeka sljedeće pitanje — begin() ga donosi.
+      setQuestion(null)
+      await begin()
+    } catch (e) {
+      setGreskaOziv(e?.message || 'Oživljavanje nije uspjelo.')
+    } finally {
+      setOzivljavam(false)
+    }
+  }
+
   // Dobrovoljni izlazak poslije tačnog odgovora — niz i pokušaj ostaju živi.
   function handleExit() {
     setBestStreak(streak)
@@ -134,6 +173,8 @@ export default function Prezivljavanje() {
     flushOverlays()
     setPhase('paused')
   }
+
+  const zetonaOziv = rewardCounts(profile).survivalRevive
 
   // Ljestvica niza (1 → 100). Dok traje run `streak` je svježiji od RTDB-a,
   // pa uzimamo veći od ta dva.
@@ -233,7 +274,17 @@ export default function Prezivljavanje() {
               {exhausted ? 'Prošao/la si cijelu banku pitanja!' : 'Tvoj niz ove sedmice'}
             </p>
             <p className="font-title text-5xl font-extrabold text-amber-300">{bestStreak}</p>
-            <p className="mt-1 text-sm text-teal-100">+{bestStreak * 3} XP osvojeno · vrati se u srijedu</p>
+            <p className="mt-1 text-sm text-teal-100">
+              +{bestStreak * SURVIVAL_XP_PO_KORAKU} XP osvojeno · vrati se u srijedu
+            </p>
+            <ReviveDugme
+              zetona={zetonaOziv}
+              vecOzivljen={vecOzivljen}
+              radi={ozivljavam}
+              greska={greskaOziv}
+              exhausted={exhausted}
+              onOzivi={ozivi}
+            />
           </div>
         )}
 
@@ -248,6 +299,14 @@ export default function Prezivljavanje() {
             <p className="mt-1 text-sm text-teal-100">
               Novi pokušaj za {formatCountdown(secondsUntilSurvivalReset())}
             </p>
+            <ReviveDugme
+              zetona={zetonaOziv}
+              vecOzivljen={vecOzivljen}
+              radi={ozivljavam}
+              greska={greskaOziv}
+              exhausted={exhausted}
+              onOzivi={ozivi}
+            />
           </div>
         )}
 
@@ -275,16 +334,28 @@ export default function Prezivljavanje() {
       {(phase === 'intro' || phase === 'loading' || phase === 'error' || phase === 'paused') && (
         <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
           <ul className="flex flex-col gap-2 pl-5 text-sm text-slate-600 marker:text-teal-600 list-disc">
-            <li>Odgovaraj tačno — svaki tačan odgovor je <b>+3 XP</b> i produžava niz.</li>
+            {/* Brojevi se povlače iz survivalLadder.js — do 31.07.2026. su ovdje
+                stajali stari iznosi (+3 XP, kovčeg 100/200/300), a server je
+                odavno isplaćivao 50 i 300. */}
+            <li>
+              Odgovaraj tačno — svaki tačan odgovor je <b>+{SURVIVAL_XP_PO_KORAKU} XP</b> i
+              produžava niz.
+            </li>
             <li>
               Poslije svakog tačnog odgovora možeš <b>izaći i vratiti se kasnije</b> — niz ti
               se čuva.
             </li>
             <li>
-              Svaki <b>10. tačan zaredom</b> otključava kovčeg: niz 10 je{' '}
-              <b>+100 XP</b>, niz 20 <b>+200 XP</b>, niz 30 <b>+300 XP</b>…
+              Svaki <b>10. tačan zaredom</b> otključava kovčeg: <b>+{chestReward()} XP</b> i
+              žetoni (niz 10 → 1 kovčeg, 20 → 2 … 100 → 10).
             </li>
             <li>Izazov prekida samo netačan odgovor ili istek 20s.</li>
+            {zetonaOziv > 0 && (
+              <li>
+                Imaš <b>{zetonaOziv}</b> {zetonaOziv === 1 ? 'žeton' : 'žetona'} za{' '}
+                <b>oživljavanje</b> — ako ispadneš, možeš nastaviti jednom po pokušaju.
+              </li>
+            )}
             <li>Sve traje do srijede, kad kreće nova sedmica.</li>
           </ul>
           {phase === 'error' && (
@@ -367,6 +438,49 @@ export default function Prezivljavanje() {
           </div>
         )}
       </section>
+    </div>
+  )
+}
+
+// Ponuda oživljavanja poslije ispadanja.
+//
+// Prikazuje se SAMO kad igrač zaista može nešto uraditi — ima žeton, nije ga
+// već potrošio na ovom pokušaju, i banka pitanja nije iscrpljena (tada nema
+// gdje nastaviti). Kad žetona nema, stoji tiho objašnjenje odakle se dobija:
+// to je jedina nagrada koja se ne izvlači iz kovčega.
+function ReviveDugme({ zetona, vecOzivljen, radi, greska, exhausted, onOzivi }) {
+  if (exhausted) return null
+
+  if (vecOzivljen) {
+    return (
+      <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-xs text-teal-100">
+        💚 Oživljavanje si već iskoristio/la ovaj pokušaj — jedno po sedmici.
+      </p>
+    )
+  }
+
+  if (zetona <= 0) {
+    return (
+      <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-xs text-teal-100">
+        💚 Žeton za oživljavanje nosi mjesečni zadatak <b>„Napiši 1 post na EPC platformi"</b>.
+      </p>
+    )
+  }
+
+  return (
+    <div className="mt-3">
+      <button
+        onClick={onOzivi}
+        disabled={radi}
+        className="w-full rounded-2xl bg-emerald-500 py-3.5 font-title text-base font-extrabold text-white shadow-md active:bg-emerald-600 disabled:opacity-60"
+      >
+        {radi ? 'Oživljavam…' : `💚 Oživi i nastavi (${zetona})`}
+      </button>
+      <p className="mt-1.5 text-[11px] text-teal-100">
+        Pitanje na kojem si pao/la broji se kao pređeno — dobijaš XP za taj korak i nastavljaš
+        na sljedećem. Jednom po pokušaju.
+      </p>
+      {greska && <p className="mt-1 text-xs font-medium text-red-300">{greska}</p>}
     </div>
   )
 }
