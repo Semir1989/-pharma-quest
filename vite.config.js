@@ -13,7 +13,7 @@ export default defineConfig({
     // nego UpdatePrompt.jsx prikaže toast "Dostupna nova verzija — osvježi".
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Pharma Quest',
         short_name: 'Pharma Quest',
