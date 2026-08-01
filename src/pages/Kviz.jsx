@@ -13,6 +13,7 @@ import { levelFromXp } from '../utils/levels'
 import { formatCountdown, nextDailyResetAt } from '../utils/periods'
 import { QUIZ_ENERGY_MAX, quizEnergy, rewardCounts } from '../utils/quizEnergy'
 import { spendQuizRefill } from '../services/quizApi'
+import { useSakrijNav } from '../context/NavContext'
 import QuestionScreen from '../components/quiz/QuestionScreen'
 import ResultsScreen from '../components/quiz/ResultsScreen'
 
@@ -38,6 +39,11 @@ export default function Kviz() {
   const [badgeQueue, setBadgeQueue] = useState([]) // novi bedževi za animaciju
   const [hintovi, setHintovi] = useState(0) // 50:50 iz Kliničke Apoteke
   const xpAtStartRef = useRef(0)
+
+  // Dok pitanje stoji na ekranu nema donje navigacije: tab pored prsta je usred
+  // odbrojavanja najlakši način da se slučajno izađe iz kviza. Na rezultatima
+  // se traka vraća — tad je izlaz baš ono što igrač traži.
+  useSakrijNav(phase === 'playing' && !!question)
 
   async function startQuiz() {
     setPhase('loading')

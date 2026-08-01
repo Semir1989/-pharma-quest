@@ -25,6 +25,7 @@ import {
   openedThisWeek,
   unopenedChests,
 } from '../utils/survivalLadder'
+import { useSakrijNav } from '../context/NavContext'
 import SurvivalQuestion from '../components/SurvivalQuestion'
 import BadgeUnlockOverlay from '../components/BadgeUnlockOverlay'
 import ChestOpenOverlay from '../components/ChestOpenOverlay'
@@ -58,6 +59,10 @@ export default function Prezivljavanje() {
   const xpAtStartRef = useRef(0)
   const badgesRef = useRef([]) // skupljeni novi bedževi tokom run-a
   const bonusRef = useRef(0) // skupljeni level-bonus XP tokom run-a
+
+  // Bez donje navigacije dok traje pitanje: jedna greška ovdje ne košta pokušaj
+  // nego cijelu sedmicu (izazov se otvara tek u srijedu).
+  useSakrijNav(phase === 'playing' && !!question)
 
   // Live leaderboard tekuće sedmice.
   useEffect(() => subscribeSurvivalLeaderboard(setRows), [])

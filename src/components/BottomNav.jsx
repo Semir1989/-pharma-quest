@@ -20,6 +20,11 @@ import { klanZabranaOstalo, formatZabranu } from '../utils/klanZabrana'
 // Klan ima drugačiju oznaku: dok traje zabrana poslije izlaska iz klana, ispod
 // ikonice stoji ODBROJAVANJE do trenutka kad se smije u novi klan. To nije
 // poziv na akciju nego obavijest, pa nema ni halo ni tačkicu.
+//
+// Sloj (z-30) nije kozmetika: traka je oduvijek bila `fixed`, ali bez sloja su
+// je kartice i banneri sa sjenom znali prekriti pri skrolu, pa je izgledala kao
+// da nestaje. Ostaje ISPOD overlaya nagrada (z-50) i UpdatePrompta (z-60), koji
+// moraju prekriti sve. Skrivanje dok igrač igra radi NavContext.
 const TABS = [
   { to: '/', label: 'Home', Icon: HomeIcon },
   { to: '/kviz', label: 'Kviz', Icon: QuizIcon, alert: 'quiz' },
@@ -42,7 +47,7 @@ export default function BottomNav() {
   const zabrana = klanZabranaOstalo(profile, now)
 
   return (
-    <nav className="fixed bottom-0 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-around border-t border-slate-200 bg-white pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1">
+    <nav className="fixed bottom-0 left-1/2 z-30 flex w-full max-w-md -translate-x-1/2 justify-around border-t border-slate-200 bg-white pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1">
       {TABS.map(({ to, label, Icon, alert }) => {
         const glowing = !!alert && gori[alert]
         return (

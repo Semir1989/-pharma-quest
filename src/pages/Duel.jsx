@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { startDuel, submitDuelAnswer } from '../services/quizApi'
 import { track } from '../services/analytics'
+import { useSakrijNav } from '../context/NavContext'
 import DuelQuestionScreen from '../components/quiz/DuelQuestionScreen'
 
 const LETTERS = ['A', 'B', 'C', 'D']
@@ -30,6 +31,11 @@ export default function Duel() {
   const [prosao, setProsao] = useState(null) // ishod kvalifikacije
   const cakaRef = useRef(false) // isto što i `caka`, ali čitljivo odmah
   const istekCekaRef = useRef(false) // istek stigao dok je odgovor bio u letu
+
+  // Bez donje navigacije dok duel traje. Ovdje je najvažnije od sva tri mjesta:
+  // sat od 120 sekundi NE staje na izlazak iz aplikacije, pa slučajan dodir
+  // tab-a znači izgubljen meč i ispadanje iz turnira.
+  useSakrijNav(phase === 'playing' && !!question)
 
   useEffect(() => {
     let cancelled = false
