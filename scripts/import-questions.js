@@ -131,6 +131,7 @@ const items = snap.docs.map((d) => ({
   id: d.id,
   points: d.data().points,
   category: d.data().category,
+  difficulty: d.data().difficulty ?? null, // 1v1 turnir bira težinu po rundi
 }))
 await db.doc('bank/index').set({
   version: Date.now(), // promjena verzije obara keš na instancama funkcija

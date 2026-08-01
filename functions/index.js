@@ -64,6 +64,7 @@ import {
   resolveMatch,
 } from './duel-pravila.js'
 import { rasporedRundi, brojRundi, paroviPrveRunde } from './turnir-raspored.js'
+import { izaberiPitanjaZaRundu, profilRunde } from './pitanja-tezina.js'
 // Klanski rat. Prefiks `rat*` je namjeran: imena poput `bonusi` ili `mnozilac`
 // su preopšta za fajl od 4600 linija, a `objekat`/`resolveMatch` bi se sudarili
 // s postojećim funkcijama.
@@ -809,7 +810,11 @@ let bankIndex = null // { version, items }
 let bankIndexAt = 0
 const questionBodies = new Map() // id -> puni dokument pitanja (ili null ako ga nema)
 
-// Metapodaci svih aktivnih pitanja. Vraća listu { id, points, category }.
+// Metapodaci svih aktivnih pitanja. Vraća listu { id, points, category,
+// difficulty }. `difficulty` nose i indeks i scan od 01.08.2026. — po njemu se
+// bira težina runde u turniru (functions/pitanja-tezina.js). Stariji indeks ga
+// nema, pa dok se ne pregradi (`npm run izgradi-indeks`) sva pitanja izgledaju
+// kao srednja težina i ljestvica se oslanja samo na statistiku.
 async function getActiveQuestions() {
   if (bankIndex && Date.now() - bankIndexAt < CONTENT_TTL) return bankIndex.items
 
@@ -832,11 +837,58 @@ async function getActiveQuestions() {
   const items = qs.docs.map((d) => {
     const q = d.data()
     questionBodies.set(d.id, { id: d.id, ...q })
-    return { id: d.id, points: q.points, category: q.category }
+    return { id: d.id, points: q.points, category: q.category, difficulty: q.difficulty }
   })
   bankIndex = { version: null, items }
   bankIndexAt = Date.now()
   return items
+}
+
+// ---------------------------------------------------------------------------
+// Globalna statistika pitanja (stats/pitanja) — koliko puta je pitanje
+// postavljeno (`n`) i koliko puta tačno odgovoreno (`t`), zbirno za sve igrače.
+// ---------------------------------------------------------------------------
+// Sluti izboru težine u 1v1 turniru: unutar istog nivoa `difficulty` bira se
+// ono što igrači stvarno griješe (functions/pitanja-tezina.js).
+//
+// SVE u jednom dokumentu, ne po dokument na pitanje: 10 odgovora po kvizu bi
+// inače bilo 10 upisa. Ovako je jedan upis po odigranom kvizu/duelu, a 635
+// pitanja × dva broja stane u ~40 KB (granica dokumenta je 1 MiB).
+//
+// Klijent ovaj dokument NE ČITA i NE PIŠE — u firestore.rules nema pravila za
+// 'stats', pa je zatvoren; server ide preko Admin SDK-a.
+const STATS_DOC = 'stats/pitanja'
+
+let statsCache = null
+let statsCacheAt = 0
+async function getQuestionStats() {
+  if (statsCache && Date.now() - statsCacheAt < CONTENT_TTL) return statsCache
+  const snap = await db.doc(STATS_DOC).get().catch(() => null)
+  statsCache = (snap?.exists ? snap.data().q : null) || {}
+  statsCacheAt = Date.now()
+  return statsCache
+}
+
+// Upis ishoda jednog odigranog seta. `answers` su stavke { id, correct }.
+// Namjerno NIJE u transakciji poziva koji je zove: statistika je pomoćni podatak
+// i njen pad ne smije srušiti kviz, duel ni upis XP-a.
+async function biljeziStatistiku(answers) {
+  const q = {}
+  for (const a of answers || []) {
+    if (!a?.id) continue
+    q[a.id] = {
+      n: FieldValue.increment(1),
+      t: FieldValue.increment(a.correct ? 1 : 0),
+    }
+  }
+  if (Object.keys(q).length === 0) return
+  await db.doc(STATS_DOC).set({ q }, { merge: true }).catch(() => {})
+}
+
+// Banka spojena sa statistikom — ulaz za izbor pitanja po težini runde.
+async function bankaSaStatistikom() {
+  const [items, stats] = await Promise.all([getActiveQuestions(), getQuestionStats()])
+  return items.map((q) => ({ ...q, ...(stats[q.id] || {}) }))
 }
 
 // Puni dokument pitanja. Vraća null ako pitanje ne postoji ili nije aktivno —
@@ -858,6 +910,7 @@ async function rebuildBankIndex() {
     id: d.id,
     points: d.data().points,
     category: d.data().category,
+    difficulty: d.data().difficulty ?? null,
   }))
   await db.doc(BANK_INDEX_DOC).set({
     version: Date.now(), // svaka izmjena obara keš tijela na instancama
@@ -1247,6 +1300,8 @@ export const submitAnswer = onCall(async (request) => {
     izvor: 'kviz',
   })
   await bumpStreak(uid)
+  // Kviz je najveći izvor podataka o tome koliko je koje pitanje stvarno teško.
+  await biljeziStatistiku(answers)
 
   return {
     correct,
@@ -1642,8 +1697,12 @@ async function buildBracket(tid, cfg) {
   const size = 2 ** rounds
   const parovi = paroviPrveRunde(participants)
 
-  const qids = (await getActiveQuestions()).map((q) => q.id)
-  const pickQs = () => shuffle(qids).slice(0, DUEL_QUESTIONS)
+  // Pitanja se biraju PO RUNDI, sve teža kako se ide ka finalu (Faza 1,
+  // 01.08.2026. — functions/pitanja-tezina.js). Runda je poznata već ovdje, pa
+  // se i dalje sve bira pri gradnji bracketa; oba igrača u meču dobijaju isti
+  // set, što je uslov da se skorovi uopšte mogu porediti.
+  const banka = await bankaSaStatistikom()
+  const pickQs = (r) => izaberiPitanjaZaRundu(banka, r, rounds, DUEL_QUESTIONS)
 
   const batch = db.batch()
   const mcol = db.collection(`tournaments/${tid}/matches`)
@@ -1652,7 +1711,8 @@ async function buildBracket(tid, cfg) {
     for (let s = 0; s < count; s++) {
       const [p1, p2] = r === 1 ? parovi[s] : [null, null]
       batch.set(mcol.doc(`r${r}s${s}`), {
-        round: r, slot: s, p1: p1 || null, p2: p2 || null, questionIds: pickQs(),
+        round: r, slot: s, p1: p1 || null, p2: p2 || null, questionIds: pickQs(r),
+        tezina: profilRunde(r, rounds).ime,
         p1Score: null, p2Score: null, p1Played: false, p2Played: false,
         winner: null, status: 'pending',
       })
@@ -1845,6 +1905,7 @@ async function zavrsiDuel(uid, tid, sRef, session, answers) {
 
   await applyProgress(uid, { duels: 1 }) // questovi tipa "odigraj duel"
   await bumpStreak(uid)
+  await biljeziStatistiku(answers)
   // Ishod kvalifikacije se smije reći ODMAH: nema protivnika čiji bi rezultat
   // trebalo čuvati do zatvaranja runde, a prag je igraču bio poznat unaprijed.
   return {
@@ -1954,7 +2015,9 @@ export const submitDuelAnswer = onCall(async (request) => {
   const qid = session.questionIds[session.current]
   const secret = await getSecret(qid)
   const correct = answer !== null && answer === secret.correctIndex
-  const answers = [...session.answers, { correct }]
+  // `id` se pamti od 01.08.2026. — bez njega se iz duela ne može znati KOJE je
+  // pitanje pogođeno, pa duel nije ulazio u statistiku težine pitanja.
+  const answers = [...session.answers, { id: qid, correct }]
   const isLast = session.current + 1 >= session.questionIds.length
 
   if (!isLast) {
@@ -2212,6 +2275,7 @@ export const submitSurvivalAnswer = onCall(async (request) => {
   const timedOut = elapsed > SURVIVAL_SECONDS + GRACE_SECONDS
   const secret = await getSecret(run.currentQid)
   const correct = !timedOut && answer !== null && answer === secret.correctIndex
+  await biljeziStatistiku([{ id: run.currentQid, correct }])
 
   // Greška ili istek → kraj run-a za ovu sedmicu (jedino ovo zaključava event).
   if (!correct) {

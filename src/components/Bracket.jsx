@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar'
 import { KVALIFIKACIJA_PRAG } from '../services/tournament'
 
+// Težina runde koju je server upisao na meč (`tezina`, vidi
+// functions/pitanja-tezina.js). Stariji turniri to polje nemaju — tada se ne
+// prikazuje ništa.
+const TEZINA_NATPIS = {
+  'rane runde': '★ lakša pitanja',
+  četvrtfinale: '★★ teža pitanja',
+  polufinale: '★★★ vrlo teška',
+  finale: '★★★ najteža u banci',
+}
+
 // Bracket stablo 1v1 turnira — kolone po rundama, horizontalno skrolabilno.
 //
 // Šta je bilo pogrešno u prvoj verziji: crtale su se SVE ćelije bracketa, pa je
@@ -74,6 +84,13 @@ export default function Bracket({ matches, participants, myUid, currentRound = 0
                         ? `${stanje === 'uToku' ? 'do' : 'rok'} ${kratko(roundDeadlines[r - 1])}`
                         : ' '}
                   </p>
+                  {/* Težina runde — igrač treba znati unaprijed da pitanja
+                      rastu, inače pad rezultata u polufinalu izgleda kao peh. */}
+                  {TEZINA_NATPIS[poRundi[r]?.[0]?.tezina] && (
+                    <p className="mt-0.5 text-[10px] font-bold text-amber-600">
+                      {TEZINA_NATPIS[poRundi[r][0].tezina]}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-1 flex-col justify-around gap-3">

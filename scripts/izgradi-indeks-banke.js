@@ -32,10 +32,14 @@ initializeApp({ credential: cert(JSON.parse(readFileSync(KEY_PATH, 'utf8'))) })
 const db = getFirestore()
 
 const snap = await db.collection('questions').where('active', '==', true).get()
+// `difficulty` (1–3) je od 01.08.2026. dio indeksa: po njemu 1v1 turnir bira
+// težinu pitanja po rundi (functions/pitanja-tezina.js). Bez njega u indeksu
+// sva pitanja izgledaju kao srednja težina.
 const items = snap.docs.map((d) => ({
   id: d.id,
   points: d.data().points,
   category: d.data().category,
+  difficulty: d.data().difficulty ?? null,
 }))
 
 if (items.length === 0) {

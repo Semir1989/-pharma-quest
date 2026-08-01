@@ -98,3 +98,65 @@ otkazivanje. `TurnirKontrola.jsx` drži sve **nad tekućim turnirom**:
 gdje je 30 s po pitanju). To sada piše ispod tajmera i ispod trake u
 `DuelQuestionScreen.jsx` — igrači su se zadržavali na prvom pitanju misleći da
 je sat po pitanju.
+
+## Kvalifikacija: prolaz bez protivnika (01.08.2026.)
+
+Igrač koji u rundi **poslije prve** ostane bez protivnika više ne prolazi
+besplatno. Meč se označi kao `kvalifikacija: true` i **ostaje otvoren** — igrač
+dobija istih 10 pitanja i mora pogoditi bar **6** (`KVALIFIKACIJA_PRAG` u
+`functions/duel-pravila.js`), inače na zatvaranju runde ispada. Ko ne izađe do
+roka runde, također ispada: prolaz se zarađuje, ne čeka.
+
+Bye u **prvoj** rundi ostaje besplatan. Tamo su byevi posljedica bracketa — 20
+prijavljenih u stablu od 32 daje 4 puna meča i **12 byeva** — pa bi prag značio
+da polovina učesnika ispada prvog dana bez ijednog odigranog meča.
+
+> **Napomena o tome kad se ovo uopšte dešava.** Uz sadašnji `paroviPrveRunde()`
+> svi byevi padaju u prvu rundu, pa su runde 2+ uvijek pune. Kvalifikacija se
+> zato pali samo kad grana propadne: kvalifikant koji padne ostavlja prazan slot
+> pa sljedeći dobija svoju kvalifikaciju (lančano), admin ručno postavi
+> pobjednika na `null`, ili se meč počisti. Da bi se kvalifikacija javljala i u
+> redovnoj igri, byevi bi se morali raspoređivati kroz stablo umjesto da se svi
+> guraju u prvu rundu — to je zasebna odluka.
+
+Gdje se vidi: traka na ekranu duela s pragom, natpis i dugme na `/turnir`,
+`kvalifikacija · 6/10` u bracketu, oznaka u admin panelu, i poseban tekst push
+podsjetnika (raniji je preskakao mečeve bez protivnika, pa kvalifikant ne bi
+bio ni pozvan).
+
+Test: `npm run test-duel`.
+
+## Progresivna težina po rundama — Faza 1 (01.08.2026.)
+
+Do sada je i prvi krug i finale dobijalo 10 nasumičnih pitanja iz cijele banke,
+pa finale nije bilo teže od prve runde. Sada se pitanja biraju po fazi turnira
+(`functions/pitanja-tezina.js`, test `npm run test-tezina`).
+
+Ključ je **koliko rundi ostaje do finala**, pa ista ljestvica radi i za turnir
+od 2 runde i za onaj od 5:
+
+| Faza | Sastav 10 pitanja |
+|---|---|
+| rane runde | 6 × težina 2, 4 × težina 1 |
+| četvrtfinale | 7 × težina 2, 3 × težina 3 |
+| polufinale | 4 × težina 2, 6 × težina 3 |
+| finale | 10 × težina 3 |
+
+Unutar istog nivoa bira se ono što igrači **stvarno griješe** — globalni
+procenat tačnosti iz `stats/pitanja` (`{ q: { [qid]: { n, t } } }`, jedan
+dokument, jedan upis po odigranom kvizu/duelu/koraku Preživljavanja; klijent ga
+ne čita niti piše). Ispod `MIN_UZORAK = 5` odgovora pitanje se drži za
+neodređeno i ide u sredinu poretka — ni nagrađeno ni kažnjeno.
+
+Ne bira se apsolutno najteže, nego nasumično iz **kruga** najtežih
+(`SIRINA = 2.5`), inače bi svaki turnir imao identično finale.
+
+**Lične istorije ovdje nema namjerno.** „Pitanja koja igrač nije vidio" kažnjava
+onoga ko više igra (manji bazen neviđenih) i stvara podsticaj da se pred turnir
+NE igra kviz. Faza 2 je da se „oba igrača ovo griješe" koristi kao pomjeranje
+*unutar* nivoa, a „nikad viđeno" samo kao razrješenje neriješenog pri izboru —
+nikad kao tvrdi filter.
+
+**Preduslov:** `difficulty` mora biti u `bank/index`. Indeks ga nosi od
+01.08.2026. — poslije deploya pokrenuti `npm run izgradi-indeks`, inače sva
+pitanja izgledaju kao srednja težina i ljestvica nema po čemu raditi.
