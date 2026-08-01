@@ -271,10 +271,20 @@ export async function adminSetQuestProgress(uid, taskId, value) {
   return (await adminSetQuestProgressFn({ uid, taskId, value })).data
 }
 
-// Popis igrača sa stanjem pretplate — za biranje primaoca objave.
+// Popis igrača sa stanjem pretplate — za biranje primaoca objave, potvrdu
+// vanjskih zadataka i izmjenu imena. Nosi i email (jedina veza s nalogom na
+// Circle platformi), telefon i državu iz registracije.
 const adminListPlayersFn = httpsCallable(functions, 'adminListPlayers')
 export async function adminListPlayers() {
   return (await adminListPlayersFn({})).data
+}
+
+// Izmjena imena igrača. Treći alat koji dira tuđi profil (uz objavu i vanjske
+// zadatke) — ime stoji na ljestvici i u bracketu, pa ga bez admina niko ne može
+// ispraviti. Ljestvicu osvježava trigger syncProfileToLeaderboard sam.
+const adminSetDisplayNameFn = httpsCallable(functions, 'adminSetDisplayName')
+export async function adminSetDisplayName(uid, ime) {
+  return (await adminSetDisplayNameFn({ uid, ime })).data
 }
 
 export async function adminSetTournamentConfig(cfg) {

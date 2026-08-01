@@ -20,6 +20,10 @@ import {
   turnirskaPoruka,
   smijePrimiti,
   notifUkljucen,
+  porukaNoveRunde,
+  porukaRokRunde,
+  trebaPodsjetnikRunde,
+  porukaZahtjevaZaKlan,
 } from './notif-odluka.js'
 import {
   seedFrom,
@@ -1731,6 +1735,9 @@ async function buildBracket(tid, cfg) {
   )
   await batch.commit()
   await resolveByes(tid, 1, rounds)
+  // Prva runda počinje u trenutku kad bracket postoji — igrač inače nema kako
+  // saznati da mu je protivnik izvučen osim da sam otvori /turnir.
+  await obavijestiONovojRundi(tid, 1, rounds, roundDeadlines)
 }
 
 // Prosljeđivanje pobjednika u sljedeću rundu (fiksni bracket).
@@ -1776,6 +1783,89 @@ async function resolveByes(tid, round, rounds) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Obavještavanje učesnika runde (01.08.2026)
+//
+// Tri trenutka nose poruku, i sva tri su van notifTicka jer se ne ponavljaju:
+//   • runda je počela — parovi su izvučeni, meč se može igrati;
+//   • sat vremena do roka, a igrač nije odigrao;
+//   • admin ručno pošalje podsjetnik (adminPodsjetiNeodigrale).
+// Zato ne padaju ni na branu od 8h (smijePrimiti): igraču koji je jutros dobio
+// podsjetnik na kviz meč bi inače istekao u tišini.
+// ---------------------------------------------------------------------------
+
+// uid → vrsta meča ('duel' | 'kvalifikacija') za rundu.
+//
+// Vrsta se nosi kroz cijeli lanac jer poruka nije ista: kvalifikantu nema ko
+// "proći umjesto njega", njemu istječe vlastiti prag tačnih.
+async function igraciURundi(tid, round, { samoNeodigrali = false } = {}) {
+  const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
+  const kome = new Map()
+  for (const d of snap.docs) {
+    const m = d.data()
+    if (m.status === 'done') continue // riješen bye — nema šta da se igra
+    if (jeKvalifikacija(m)) {
+      const sam = m.p1 || m.p2
+      const odigrao = m.p1 ? m.p1Played : m.p2Played
+      if (sam && !(samoNeodigrali && odigrao)) kome.set(sam, 'kvalifikacija')
+      continue
+    }
+    if (!m.p1 || !m.p2) continue
+    if (!(samoNeodigrali && m.p1Played)) kome.set(m.p1, 'duel')
+    if (!(samoNeodigrali && m.p2Played)) kome.set(m.p2, 'duel')
+  }
+  return kome
+}
+
+// Pošalji turnirsku poruku grupi igrača. `porukaZa(vrsta)` gradi tekst.
+async function posaljiTurnirGrupi(kome, porukaZa) {
+  let poslano = 0
+  let bezUredjaja = 0
+  let odjavljenih = 0
+  for (const [igrac, vrsta] of kome) {
+    const us = await db.doc(`users/${igrac}`).get()
+    if (!us.exists) continue
+    const p = us.data()
+    // `notifOn` se provjerava uz `notifPrefs`, ne samo dužina liste tokena:
+    // gašenje notifikacija briše token SAMO tog uređaja, pa igraču s dva
+    // uređaja ostane token drugog. Ranije (dok je ovo bio isključivo ručni
+    // admin podsjetnik) taj slučaj je promakao; sad kad poruke idu same, to bi
+    // značilo da igrač koji je izričito ugasio notifikacije ipak dobija duele.
+    if (p.notifOn !== true || !notifUkljucen(p, 'turnir')) {
+      odjavljenih++
+      continue
+    }
+    const tokeni = p.fcmTokens || []
+    if (tokeni.length === 0) {
+      bezUredjaja++
+      continue
+    }
+    if (await posaljiNotifikaciju(igrac, tokeni, porukaZa(vrsta))) {
+      poslano++
+      await us.ref.update({ lastNotifAt: Date.now(), lastNotifTip: 'turnir' }).catch(() => {})
+    }
+  }
+  return { kome: kome.size, poslano, bezUredjaja, odjavljenih }
+}
+
+// "Runda je počela" — svima koji u njoj imaju šta odigrati.
+//
+// Zove se TEK poslije resolveByes: prije toga se ne zna ko je kvalifikant, pa
+// bi polovina igrača dobila pogrešan tekst. Greška u slanju ne smije srušiti
+// zatvaranje runde, zato catch.
+async function obavijestiONovojRundi(tid, round, rounds, roundDeadlines) {
+  try {
+    const kome = await igraciURundi(tid, round)
+    const rok = (roundDeadlines || [])[round - 1]
+    const rez = await posaljiTurnirGrupi(kome, (vrsta) =>
+      porukaNoveRunde({ tid, round, rounds, rok, vrsta })
+    )
+    console.log(`nova runda ${round} (${tid}): obaviješteno ${rez.poslano}/${rez.kome}`)
+  } catch (e) {
+    console.error(`obavijestiONovojRundi(${tid}, ${round}) pao:`, e?.message || e)
+  }
+}
+
 // Zatvori tekuću rundu na rok: odredi pobjednike, prosljedi, pomjeri rundu.
 async function resolveRound(tid, t) {
   const round = t.currentRound
@@ -1791,8 +1881,11 @@ async function resolveRound(tid, t) {
   if (round >= rounds) {
     await finalizeTournament(tid, rounds)
   } else {
-    await db.doc(`tournaments/${tid}`).update({ currentRound: round + 1 })
+    // `podsjetnikRunda` se briše zajedno s pomjeranjem runde — inače bi oznaka
+    // iz prethodne runde ostala i podsjetnik za novu se nikad ne bi poslao.
+    await db.doc(`tournaments/${tid}`).update({ currentRound: round + 1, podsjetnikRunda: null })
     await resolveByes(tid, round + 1, rounds)
+    await obavijestiONovojRundi(tid, round + 1, rounds, t.roundDeadlines)
   }
 }
 
@@ -1885,7 +1978,24 @@ export const tournamentTick = onSchedule('every 30 minutes', async () => {
   if (t.status === 'active') {
     const dl = t.roundDeadlines || []
     const idx = t.currentRound - 1
-    if (idx >= 0 && idx < dl.length && now >= dl[idx]) await resolveRound(tid, t)
+    if (idx >= 0 && idx < dl.length && now >= dl[idx]) {
+      await resolveRound(tid, t)
+      return
+    }
+    // Sat prije roka: podsjetnik SAMO onome ko još nije odigrao. Tick ide
+    // svakih 30 min, pa prozor od 60 min uvijek uhvati bar jedan prolaz;
+    // oznaka `podsjetnikRunda` sprječava drugi.
+    const podsjetnikZa = trebaPodsjetnikRunde(t, now)
+    if (podsjetnikZa) {
+      // Oznaka se upisuje PRIJE slanja: ako slanje pukne na pola, gore je
+      // ponoviti poruke svima nego preskočiti podsjetnik za tu rundu.
+      await db.doc(`tournaments/${tid}`).update({ podsjetnikRunda: podsjetnikZa })
+      const kome = await igraciURundi(tid, podsjetnikZa, { samoNeodigrali: true })
+      const rez = await posaljiTurnirGrupi(kome, (vrsta) =>
+        porukaRokRunde({ tid, round: podsjetnikZa, rok: dl[podsjetnikZa - 1], vrsta })
+      )
+      console.log(`rok runde ${podsjetnikZa} (${tid}): podsjećeno ${rez.poslano}/${rez.kome}`)
+    }
   }
 })
 
@@ -2999,6 +3109,12 @@ export const adminListPlayers = onCall(async (request) => {
       return {
         uid: d.id,
         ime: p.displayName || '(bez imena)',
+        // Email je jedini podatak po kojem se nalog u igrici može spojiti s
+        // nalogom na Circle platformi — bez njega admin ne zna kome upisuje
+        // napredak vanjskih zadataka kad se dva igrača zovu isto.
+        email: p.email || '',
+        telefon: p.phone || '',
+        drzava: p.country || '',
         uredjaja: (p.fcmTokens || []).length,
         notifOn: p.notifOn === true,
         najaveUgasene: p.notifPrefs?.najave === false,
@@ -3041,6 +3157,9 @@ export const adminQuestStanje = onCall(async (request) => {
 
   return {
     ime: snap.data().displayName || '(bez imena)',
+    // Email stoji uz ime i poslije izbora igrača: potvrda da je upisan napredak
+    // otišao na nalog koji je i na Circle platformi radio zadatak.
+    email: snap.data().email || '',
     zadaci: rucni.map((t) => {
       const stored = tp[t.type]
       const vazi = stored?.period === periodKey(t.type)
@@ -3143,6 +3262,47 @@ export const adminSetHidden = onCall(async (request) => {
   if (hidden) await purgeFromBoards(uid)
   await adminLog(uid, 'setHidden', { hidden })
   return { ok: true, hidden }
+})
+
+// Izmjena imena igrača (01.08.2026).
+//
+// TREĆI izuzetak od pravila da admin alati rade samo nad vlastitim nalogom (uz
+// adminBroadcast i adminSetQuestProgress). Razlog je praktičan: igrači se
+// prijavljuju s "asdf", nadimkom ili pogrešno otkucanim prezimenom, a ime stoji
+// na ljestvici, u bracketu i u klanu — pa ga niko osim admina ne može ispraviti
+// bez brisanja naloga.
+//
+// Ljestvicu ne treba dirati ručno: upis u users okida syncProfileToLeaderboard,
+// koji poredi baš displayName i osvježi RTDB unos sam.
+export const adminSetDisplayName = onCall(async (request) => {
+  const admin = requireAdmin(request)
+  const { uid } = request.data || {}
+  const ime = String(request.data?.ime ?? '').replace(/\s+/g, ' ').trim()
+  if (typeof uid !== 'string' || !uid) throw new HttpsError('invalid-argument', 'Nedostaje igrač.')
+  if (ime.length < 2 || ime.length > 24) {
+    throw new HttpsError('invalid-argument', 'Ime mora imati 2–24 znaka.')
+  }
+
+  const ref = db.doc(`users/${uid}`)
+  const snap = await ref.get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Taj igrač ne postoji.')
+  const staro = snap.data().displayName || ''
+  if (staro === ime) return { ok: true, ime, promijenjeno: false }
+
+  await ref.update({ displayName: ime })
+  // Ime učesnika turnira je zamrznuto u dokumentu prijave (bracket ga čita
+  // odatle, ne iz profila), pa bi bez ovoga staro ime ostalo stajati u stablu
+  // do kraja turnira.
+  const cfg = await getTournamentConfig()
+  if (cfg?.key) {
+    await db
+      .doc(`tournaments/${cfg.key}/participants/${uid}`)
+      .update({ name: ime })
+      .catch(() => {}) // nije prijavljen na ovaj turnir — uredu
+  }
+
+  await adminLog(admin, 'setDisplayName', { uid, staro, novo: ime })
+  return { ok: true, ime, staro, promijenjeno: true }
 })
 
 // Dodjela/oduzimanje okvira sebi — za provjeru izgleda bez čekanja eventa.
@@ -3290,6 +3450,10 @@ export const adminForceResolveRound = onCall(async (request) => {
 // Ponovna izgradnja bracketa iz trenutnih prijava. Briše mečeve i turnir doc,
 // pa gradi nanovo — za slučaj da je bracket napravljen s pogrešnim sastavom.
 // Prijave (participants) ostaju netaknute.
+// NAPOMENA (01.08.2026): rebuild ide kroz buildBracket, pa svi učesnici dobiju
+// notifikaciju "runda je počela" još jednom. To je namjerno — parovi se stvarno
+// promijenili, a igrač koji to ne sazna igra u uvjerenju da mu je protivnik
+// neko drugi. Znači i da svaki rebuild "u prazno" košta jednu poruku svima.
 export const adminRebuildBracket = onCall(async (request) => {
   const uid = requireAdmin(request)
   const cfg = await getTournamentConfig()
@@ -3772,70 +3936,15 @@ export const adminPodsjetiNeodigrale = onCall(async (request) => {
   const { tid, t } = await turnirZaAdmina()
   if (t.status !== 'active') throw new HttpsError('failed-precondition', 'Turnir nije aktivan.')
   const round = t.currentRound
-  const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
-  // uid → vrsta meča, jer poruka nije ista: kvalifikantu nema ko "proći
-  // umjesto njega", njemu istječe vlastiti prag.
-  const kome = new Map()
-  for (const d of snap.docs) {
-    const m = d.data()
-    if (m.status === 'done') continue
-    // Kvalifikacija nema protivnika, ali JE meč koji se mora odigrati — bez
-    // ovoga bi je podsjetnik preskočio i igrač bi ispao ne znajući da je imao
-    // šta odigrati.
-    if (jeKvalifikacija(m)) {
-      const sam = m.p1 || m.p2
-      const odigrao = m.p1 ? m.p1Played : m.p2Played
-      if (sam && !odigrao) kome.set(sam, 'kvalifikacija')
-      continue
-    }
-    if (!m.p1 || !m.p2) continue
-    if (!m.p1Played) kome.set(m.p1, 'duel')
-    if (!m.p2Played) kome.set(m.p2, 'duel')
-  }
   const rok = (t.roundDeadlines || [])[round - 1]
-  const kada = rok
-    ? new Intl.DateTimeFormat('bs-BA', { timeZone: 'Europe/Sarajevo', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(rok))
-    : 'uskoro'
-  const porukaZa = (vrsta) =>
-    vrsta === 'kvalifikacija'
-      ? {
-          title: `Kvalifikacija te čeka — runda ${round}`,
-          body: `Nemaš protivnika: odigraj do ${kada} i pogodi bar ${KVALIFIKACIJA_PRAG} od ${DUEL_QUESTIONS} da prođeš dalje.`,
-          url: '/turnir',
-          tip: 'turnir',
-          tag: `duel-podsjetnik-${tid}-r${round}`,
-        }
-      : {
-          title: `Tvoj duel čeka — runda ${round}`,
-          body: `Odigraj do ${kada} ili prolazi protivnik.`,
-          url: '/turnir',
-          tip: 'turnir',
-          tag: `duel-podsjetnik-${tid}-r${round}`,
-        }
-
-  let poslano = 0
-  let bezUredjaja = 0
-  let odjavljenih = 0
-  for (const [igrac, vrsta] of kome) {
-    const us = await db.doc(`users/${igrac}`).get()
-    if (!us.exists) continue
-    const p = us.data()
-    if (p.notifPrefs?.turnir === false) {
-      odjavljenih++
-      continue
-    }
-    const tokeni = p.fcmTokens || []
-    if (tokeni.length === 0) {
-      bezUredjaja++
-      continue
-    }
-    if (await posaljiNotifikaciju(igrac, tokeni, porukaZa(vrsta))) {
-      poslano++
-      await us.ref.update({ lastNotifAt: Date.now(), lastNotifTip: 'turnir' }).catch(() => {})
-    }
-  }
-  await adminLog(admin, 'podsjetiNeodigrale', { tid, round, kome: kome.size, poslano })
-  return { ok: true, kome: kome.size, poslano, bezUredjaja, odjavljenih }
+  // Isti izbor primalaca i isti tekst kao automatski podsjetnik sat prije roka
+  // (tournamentTick) — admin ovime samo pomjera trenutak slanja.
+  const kome = await igraciURundi(tid, round, { samoNeodigrali: true })
+  const rez = await posaljiTurnirGrupi(kome, (vrsta) =>
+    porukaRokRunde({ tid, round, rok, vrsta, hitno: false })
+  )
+  await adminLog(admin, 'podsjetiNeodigrale', { tid, round, kome: rez.kome, poslano: rez.poslano })
+  return { ok: true, ...rez }
 })
 
 // ---------------------------------------------------------------------------
@@ -4064,6 +4173,33 @@ async function clanoviSaProfilima(clan) {
 // In-app obavijest + push. Obavijest se upisuje na profil (clanNotice) jer push
 // nestane s ekrana, a promjenu vodstva igrač mora vidjeti i kad je propustio
 // notifikaciju. Push poštuje notifPrefs.klan — kao i svaka druga vrsta poruke.
+// Poruka SAMO onima koji o njoj mogu nešto odlučiti — osnivaču i savjetnicima.
+//
+// Odvojeno od obavijestiClan jer zahtjev za ulazak nije vijest za cijeli klan
+// nego zadatak za vodstvo: običnom članu je to obavijest bez ijedne akcije, a
+// takve poruke su najbrži put do ugašenih notifikacija.
+//
+// `clanNotice` se ovdje NE upisuje: to polje je zajednička klanska vijest koju
+// vide svi, a zahtjev na čekanju vodstvo ionako vidi u sekciji Klan.
+async function obavijestiVodstvo(clan, poruka, osimUid = null) {
+  const ids = [clan.founderId, ...(clan.advisorIds || [])].filter(
+    (id, i, a) => id && id !== osimUid && a.indexOf(id) === i
+  )
+  if (ids.length === 0) return
+  const snaps = await db.getAll(...ids.map((id) => db.doc(`users/${id}`)))
+  for (const s of snaps) {
+    if (!s.exists) continue
+    const p = s.data()
+    const tokeni = p.fcmTokens || []
+    if (tokeni.length === 0 || p.notifOn !== true) continue
+    if (!notifUkljucen(p, poruka.tip)) continue
+    const ok = await posaljiNotifikaciju(s.id, tokeni, poruka)
+    if (ok) {
+      await s.ref.update({ lastNotifAt: Date.now(), lastNotifTip: poruka.tip }).catch(() => {})
+    }
+  }
+}
+
 async function obavijestiClan(clan, { naslov, tekst }, osimUid = null) {
   const ids = (clan.memberIds || []).filter((id) => id !== osimUid)
   if (ids.length === 0) return
@@ -4197,6 +4333,23 @@ export const requestJoinClan = onCall(async (request) => {
 
     tx.update(clanRef(clanId), { pendingRequests: FieldValue.arrayUnion(uid) })
   })
+
+  // Obavijest vodstvu ide POSLIJE transakcije i ne smije je srušiti: zahtjev je
+  // već upisan, a neposlana notifikacija nije razlog da igrač dobije grešku.
+  try {
+    const [svjez, me] = await Promise.all([clanRef(clanId).get(), db.doc(`users/${uid}`).get()])
+    const clan = { id: clanId, ...svjez.data() }
+    await obavijestiVodstvo(
+      clan,
+      porukaZahtjevaZaKlan({
+        ime: (me.exists && me.data().displayName) || 'Farmaceut',
+        klan: clan.name,
+        ukupno: (clan.pendingRequests || []).length,
+      })
+    )
+  } catch (e) {
+    console.error('obavijest o zahtjevu za klan pala:', e?.message || e)
+  }
 
   return { ok: true }
 })

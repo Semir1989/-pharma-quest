@@ -173,3 +173,52 @@ nikad kao tvrdi filter.
 **Preduslov:** `difficulty` mora biti u `bank/index`. Indeks ga nosi od
 01.08.2026. — poslije deploya pokrenuti `npm run izgradi-indeks`, inače sva
 pitanja izgledaju kao srednja težina i ljestvica nema po čemu raditi.
+
+---
+
+## Notifikacije turnira (01.08.2026.)
+
+Tri automatske poruke, sve pod postojećim tipom **`turnir`** (igrač ih gasi
+jednim prekidačem na Profilu, nema novih postavki):
+
+| Kada | Kome | Gdje u kodu |
+|---|---|---|
+| runda počne (i prva, čim bracket postoji) | svima koji u njoj imaju meč | `obavijestiONovojRundi` — zove se iz `buildBracket` i `resolveRound` |
+| **sat vremena** prije roka runde | samo onima koji **nisu** odigrali | `tournamentTick` + `trebaPodsjetnikRunde` |
+| kad admin pritisne dugme | samo onima koji nisu odigrali | `adminPodsjetiNeodigrale` |
+
+Tri stvari koje se ne vide iz koda:
+
+- **Ne prolaze kroz `notifTick` ni kroz branu od 8h** (`smijePrimiti`). Vezane
+  su za trenutak koji se ne ponavlja; da padaju na branu, igraču koji je jutros
+  dobio podsjetnik na kviz meč bi istekao u tišini.
+- **Podsjetnik se šalje najviše jednom po rundi**, i oznaka za to (`podsjetnikRunda`)
+  stoji na dokumentu **turnira**, ne na igraču — Cloud Scheduler garantuje „bar
+  jednom", pa bi bez nje ponovljen tick poslao duplu poruku. `resolveRound` je
+  briše pri pomjeranju runde.
+- **Prozor podsjetnika je 60 min, a tick ide svakih 30** — to je jedina garancija
+  da poruka uopšte bude poslana. Ako se raspored ticka ikad prorijedi, mora se
+  produžiti i `PODSJETNIK_PRIJE_MS` (test to i provjerava).
+
+Kvalifikant dobija **drugačiji tekst** od igrača s protivnikom: njemu ne prolazi
+niko umjesto njega, nego pada na vlastiti prag. Pravila i tekstovi su čiste
+funkcije u `functions/notif-odluka.js`, testovi u `npm run test-notifikacije`.
+
+## Slika bracketa 4:5 (01.08.2026.)
+
+Dugme **„📸 Preuzmi shemu turnira (4:5)"** na `/turnir`, vidljivo **tek kad je
+turnir završen** — ranije bi objava otkrila skorove runde koja još traje (isti
+razlog zbog kojeg su skriveni i u aplikaciji).
+
+Slika se **crta po canvasu** (`src/utils/bracketSlika.js`, 1080×1350), ne snima
+iz DOM-a: `html2canvas` je nova zavisnost od par stotina kilobajta, a i dalje bi
+dao snimak horizontalno skrolabilne trake umjesto uspravnog posta. Visina
+kartice se izvodi iz najduže runde pa cijelo stablo stane bez skrola; ako ne
+stane (`< 26px` po meču), funkcija **baci grešku** umjesto da isporuči sliku s
+preklopljenim imenima.
+
+Na telefonu ide kroz `navigator.share` (jedini put do galerije i Instagrama), na
+desktopu kao preuzimanje. Geometrija se testira bez browsera —
+**`npm run test-bracket-slika`** snima poteze lažnog canvasa i provjerava da
+ništa ne izlazi van platna, da su sva imena ispisana i da se kartice ne
+preklapaju.

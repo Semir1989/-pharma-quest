@@ -28,6 +28,10 @@ export default function AdminVanjskiZadaci() {
   const [radi, setRadi] = useState('')
   const [poruka, setPoruka] = useState(null) // { ok, tekst }
 
+  // Izabrani igrač iz popisa — mail se ponavlja ispod izbornika jer se u
+  // zatvorenom <select>u dugačak red skrati i baš mail nestane prvi.
+  const izabrani = (igraci || []).find((i) => i.uid === uid) || null
+
   // Popis se čita tek na zahtjev — to je čitanje cijele kolekcije users.
   async function ucitajIgrace() {
     if (igraci || radi) return
@@ -101,18 +105,36 @@ export default function AdminVanjskiZadaci() {
           className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="">{igraci ? '— izaberi igrača —' : 'Klikni da učitaš popis…'}</option>
+          {/* Email stoji uz ime jer se napredak upisuje na osnovu onoga što je
+              admin vidio na Circle platformi — a tamo je igrač nalog s mailom,
+              ne ime iz igrice. Dva igrača s istim imenom se bez toga ne mogu
+              razlikovati i napredak lako ode pogrešnom. */}
           {(igraci || []).map((i) => (
             <option key={i.uid} value={i.uid}>
               {i.ime}
+              {i.email ? ` — ${i.email}` : ''}
             </option>
           ))}
         </select>
+        {izabrani && (
+          <p className="mt-1 truncate text-[11px] text-slate-500">
+            ✉️ {izabrani.email || 'nema mail adrese'}
+            {izabrani.drzava ? ` · ${izabrani.drzava}` : ''}
+          </p>
+        )}
       </div>
 
       {radi === 'stanje' && <p className="mt-3 text-sm text-slate-500">Učitavam…</p>}
 
       {stanje && (
         <div className="mt-4 flex flex-col gap-3">
+          {/* Potvrda čijem se profilu upisuje — dolazi sa servera, pa se vidi i
+              ako je popis u međuvremenu zastario. */}
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+            Upisujem za: <b className="text-slate-800">{stanje.ime}</b>
+            {stanje.email ? ` · ${stanje.email}` : ''}
+          </p>
+
           {stanje.zadaci.length === 0 && (
             <p className="text-sm text-slate-500">Nema vanjskih zadataka u bazenu.</p>
           )}

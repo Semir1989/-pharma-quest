@@ -210,3 +210,27 @@ obrazac kao leaderboardi. Šteta po igraču/klanu su još dva RTDB čvora.
    konstante `QUIZ_ENERGY_MAX`. Radimo li tu izmjenu ili Skladište ispada?
 5. **Šta ako klan raspusti vođa usred takmičenja** — propadaju li bodovi
    članovima? Prijedlog: sedmica se poništava samo tom klanu.
+
+---
+
+## Notifikacija vodstvu o zahtjevu za ulazak (01.08.2026.)
+
+`requestJoinClan` sada javlja **osnivaču i savjetnicima** da neko čeka odobrenje
+(`obavijestiVodstvo` u `functions/index.js`, tekst u `porukaZahtjevaZaKlan`).
+
+Zašto zaseban put umjesto postojećeg `obavijestiClan`:
+
+- zahtjev je **zadatak za vodstvo**, ne vijest za klan — običnom članu je to
+  obavijest bez ijedne moguće akcije, a takve poruke su najbrži put do toga da
+  igrač ugasi notifikacije;
+- `clanNotice` se pritom **ne** upisuje: to polje je zajednička klanska vijest
+  koju vide svi, a zahtjev na čekanju vodstvo ionako vidi u sekciji Klan.
+
+Ide pod postojećim tipom `klan` (isti prekidač kao ostale klanske poruke), ali s
+vlastitim tagom `klan-zahtjev` — da ga obavijest o novom članu ne obriše s
+ekrana prije nego vodstvo odluči.
+
+**Izlazak iz klana se već javljao** i javlja se i dalje svim članovima
+(`leaveClan` → `obavijestiClan`), pa vodstvo tu poruku dobija kroz taj put.
+Slanje ide POSLIJE transakcije i u `try/catch`: zahtjev je već upisan, a
+neposlana notifikacija nije razlog da igrač dobije grešku.

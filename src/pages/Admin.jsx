@@ -16,6 +16,7 @@ import { levelFromXp } from '../utils/levels'
 import EventKontrola from '../components/admin/EventKontrola'
 import TurnirKontrola from '../components/admin/TurnirKontrola'
 import RatKontrola from '../components/admin/RatKontrola'
+import AdminIgraci from '../components/admin/AdminIgraci'
 import {
   normalizeCategory,
   categoryLabel,
@@ -110,6 +111,8 @@ export default function Admin() {
       <AdminObjava />
 
       <AdminVanjskiZadaci />
+
+      <AdminIgraci />
 
       <TestAlati profile={profile} />
 

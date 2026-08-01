@@ -10,6 +10,11 @@ import {
   turnirskaPoruka,
   smijePrimiti,
   NOTIF_RAZMAK,
+  porukaNoveRunde,
+  porukaRokRunde,
+  trebaPodsjetnikRunde,
+  porukaZahtjevaZaKlan,
+  PODSJETNIK_PRIJE_MS,
 } from '../functions/notif-odluka.js'
 
 let pao = 0
@@ -160,6 +165,96 @@ provjeri(
   turnirskaPoruka({ enabled: true, openAt: SADA }, SADA, 20)?.title.includes('počinje'),
   'početak turnira u 20h → poruka o početku'
 )
+
+console.log('\n— 1v1: NOVA RUNDA —')
+{
+  const rok = SADA + 12 * 3600 * 1000
+  const duel = porukaNoveRunde({ tid: 't1', round: 2, rounds: 4, rok, vrsta: 'duel' })
+  const kval = porukaNoveRunde({ tid: 't1', round: 2, rounds: 4, rok, vrsta: 'kvalifikacija' })
+  provjeri(duel.tip === 'turnir', 'nova runda ide pod tipom turnir (postojeći prekidač)')
+  provjeri(duel.title.includes('Runda 2'), 'obična runda nosi svoj broj')
+  provjeri(
+    porukaNoveRunde({ tid: 't1', round: 4, rounds: 4, rok }).title.includes('Finale'),
+    'zadnja runda se zove Finale, ne "Runda 4"'
+  )
+  provjeri(
+    porukaNoveRunde({ tid: 't1', round: 3, rounds: 4, rok }).title.includes('Polufinale'),
+    'pretposljednja runda je Polufinale'
+  )
+  provjeri(
+    kval.body.includes('6') && kval.body.includes('10'),
+    'kvalifikacija u tekstu nosi prag (6 od 10)'
+  )
+  provjeri(duel.body !== kval.body, 'duel i kvalifikacija NEMAJU isti tekst')
+  provjeri(
+    duel.tag !== porukaRokRunde({ tid: 't1', round: 2, rok }).tag,
+    'početak runde i podsjetnik na rok imaju različit tag (ne brišu se međusobno)'
+  )
+  provjeri(
+    porukaNoveRunde({ tid: 't1', round: 1, rounds: 4, rok: 0 }).body.includes('uskoro'),
+    'bez roka poruka i dalje ima smisla'
+  )
+}
+
+console.log('\n— 1v1: PODSJETNIK SAT PRIJE ROKA —')
+{
+  const rok = SADA + 12 * 3600 * 1000
+  const t = (izmjene = {}) => ({
+    status: 'active',
+    currentRound: 2,
+    roundDeadlines: [SADA - 86400000, rok],
+    ...izmjene,
+  })
+  provjeri(trebaPodsjetnikRunde(t(), SADA) === null, 'daleko od roka → ništa')
+  provjeri(
+    trebaPodsjetnikRunde(t(), rok - 59 * 60 * 1000) === 2,
+    '59 min prije roka → podsjetnik za tekuću rundu'
+  )
+  provjeri(
+    trebaPodsjetnikRunde(t(), rok - 61 * 60 * 1000) === null,
+    '61 min prije roka → još ne (prozor je 60 min)'
+  )
+  provjeri(trebaPodsjetnikRunde(t(), rok) === null, 'na rok → rundu zatvara tick, ne podsjetnik')
+  provjeri(
+    trebaPodsjetnikRunde(t({ podsjetnikRunda: 2 }), rok - 10 * 60 * 1000) === null,
+    'već poslan za ovu rundu → ne šalje se drugi put'
+  )
+  provjeri(
+    trebaPodsjetnikRunde(t({ podsjetnikRunda: 1 }), rok - 10 * 60 * 1000) === 2,
+    'oznaka iz PRETHODNE runde ne blokira novu'
+  )
+  provjeri(
+    trebaPodsjetnikRunde(t({ status: 'finished' }), rok - 10 * 60 * 1000) === null,
+    'završen turnir → ništa'
+  )
+  provjeri(
+    trebaPodsjetnikRunde(t({ roundDeadlines: [] }), rok - 10 * 60 * 1000) === null,
+    'bez roka runde → ništa'
+  )
+  // Tick ide svakih 30 min, prozor je 60 — bar jedan prolaz mora upasti.
+  provjeri(
+    PODSJETNIK_PRIJE_MS >= 2 * 30 * 60 * 1000,
+    'prozor je bar dva ciklusa ticka (30 min) — inače podsjetnik zna promašiti'
+  )
+  provjeri(
+    porukaRokRunde({ tid: 't1', round: 2, rok }).title.includes('sat vremena'),
+    'automatski podsjetnik kaže da je ostao sat'
+  )
+  provjeri(
+    !porukaRokRunde({ tid: 't1', round: 2, rok, hitno: false }).title.includes('sat vremena'),
+    'ručni (admin) podsjetnik NE tvrdi da je ostao sat'
+  )
+}
+
+console.log('\n— KLAN: ZAHTJEV ZA ULAZAK —')
+{
+  const jedan = porukaZahtjevaZaKlan({ ime: 'Amra', klan: 'Mortari', ukupno: 1 })
+  const vise = porukaZahtjevaZaKlan({ ime: 'Amra', klan: 'Mortari', ukupno: 3 })
+  provjeri(jedan.tip === 'klan', 'zahtjev ide pod tipom klan (postojeći prekidač)')
+  provjeri(jedan.body.includes('Amra') && jedan.body.includes('Mortari'), 'ime i klan u tekstu')
+  provjeri(vise.body.includes('3'), 'kad ih je više, broj zahtjeva na čekanju je u tekstu')
+  provjeri(jedan.url === '/klan', 'vodi na sekciju Klan')
+}
 
 console.log(
   pao === 0

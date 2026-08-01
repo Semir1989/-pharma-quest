@@ -4,6 +4,8 @@
 // što se najlakše pokvari, a ovako se mogu testirati bez emulatora i bez
 // slanja ijedne prave notifikacije (vidi scripts/test-notifikacije.mjs).
 
+import { DUEL_QUESTIONS, KVALIFIKACIJA_PRAG } from './duel-pravila.js'
+
 // Manji broj = viši prioritet. Kad je više razloga aktivno istovremeno, ide
 // samo jedan — onaj koji igraču znači više. `dnevni` je namjerno zadnji: to je
 // zamjenska poruka koja ide kad nema ničeg konkretnijeg za reći.
@@ -135,4 +137,112 @@ export function kandidatiZaNotifikaciju(profile, kontekst) {
 export function smijePrimiti(profile, sada) {
   if (!profile.lastNotifAt) return true
   return sada - profile.lastNotifAt >= NOTIF_RAZMAK
+}
+
+// ===========================================================================
+// DOGAĐAJNE PORUKE (1v1 arena, klan)
+//
+// Za razliku od svega iznad, ovo NE ide kroz notifTick i NE pada na branu od
+// 8h: poruke su vezane za trenutak koji se ne ponavlja (runda je počela, rok
+// ističe, neko je poslao zahtjev za klan) i zakašnjela poruka bi bila
+// beskorisna. Zato ih šalje ona funkcija koja događaj i izaziva.
+//
+// Igračevo gašenje tipa i dalje vrijedi: `turnir` i `klan` su isti prekidači
+// koje već ima na Profilu, pa nema novih postavki koje bi trebalo objašnjavati.
+// ===========================================================================
+
+// Koliko prije roka runde ide podsjetnik onome ko još nije odigrao.
+// tournamentTick ide svakih 30 min, pa prozor od 60 min garantuje bar jedan
+// pogodak — a oznaka `podsjetnikRunda` na turniru sprječava drugi.
+export const PODSJETNIK_PRIJE_MS = 60 * 60 * 1000
+
+// "petak 08:00" — dan i sat po BiH vremenu. Datum se ne piše: rokovi su uvijek
+// unutar par dana, a kraća poruka bolje stane na zaključan ekran.
+export function formatRok(ms) {
+  if (!ms) return 'uskoro'
+  return new Intl.DateTimeFormat('bs-BA', {
+    timeZone: 'Europe/Sarajevo',
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+    .format(new Date(ms))
+    .replace(',', '')
+}
+
+// Poruka kad runda POČNE. `vrsta` je 'duel' ili 'kvalifikacija' — isti trenutak,
+// ali potpuno različit zadatak, pa se i tekst mora razlikovati.
+export function porukaNoveRunde({ tid, round, rounds, rok, vrsta = 'duel' }) {
+  const ime =
+    round === rounds ? 'Finale' : round === rounds - 1 ? 'Polufinale' : `Runda ${round}`
+  const kada = formatRok(rok)
+  return {
+    tip: 'turnir',
+    title: vrsta === 'kvalifikacija' ? `${ime} — kvalifikacija ⚔️` : `${ime} je počela ⚔️`,
+    body:
+      vrsta === 'kvalifikacija'
+        ? `Nemaš protivnika: pogodi bar ${KVALIFIKACIJA_PRAG} od ${DUEL_QUESTIONS} do ${kada} da prođeš dalje.`
+        : `Protivnik ti je izvučen. Odigraj do ${kada} ili prolazi on.`,
+    url: '/turnir',
+    // Svoj tag po rundi: podsjetnik koji stiže sat prije roka NE smije obrisati
+    // ovu poruku, i obrnuto — to su dva različita poziva na istu akciju.
+    tag: `duel-runda-${tid}-r${round}`,
+  }
+}
+
+// Poruka sat vremena prije roka — samo onome ko još NIJE odigrao.
+//
+// `hitno` je tačno kad je poruku poslao tick u zadnjem satu. Admin isti tekst
+// šalje i ranije (adminPodsjetiNeodigrale), a tvrdnja "ostao ti je sat vremena"
+// tada nije istinita — zato naslov ovisi o njoj, a tijelo nosi tačan rok u oba
+// slučaja.
+export function porukaRokRunde({ tid, round, rok, vrsta = 'duel', hitno = true }) {
+  const kada = formatRok(rok)
+  const naslov = hitno
+    ? '⏳ Ostao ti je sat vremena'
+    : vrsta === 'kvalifikacija'
+      ? `Kvalifikacija te čeka — runda ${round}`
+      : `Tvoj duel čeka — runda ${round}`
+  return {
+    tip: 'turnir',
+    title: naslov,
+    body:
+      vrsta === 'kvalifikacija'
+        ? `Kvalifikacija runde ${round} se zatvara u ${kada}. Ko ne odigra, ispada.`
+        : `Runda ${round} se zatvara u ${kada}. Ako ne odigraš, protivnik prolazi bez borbe.`,
+    url: '/turnir',
+    tag: `duel-rok-${tid}-r${round}`,
+  }
+}
+
+// Treba li OVOM ticku poslati podsjetnik za rok tekuće runde.
+// Vraća broj runde ili null. `t` je dokument turnira.
+export function trebaPodsjetnikRunde(t, sada) {
+  if (!t || t.status !== 'active') return null
+  const round = t.currentRound
+  const rok = (t.roundDeadlines || [])[round - 1]
+  if (!rok) return null
+  // Poslan već jednom za ovu rundu — oznaka je na turniru, ne na igraču, pa
+  // ponovljeno izvršavanje ticka ne pravi drugu poruku.
+  if (t.podsjetnikRunda === round) return null
+  if (sada < rok - PODSJETNIK_PRIJE_MS) return null
+  if (sada >= rok) return null // rok je prošao: rundu zatvara tick, podsjetnik nema smisla
+  return round
+}
+
+// Poruka vodstvu klana kad neko pošalje zahtjev za ulazak.
+export function porukaZahtjevaZaKlan({ ime, klan, ukupno = 1 }) {
+  return {
+    tip: 'klan',
+    title: 'Novi zahtjev za klan 📨',
+    body:
+      ukupno > 1
+        ? `${ime} želi u klan ${klan}. Zahtjeva na čekanju: ${ukupno}.`
+        : `${ime} želi u klan ${klan}. Odobri ili odbij u sekciji Klan.`,
+    url: '/klan',
+    // Odvojen tag od ostalih klanskih poruka: zahtjev čeka odluku, pa ga
+    // obavijest o novom članu ne smije zbrisati s ekrana.
+    tag: 'klan-zahtjev',
+  }
 }
