@@ -18,6 +18,7 @@
     "test-klanrat": "node scripts/test-klanrat.mjs",
     "test-questovi": "node scripts/test-questovi.mjs",
     "test-tezina": "node scripts/test-tezina.mjs",
+    "test-bracket-slika": "node scripts/test-bracket-slika.mjs",
     "pokreni-rat": "node scripts/pokreni-klanski-rat.js",
     "postavi-levele": "node scripts/postavi-level-config.js",
     "postavi-taskove": "node scripts/postavi-taskove.js",

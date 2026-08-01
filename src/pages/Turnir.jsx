@@ -14,6 +14,7 @@ import { registerForDuel } from '../services/quizApi'
 import { track } from '../services/analytics'
 import { formatCountdownLong } from '../utils/periods'
 import { useNow } from '../utils/useNow'
+import { izvuciBracketSliku } from '../utils/bracketSlika'
 import Bracket from '../components/Bracket'
 
 // 1v1 ARENA — samo dueli.
@@ -261,8 +262,52 @@ export default function Turnir() {
             currentRound={tour?.currentRound || 0}
             roundDeadlines={tour?.roundDeadlines || []}
           />
+
+          {/* Slika stabla — tek kad je turnir gotov. Prije toga bi objava
+              otkrila skorove runde koja još traje. */}
+          {tour?.status === 'finished' && !tour?.cancelled && (
+            <IzvozBracketa matches={matches} participants={participants} tour={tour} />
+          )}
         </section>
       )}
+    </div>
+  )
+}
+
+// Izvoz cijelog stabla kao slike 4:5 (Instagram uspravni post): svi igrači od
+// prve runde do finala, s pobjednikom na vrhu. Crta se po canvasu — vidi
+// utils/bracketSlika.js.
+function IzvozBracketa({ matches, participants, tour }) {
+  const [radi, setRadi] = useState(false)
+  const [poruka, setPoruka] = useState('')
+
+  async function izvuci() {
+    if (radi) return
+    setRadi(true)
+    setPoruka('')
+    try {
+      const ishod = await izvuciBracketSliku({ matches, participants, turnir: tour })
+      track('bracket_export', { tid: tour?.key, ishod })
+      setPoruka(ishod === 'podijeljeno' ? 'Slika je spremna za dijeljenje ✓' : 'Slika je preuzeta ✓')
+    } catch (e) {
+      setPoruka(e?.message || 'Slika nije napravljena.')
+    } finally {
+      setRadi(false)
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={izvuci}
+        disabled={radi}
+        className="w-full rounded-2xl bg-amber-500 py-3.5 font-title font-extrabold text-white shadow active:bg-amber-600 disabled:opacity-60"
+      >
+        {radi ? 'Pravim sliku…' : '📸 Preuzmi shemu turnira (4:5)'}
+      </button>
+      <p className="mt-1.5 text-center text-[11px] text-slate-400">
+        {poruka || 'Cijelo stablo s imenima svih igrača — spremno za objavu.'}
+      </p>
     </div>
   )
 }
