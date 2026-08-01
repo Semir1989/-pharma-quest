@@ -95,35 +95,44 @@ export function brojRundi(ucesnika) {
   return Math.ceil(Math.log2(ucesnika))
 }
 
-// Raspored parova prve runde.
+// Oblik bracketa: koliko mečeva ima svaka runda.
 //
-// Ranije se popunjavalo redom (`seats[s*2]`, `seats[s*2+1]`), pa je 20 igrača u
-// bracketu od 32 davalo 10 punih mečeva i ŠEST potpuno praznih — praznine su
-// visile na ekranu i gurale stvarne mečeve van vidnog polja. Ispravno je da
-// višak mjesta postane bye: 20 igrača → 4 puna meča + 12 igrača koji čekaju
-// drugu rundu.
+// Ranije je bracket bio puna potencija dvojke (20 igrača → stablo od 32), pa su
+// SVI byevi padali u prvu rundu: 4 puna meča i 12 igrača koji prolaze dalje bez
+// ijednog odgovorenog pitanja. Runde 2+ su time uvijek bile pune.
 //
-// Puni mečevi se ravnomjerno raspoređuju kroz bracket (ne svi na vrhu), pa
-// stablo izgleda uravnoteženo i grane se spajaju kad treba.
+// Od 01.08.2026. se svaka runda samo prepolovi: igrači se pare redom, a kad ih
+// je NEPARAN broj, zadnji ostaje sam i ide u kvalifikaciju (mora 6/10 — vidi
+// KVALIFIKACIJA_PRAG u duel-pravila.js). Byevi se tako razlijevaju kroz stablo
+// umjesto da se svi nagomilaju na početku, i u prvoj rundi svi igraju.
 //
-// Vraća niz parova [p1, p2] dužine size/2; p2 je null kod bye meča.
+//   20 → 10 mečeva → 5 → 3 (2 meča + 1 sam) → 2 (1 meč + 1 sam) → 1  = 5 rundi
+//
+// Broj rundi je isti kao prije (`brojRundi`), jer je ceil(n/2) ponovljen do
+// jedinice tačno ceil(log2 n) koraka.
+//
+// Vraća niz dužine `brojRundi(n)`: koliko mečeva (slotova) ima svaka runda.
+export function slotoviPoRundi(ucesnika) {
+  const slotovi = []
+  let n = ucesnika
+  while (n > 1) {
+    n = Math.ceil(n / 2)
+    slotovi.push(n)
+  }
+  return slotovi
+}
+
+// Raspored parova prve runde: igrači se pare redom (lista je već izmiješana).
+//
+// Kad je broj igrača neparan, zadnji slot ima samo jednog — u PRVOJ rundi to je
+// besplatan bye, jer igrač nije imao s kim ni izaći. U kasnijim rundama isti
+// oblik znači kvalifikaciju (resolveByes u index.js).
+//
+// Vraća niz parova [p1, p2] dužine ceil(n/2); p2 je null u samačkom slotu.
 export function paroviPrveRunde(igraci) {
   const n = igraci.length
   if (n < 2) return []
-  let size = 2
-  while (size < n) size *= 2
-  const mjesta = size / 2
-  const puni = n - mjesta // koliko mečeva ima oba igrača
-  const parovi = Array.from({ length: mjesta }, () => [null, null])
-
-  // Ravnomjeran razmak punih mečeva kroz kolonu.
-  const puneSlotove = new Set()
-  for (let i = 0; i < puni; i++) puneSlotove.add(Math.floor((i * mjesta) / puni))
-
-  let k = 0
-  for (let s = 0; s < mjesta; s++) {
-    parovi[s][0] = igraci[k++] ?? null
-    if (puneSlotove.has(s)) parovi[s][1] = igraci[k++] ?? null
-  }
+  const parovi = []
+  for (let i = 0; i < n; i += 2) parovi.push([igraci[i], igraci[i + 1] ?? null])
   return parovi
 }

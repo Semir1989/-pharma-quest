@@ -10,6 +10,7 @@ import {
   rasporedRundi,
   brojRundi,
   paroviPrveRunde,
+  slotoviPoRundi,
 } from '../functions/turnir-raspored.js'
 
 let pao = 0
@@ -19,6 +20,14 @@ const provjeri = (uslov, t) => {
     console.error('  ✗ ' + t)
     pao++
   }
+}
+// Za provjere u petlji preko svih veličina turnira: ispisuje se samo ono što
+// PADNE, inače bi 63 veličine × 4 uslova zatrpalo izlaz.
+let tihoPalo = 0
+const provjeriTiho = (uslov, t) => {
+  if (uslov) return
+  console.error('  ✗ ' + t)
+  tihoPalo++
 }
 const naslov = (t) => console.log(`\n${t}`)
 
@@ -86,23 +95,14 @@ provjeri(brojRundi(8) === 3, '8 igrača = 3 runde')
 provjeri(brojRundi(20) === 5, '20 igrača = 5 rundi')
 
 // --- Parovi prve runde ------------------------------------------------------
-naslov('Parovi prve runde: višak mjesta postaje bye, a ne prazan meč')
+naslov('Parovi prve runde: u prvoj rundi igraju SVI')
 const igraci20 = Array.from({ length: 20 }, (_, i) => `p${i}`)
 const p20 = paroviPrveRunde(igraci20)
-provjeri(p20.length === 16, '20 igrača → 16 mečeva (bracket od 32)')
-provjeri(
-  p20.every(([a]) => a !== null),
-  'nijedan meč nije potpuno prazan'
-)
-provjeri(p20.filter(([, b]) => b !== null).length === 4, '4 meča imaju oba igrača')
-provjeri(p20.filter(([, b]) => b === null).length === 12, '12 igrača prolazi bez borbe')
+provjeri(p20.length === 10, '20 igrača → 10 mečeva (ne 16 u stablu od 32)')
+provjeri(p20.every(([a, b]) => a !== null && b !== null), '20 je paran broj — nijedan bye')
 provjeri(
   new Set(p20.flat().filter(Boolean)).size === 20,
   'svih 20 igrača je raspoređeno, nijedan dvaput'
-)
-provjeri(
-  p20[0][1] !== null && p20[4][1] !== null && p20[8][1] !== null && p20[12][1] !== null,
-  'puni mečevi su ravnomjerno raspoređeni kroz kolonu, ne nagurani na vrh'
 )
 
 naslov('Rubni slučajevi parova')
@@ -118,9 +118,56 @@ const p3 = paroviPrveRunde(['a', 'b', 'c'])
 provjeri(p3.length === 2 && p3.filter(([, b]) => b === null).length === 1, '3 igrača = meč + bye')
 const p11 = paroviPrveRunde(Array.from({ length: 11 }, (_, i) => `p${i}`))
 provjeri(
-  p11.length === 8 && new Set(p11.flat().filter(Boolean)).size === 11,
-  '11 igrača stane u 8 mečeva bez gubitka'
+  p11.length === 6 && new Set(p11.flat().filter(Boolean)).size === 11,
+  '11 igrača stane u 6 slotova bez gubitka'
 )
+provjeri(
+  p11.filter(([, b]) => b === null).length === 1,
+  'neparan broj → tačno JEDAN sam, ne više'
+)
+
+// --- Oblik bracketa ---------------------------------------------------------
+naslov('Byevi se razlijevaju kroz stablo, ne gomilaju u prvoj rundi')
+provjeri(
+  slotoviPoRundi(20).join() === '10,5,3,2,1',
+  `20 igrača: 10 → 5 → 3 → 2 → 1 (dobiveno ${slotoviPoRundi(20).join()})`
+)
+provjeri(slotoviPoRundi(8).join() === '4,2,1', '8 igrača: 4 → 2 → 1, nijedne kvalifikacije')
+provjeri(slotoviPoRundi(2).join() === '1', '2 igrača: jedan meč i gotovo')
+provjeri(slotoviPoRundi(1).length === 0, 'jedan igrač — nema rundi')
+provjeri(slotoviPoRundi(5).join() === '3,2,1', '5 igrača: 3 → 2 → 1')
+provjeri(slotoviPoRundi(11).join() === '6,3,2,1', '11 igrača: 6 → 3 → 2 → 1')
+
+naslov('Oblik bracketa se slaže s brojem rundi i sam se sklapa do finala')
+for (let n = 2; n <= 64; n++) {
+  const s = slotoviPoRundi(n)
+  provjeriTiho(s.length === brojRundi(n), `${n} igrača: broj rundi ${s.length} = brojRundi ${brojRundi(n)}`)
+  provjeriTiho(s[s.length - 1] === 1, `${n} igrača: zadnja runda je jedan meč (finale)`)
+  provjeriTiho(s[0] === Math.ceil(n / 2), `${n} igrača: prva runda ima ceil(n/2) mečeva`)
+  // Pobjednik slota s ide u slot floor(s/2) sljedeće runde (propagate u
+  // index.js). Za to svaka runda mora primiti tačno onoliko slotova koliko
+  // prethodna ima pobjednika.
+  for (let r = 1; r < s.length; r++) {
+    provjeriTiho(s[r] === Math.ceil(s[r - 1] / 2), `${n} igrača: runda ${r + 1} prima pobjednike runde ${r}`)
+  }
+}
+provjeri(tihoPalo === 0, `oblik bracketa ispravan za svih 2–64 učesnika (palo: ${tihoPalo})`)
+
+// Koliko kvalifikacija turnir uopšte proizvede — neparan broj u rundi.
+naslov('Kvalifikacije se javljaju baš tamo gdje je neparan broj')
+const kvalifikacije = (n) => {
+  const s = slotoviPoRundi(n)
+  let ulazi = n
+  const runde = []
+  for (let r = 0; r < s.length; r++) {
+    if (ulazi % 2 === 1) runde.push(r + 1)
+    ulazi = s[r]
+  }
+  return runde
+}
+provjeri(kvalifikacije(20).join() === '3,4', '20 igrača: sam igrač u 3. i 4. rundi (ne u prvoj)')
+provjeri(kvalifikacije(8).length === 0, '8 igrača: nijedna kvalifikacija')
+provjeri(kvalifikacije(5).join() === '1,2', '5 igrača: bye u prvoj (besplatan) i kvalifikacija u drugoj')
 
 console.log('\n══════════════════════════════════')
 if (pao === 0) console.log('SVI TESTOVI RASPOREDA PROŠLI ✓')

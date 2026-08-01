@@ -107,24 +107,37 @@ dobija istih 10 pitanja i mora pogoditi bar **6** (`KVALIFIKACIJA_PRAG` u
 `functions/duel-pravila.js`), inače na zatvaranju runde ispada. Ko ne izađe do
 roka runde, također ispada: prolaz se zarađuje, ne čeka.
 
-Bye u **prvoj** rundi ostaje besplatan. Tamo su byevi posljedica bracketa — 20
-prijavljenih u stablu od 32 daje 4 puna meča i **12 byeva** — pa bi prag značio
-da polovina učesnika ispada prvog dana bez ijednog odigranog meča.
+Bye u **prvoj** rundi ostaje besplatan: tamo igrač nije ni imao s kim izaći.
+Uz novi oblik bracketa (ispod) takav je najviše **jedan**, i to samo kad je broj
+prijavljenih neparan.
 
-> **Napomena o tome kad se ovo uopšte dešava.** Uz sadašnji `paroviPrveRunde()`
-> svi byevi padaju u prvu rundu, pa su runde 2+ uvijek pune. Kvalifikacija se
-> zato pali samo kad grana propadne: kvalifikant koji padne ostavlja prazan slot
-> pa sljedeći dobija svoju kvalifikaciju (lančano), admin ručno postavi
-> pobjednika na `null`, ili se meč počisti. Da bi se kvalifikacija javljala i u
-> redovnoj igri, byevi bi se morali raspoređivati kroz stablo umjesto da se svi
-> guraju u prvu rundu — to je zasebna odluka.
+Da bi se kvalifikacija uopšte javljala u redovnoj igri, promijenjen je i oblik
+bracketa (`slotoviPoRundi()` u `functions/turnir-raspored.js`). Ranije je stablo
+bilo puna potencija dvojke, pa su SVI byevi padali u prvu rundu — 20 prijavljenih
+davalo je 4 puna meča i 12 slobodnih prolaza, a runde 2+ su uvijek bile pune.
+
+Sada se svaka runda samo prepolovi, a kad je igrača neparan broj, zadnji ostaje
+sam:
+
+| Učesnika | Mečevi po rundama | Gdje pada sam igrač |
+|---|---|---|
+| 20 | 10 → 5 → 3 → 2 → 1 | 3. i 4. runda (kvalifikacija) |
+| 11 | 6 → 3 → 2 → 1 | 1. runda (besplatan bye), pa 2. i 3. |
+| 8 | 4 → 2 → 1 | nigdje |
+
+U prvoj rundi time igraju **svi** (osim jednog kad je broj neparan), a broj rundi
+je isti kao prije (`brojRundi`), jer je ceil(n/2) ponovljen do jedinice tačno
+ceil(log2 n) koraka. Prosljeđivanje pobjednika se nije mijenjalo: pobjednik
+slota `s` i dalje ide u slot `floor(s/2)` sljedeće runde, na `p1` ako je `s`
+paran. Kvalifikant koji padne ostavlja prazan slot, pa sljedeći dobija svoju
+kvalifikaciju — lančano, i to je namjerno.
 
 Gdje se vidi: traka na ekranu duela s pragom, natpis i dugme na `/turnir`,
 `kvalifikacija · 6/10` u bracketu, oznaka u admin panelu, i poseban tekst push
 podsjetnika (raniji je preskakao mečeve bez protivnika, pa kvalifikant ne bi
 bio ni pozvan).
 
-Test: `npm run test-duel`.
+Test: `npm run test-duel` (pravila) i `npm run test-raspored` (oblik bracketa).
 
 ## Progresivna težina po rundama — Faza 1 (01.08.2026.)
 

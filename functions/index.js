@@ -63,7 +63,7 @@ import {
   jeKvalifikacija,
   resolveMatch,
 } from './duel-pravila.js'
-import { rasporedRundi, brojRundi, paroviPrveRunde } from './turnir-raspored.js'
+import { rasporedRundi, brojRundi, paroviPrveRunde, slotoviPoRundi } from './turnir-raspored.js'
 import { izaberiPitanjaZaRundu, profilRunde } from './pitanja-tezina.js'
 // Klanski rat. Prefiks `rat*` je namjeran: imena poput `bonusi` ili `mnozilac`
 // su preopšta za fajl od 4600 linija, a `objekat`/`resolveMatch` bi se sudarili
@@ -1694,7 +1694,10 @@ async function buildBracket(tid, cfg) {
   }
   participants = shuffle(participants)
   const rounds = brojRundi(participants.length)
-  const size = 2 ** rounds
+  // Bracket više nije puna potencija dvojke: svaka runda se prepolovi, a kad je
+  // igrača neparan broj, jedan ostaje sam i ide u kvalifikaciju. Vidi
+  // slotoviPoRundi() u turnir-raspored.js.
+  const slotovi = slotoviPoRundi(participants.length)
   const parovi = paroviPrveRunde(participants)
 
   // Pitanja se biraju PO RUNDI, sve teža kako se ide ka finalu (Faza 1,
@@ -1707,7 +1710,7 @@ async function buildBracket(tid, cfg) {
   const batch = db.batch()
   const mcol = db.collection(`tournaments/${tid}/matches`)
   for (let r = 1; r <= rounds; r++) {
-    const count = size / 2 ** r
+    const count = slotovi[r - 1]
     for (let s = 0; s < count; s++) {
       const [p1, p2] = r === 1 ? parovi[s] : [null, null]
       batch.set(mcol.doc(`r${r}s${s}`), {
@@ -1721,7 +1724,9 @@ async function buildBracket(tid, cfg) {
   const roundDeadlines = rasporedRundi(cfg.openAt || Date.now(), rounds)
   batch.set(
     tRef,
-    { status: 'active', key: tid, rounds, size, participantCount: participants.length, currentRound: 1, roundDeadlines, builtAt: FieldValue.serverTimestamp() },
+    // `size` je od 01.08.2026. broj mečeva PRVE runde (ranije 2^rounds) — sada
+    // je to i broj igrača zaokružen naviše, jer praznih mjesta u stablu nema.
+    { status: 'active', key: tid, rounds, size: slotovi[0], slotovi, participantCount: participants.length, currentRound: 1, roundDeadlines, builtAt: FieldValue.serverTimestamp() },
     { merge: true }
   )
   await batch.commit()
