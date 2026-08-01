@@ -21,6 +21,7 @@
     "postavi-levele": "node scripts/postavi-level-config.js",
     "postavi-taskove": "node scripts/postavi-taskove.js",
     "dopuni-izbore": "node scripts/dopuni-izbore.js",
+    "skrati-izbore": "node scripts/skrati-izbore.js",
     "postavi-bedzeve": "node scripts/postavi-bedzeve.js",
     "postavi-survival": "node scripts/postavi-survival-config.js",
     "reset-survival": "node scripts/reset-survival.js",

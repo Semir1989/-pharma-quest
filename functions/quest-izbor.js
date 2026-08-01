@@ -145,6 +145,29 @@ export function dopuniIzbor(picked, pool, uid, type, period, count = TASK_COUNT[
   return rezultat.sort((a, b) => (redoslijed.get(a) ?? 0) - (redoslijed.get(b) ?? 0))
 }
 
+// Napredak igrača na jednom questu — jedno mjesto za sva tri načina mjerenja.
+// `stored` je taskProgress tog tipa (users/{uid}.taskProgress.daily …).
+export function vrijednostQuesta(stored, task) {
+  if (task.metric === 'manual') return stored?.manual?.[task.id] || 0
+  if (task.metric === 'correct' && task.category) return stored?.byCategory?.[task.category] || 0
+  return stored?.[task.metric] || 0
+}
+
+// Questovi koje igrač u OVOM periodu već drži zarađenima — preuzeo je nagradu
+// ili je ispunio cilj a nije je preuzeo. Dopisuju se svježem izboru da prelazak
+// na rotaciju (30.07.2026.) nikome ne pojede nagradu koju je pošteno zaradio.
+//
+// Period se provjerava OVDJE i to je cijela poenta funkcije: bez te provjere
+// (greška do 01.08.2026.) su se u novi dan prenosili jučerašnji preuzeti
+// questovi, pa je dnevnih svaki dan bilo sve više — 5, pa 7, pa 9.
+export function zasluzeni(pool, type, stored, period) {
+  if (!stored || stored.period !== period) return []
+  return pool
+    .filter((t) => t.type === type)
+    .filter((t) => stored.claimed?.[t.id] || vrijednostQuesta(stored, t) >= t.goal)
+    .map((t) => t.id)
+}
+
 // Smije li se ovaj quest zamijeniti žetonom.
 // `always` questovi ne smiju: zamjena bi ih uklonila do kraja perioda, a onda
 // "uvijek prisutan" ne bi bio istinit. Isti razlog vrijedi i za kandidate —

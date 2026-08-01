@@ -13,6 +13,8 @@ import {
   dostupanOd,
   ponuda,
   smijeSeZamijeniti,
+  vrijednostQuesta,
+  zasluzeni,
 } from '../functions/quest-izbor.js'
 import { TASKS } from './taskovi-lista.js'
 
@@ -320,6 +322,58 @@ for (const tip of TIPOVI) {
     `${tip}: bazen bez odgođenih daje ${always + rotirajuci}, treba ${TASK_COUNT[tip]}`
   )
 }
+
+// ---------------------------------------------------------------------------
+console.log('11. Zarađeni questovi se prenose SAMO unutar istog perioda')
+// ---------------------------------------------------------------------------
+// Greška do 01.08.2026.: pri prvom ulasku u novi dan su se svježem izboru
+// dopisivali JUČERAŠNJI preuzeti questovi, pa je dnevnih bilo 7, 8, 9...
+const DANAS = '2026-08-01'
+const JUCERASNJI = {
+  period: '2026-07-31',
+  claimed: { 'daily-kviz-1': true, 'daily-xp-150': true, 'daily-savrsen': true },
+  quizzes: 3,
+  xp: 300,
+}
+jednako(
+  zasluzeni(TASKS, 'daily', JUCERASNJI, DANAS).length,
+  0,
+  'jučerašnji preuzeti questovi ne ulaze u današnji izbor'
+)
+jednako(zasluzeni(TASKS, 'daily', null, DANAS).length, 0, 'igrač bez napretka ne dodaje ništa')
+
+// Unutar ISTOG perioda se i dalje prenose — inače bi prelazak na rotaciju
+// nekome pojeo nagradu koju je već zaradio.
+const DANASNJI = { ...JUCERASNJI, period: DANAS }
+const preneseni = zasluzeni(TASKS, 'daily', DANASNJI, DANAS)
+ok(preneseni.includes('daily-kviz-1'), 'preuzet quest iz ovog perioda ostaje')
+ok(preneseni.includes('daily-kviz-3'), 'ispunjen (3 kviza) a nepreuzet quest ostaje')
+ok(!preneseni.includes('daily-tacnih-12'), 'nezapočet quest se ne dopisuje')
+ok(
+  preneseni.every((id) => byId.get(id)?.type === 'daily'),
+  'prenose se samo questovi istog tipa'
+)
+
+// Puna slika jednog dana: svjež izbor + zarađeno iz istog dana ostaje razuman
+// broj, a s jučerašnjim stanjem je tačno TASK_COUNT.
+for (const uid of UIDS) {
+  const svjez = pickTaskIds(ponuda(TASKS, DANAS), uid, 'daily', DANAS, ['survival'])
+  const sJuce = new Set([...svjez, ...zasluzeni(TASKS, 'daily', JUCERASNJI, DANAS)])
+  jednako(sJuce.size, TASK_COUNT.daily, `${uid}: novi dan daje tačno ${TASK_COUNT.daily} dnevnih`)
+}
+
+// vrijednostQuesta: tri načina mjerenja na jednom mjestu.
+jednako(vrijednostQuesta({ quizzes: 2 }, byId.get('daily-kviz-3')), 2, 'metrika iz korijena')
+jednako(
+  vrijednostQuesta({ byCategory: { interakcije: 4 } }, byId.get('daily-interakcije-3')),
+  4,
+  'metrika po kategoriji'
+)
+jednako(
+  vrijednostQuesta({ manual: { 'daily-epc-razgovor': 1 } }, byId.get('daily-epc-razgovor')),
+  1,
+  'ručna (vanjska) metrika'
+)
 
 // ---------------------------------------------------------------------------
 console.log(`\n${prosao} prošlo, ${pao} palo`)

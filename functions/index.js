@@ -28,6 +28,8 @@ import {
   dopuniIzbor,
   ponuda,
   smijeSeZamijeniti,
+  vrijednostQuesta,
+  zasluzeni as zasluzeniUPeriodu,
 } from './quest-izbor.js'
 import {
   MAX_CLANOVA,
@@ -344,15 +346,6 @@ function emptyProgress(period) {
   }
 }
 
-// Napredak igrača na jednom questu — jedno mjesto za sva tri načina mjerenja.
-// Ranije je isti izraz stajao prepisan u claimTask i ensurePicksZaTip, pa je
-// dodavanje metrike tražilo izmjenu na dva mjesta.
-function vrijednostQuesta(stored, task) {
-  if (task.metric === 'manual') return stored?.manual?.[task.id] || 0
-  if (task.metric === 'correct' && task.category) return stored?.byCategory?.[task.category] || 0
-  return stored?.[task.metric] || 0
-}
-
 // Novi taskProgress objekt s primijenjenim uvećanjima ("lijeni reset" po ključu
 // perioda). delta.day (BiH dan) uvećava 'days' samo ako je dan nov za taj period.
 function bumpProgress(profile, delta) {
@@ -494,18 +487,14 @@ async function ensurePicksZaTip(uid, type, pool, events) {
       final = cur.picked
       return
     }
-    // Zatečeni napredak se NE oduzima. U izbor ulaze i questovi koje je igrač
-    // u ovom periodu već preuzeo ILI već ispunio a nije preuzeo — bez toga bi
-    // prelazak na izbor (30.07.2026.) usred sedmice nekome pojeo nagradu koju
-    // je pošteno zaradio. Vrijedi samo za period u kojem se prelazi; sljedeći
-    // kreće s čistim izborom.
-    const stvarni = pool.filter((t) => t.type === type)
-    const zasluzeni = stvarni
-      .filter((t) => cur?.claimed?.[t.id] || vrijednostQuesta(cur, t) >= t.goal)
-      .map((t) => t.id)
-    const spojeno = [...new Set([...picked, ...zasluzeni])]
+    // Zatečeni napredak se NE oduzima: u izbor ulaze i questovi koje je igrač
+    // u OVOM periodu već preuzeo ili ispunio (vidi zasluzeni() u quest-izbor.js).
+    // Iz prošlog perioda se ne prenosi ništa — to je bila greška zbog koje je
+    // dnevnih questova svaki dan bilo sve više.
+    const izOvogPerioda = cur?.period === period
+    const spojeno = [...new Set([...picked, ...zasluzeniUPeriodu(pool, type, cur, period)])]
     final = spojeno
-    const base = cur?.period === period ? { ...emptyProgress(period), ...cur } : emptyProgress(period)
+    const base = izOvogPerioda ? { ...emptyProgress(period), ...cur } : emptyProgress(period)
     tx.update(userRef, { [`taskProgress.${type}`]: { ...base, period, picked: spojeno } })
   })
   return final
