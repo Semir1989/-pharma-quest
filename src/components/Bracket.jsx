@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar'
+import { KVALIFIKACIJA_PRAG } from '../services/tournament'
 
 // Bracket stablo 1v1 turnira — kolone po rundama, horizontalno skrolabilno.
 //
@@ -46,7 +47,8 @@ export default function Bracket({ matches, participants, myUid, currentRound = 0
       {/* Legenda — bez nje se ne zna zašto neki prolaze bez rezultata */}
       <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold text-slate-400">
         <span>✓ pobjednik</span>
-        <span>• bye — prolazi bez borbe</span>
+        <span>• bye — prolazi bez borbe (samo 1. runda)</span>
+        <span>• kvalifikacija — bez protivnika, treba {KVALIFIKACIJA_PRAG}/10</span>
         <span>skor se otkriva kad se runda zatvori</span>
       </div>
 
@@ -104,7 +106,11 @@ export default function Bracket({ matches, participants, myUid, currentRound = 0
 }
 
 function Mec({ m, participants, myUid, aktivna, otvoren, onToggle }) {
-  const bye = !!(m.p1 && !m.p2) || !!(m.p2 && !m.p1)
+  const sam = !!(m.p1 && !m.p2) || !!(m.p2 && !m.p1)
+  // Isti oblik (jedan igrač), dva različita ishoda: u prvoj rundi je to bye i
+  // prolazi se besplatno, poslije je kvalifikacija i prolazi se s pragom.
+  const kvalifikacija = sam && !!m.kvalifikacija
+  const bye = sam && !kvalifikacija
   const mojMec = m.p1 === myUid || m.p2 === myUid
   const gotov = m.status === 'done'
 
@@ -116,7 +122,11 @@ function Mec({ m, participants, myUid, aktivna, otvoren, onToggle }) {
       } ${aktivna && !gotov ? 'shadow-md' : ''}`}
     >
       <Red uid={m.p1} score={m.p1Score} played={m.p1Played} gotov={gotov} winner={m.winner} myUid={myUid} participants={participants} linija />
-      {bye ? (
+      {kvalifikacija ? (
+        <div className="bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-700">
+          kvalifikacija · {KVALIFIKACIJA_PRAG}/10
+        </div>
+      ) : bye ? (
         <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-300">
           bye
         </div>
@@ -126,7 +136,16 @@ function Mec({ m, participants, myUid, aktivna, otvoren, onToggle }) {
 
       {/* Detalji na dodir: dok runda traje skor je skriven, ali se vidi KO je
           već odigrao — to je jedini podatak koji smije van bez kvarenja meča. */}
-      {otvoren && !bye && (
+      {otvoren && kvalifikacija && (
+        <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
+          {gotov
+            ? m.winner
+              ? 'Položio/la kvalifikaciju i prošao/la dalje.'
+              : `Nije bilo ${KVALIFIKACIJA_PRAG} tačnih — ispao/la je.`
+            : `Bez protivnika: treba ${KVALIFIKACIJA_PRAG} od 10 tačnih za prolaz.`}
+        </div>
+      )}
+      {otvoren && !sam && (
         <div className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
           {gotov ? (
             m.winner ? (

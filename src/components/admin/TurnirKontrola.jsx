@@ -392,7 +392,9 @@ function MecRed({ m, radi, onPobjednik, onReset }) {
             <>
               <Strana ime={m.p1Ime} score={m.p1Score} played={m.p1Played} gotov={gotov} pobjednik={m.winner === m.p1} />
               <span className="mx-1 text-slate-300">vs</span>
-              {bye ? (
+              {m.kvalifikacija ? (
+                <span className="font-bold text-amber-700">kvalifikacija 6/10</span>
+              ) : bye ? (
                 <span className="text-slate-400">bye</span>
               ) : (
                 <Strana ime={m.p2Ime} score={m.p2Score} played={m.p2Played} gotov={gotov} pobjednik={m.winner === m.p2} />

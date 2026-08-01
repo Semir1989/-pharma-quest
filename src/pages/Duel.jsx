@@ -24,6 +24,10 @@ export default function Duel() {
   const [isteklo, setIsteklo] = useState(false)
   const [caka, setCaka] = useState(false) // čeka se odgovor servera
   const [pregled, setPregled] = useState([]) // {text, options, selected, correctIndex, explanation}
+  // Kvalifikacija: igrač bez protivnika u rundi poslije prve. Prolazi tek s
+  // `prag` tačnih, pa mu se to mora reći PRIJE prvog pitanja, ne poslije.
+  const [kval, setKval] = useState(null) // { prag } | null
+  const [prosao, setProsao] = useState(null) // ishod kvalifikacije
   const cakaRef = useRef(false) // isto što i `caka`, ali čitljivo odmah
   const istekCekaRef = useRef(false) // istek stigao dok je odgovor bio u letu
 
@@ -33,10 +37,12 @@ export default function Duel() {
       .then((res) => {
         if (cancelled) return
         if (res.noMatch) return setPhase('nomatch')
+        if (res.kvalifikacija) setKval({ prag: res.prag || 6 })
         if (res.alreadyPlayed) {
           setMyScore(res.score || 0)
           setTotal(res.total || 10)
           setIsteklo(!!res.isteklo)
+          if (res.kvalifikacija) setProsao(!!res.prosao)
           return setPhase('done')
         }
         setTotal(res.total || 10)
@@ -79,8 +85,13 @@ export default function Duel() {
           setMyScore(res.myScore || 0)
           setTotal(res.total || total)
           setIsteklo(!!res.isteklo)
+          if (res.kvalifikacija) setProsao(!!res.prosao)
           setPhase('done')
-          track('duel_complete', { score: res.myScore || 0, isteklo: !!res.isteklo })
+          track('duel_complete', {
+            score: res.myScore || 0,
+            isteklo: !!res.isteklo,
+            kvalifikacija: !!res.kvalifikacija,
+          })
           return
         }
         // Sat se sinhronizuje sa serverom poslije svakog odgovora — mrežno
@@ -127,6 +138,7 @@ export default function Duel() {
         onAnswer={naOdgovor}
         onTimeout={naIstek}
         caka={caka}
+        kvalifikacija={kval}
       />
     )
   }
@@ -140,8 +152,14 @@ export default function Duel() {
       {phase === 'done' && (
         <div className="w-full max-w-md">
           <div className="mt-6 text-center">
-            <h1 className="font-title text-3xl font-extrabold text-slate-900">Tvoj rezultat</h1>
-            <p className="mt-3 font-title text-6xl font-extrabold text-teal-700">
+            <h1 className="font-title text-3xl font-extrabold text-slate-900">
+              {kval ? 'Kvalifikacija' : 'Tvoj rezultat'}
+            </h1>
+            <p
+              className={`mt-3 font-title text-6xl font-extrabold ${
+                kval && prosao === false ? 'text-red-600' : 'text-teal-700'
+              }`}
+            >
               {myScore}
               <span className="text-3xl text-slate-400">/{total}</span>
             </p>
@@ -150,10 +168,24 @@ export default function Duel() {
                 ⏱ Isteklo je vrijeme — neodgovorena pitanja se broje kao netačna.
               </p>
             )}
-            <p className="mt-3 text-slate-500">
-              Rezultat protivnika je skriven do zatvaranja runde. Kod istog broja tačnih
-              prolazi onaj ko je duel odigrao ranije.
-            </p>
+            {/* Kvalifikacija nema protivnika čiji bi rezultat trebalo čuvati,
+                pa se ishod kaže odmah. */}
+            {kval ? (
+              prosao ? (
+                <p className="mt-3 font-bold text-teal-700">
+                  ✓ Prošao/la si — trebalo je {kval.prag} od {total}. Vidimo se u sljedećoj rundi.
+                </p>
+              ) : (
+                <p className="mt-3 font-bold text-red-600">
+                  ✗ Trebalo je {kval.prag} od {total} — turnir je za tebe gotov.
+                </p>
+              )
+            ) : (
+              <p className="mt-3 text-slate-500">
+                Rezultat protivnika je skriven do zatvaranja runde. Kod istog broja tačnih
+                prolazi onaj ko je duel odigrao ranije.
+              </p>
+            )}
           </div>
 
           {pregled.length > 0 && (

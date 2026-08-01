@@ -12,7 +12,8 @@ const LETTERS = ['A', 'B', 'C', 'D']
 //      kriterij za neriješen rezultat.
 //
 // props: question ({ index, text, options, points }), total, deadline (ms),
-//        totalSeconds, onAnswer(index), onTimeout(), caka (čeka se server)
+//        totalSeconds, onAnswer(index), onTimeout(), caka (čeka se server),
+//        kvalifikacija ({ prag } kad igrač nema protivnika — vidi Duel.jsx)
 export default function DuelQuestionScreen({
   question,
   total,
@@ -21,6 +22,7 @@ export default function DuelQuestionScreen({
   onAnswer,
   onTimeout,
   caka,
+  kvalifikacija,
 }) {
   const [selected, setSelected] = useState(undefined)
   const [seconds, setSeconds] = useState(() =>
@@ -56,6 +58,19 @@ export default function DuelQuestionScreen({
 
   return (
     <div className="flex min-h-svh flex-col p-5 pb-8">
+      {/* Kvalifikacija: prag mora stajati pred očima cijelo vrijeme, jer o njemu
+          ovisi prolaz — protivnika koji bi ga "zamijenio" nema. */}
+      {kvalifikacija && (
+        <div className="mb-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-2 text-center">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-amber-700">
+            Kvalifikacija — nemaš protivnika
+          </p>
+          <p className="mt-0.5 text-sm font-bold text-amber-800">
+            Treba ti {kvalifikacija.prag} od {total} tačnih da prođeš dalje
+          </p>
+        </div>
+      )}
+
       {/* Gornji red: koje je pitanje + ukupno vrijeme */}
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-slate-500">

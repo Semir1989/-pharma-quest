@@ -6,7 +6,10 @@
 import {
   DUEL_QUESTIONS,
   DUEL_TOTAL_SECONDS,
+  KVALIFIKACIJA_PRAG,
   duelPreostalo,
+  jeKvalifikacija,
+  kvalifikacijaProsla,
   resolveMatch,
 } from '../functions/duel-pravila.js'
 
@@ -98,6 +101,53 @@ provjeri(
   resolveMatch({ ...odigrali, p1Score: 5, p2Score: 5 }, uvijekP2) === 'b',
   'zatečeni meč bez vremena (odigran prije izmjene) → žrijeb kao zadnja brana'
 )
+
+// --- Kvalifikacija (01.08.2026.) -----------------------------------------
+naslov(`Kvalifikacija — bez protivnika treba ${KVALIFIKACIJA_PRAG}/${DUEL_QUESTIONS}`)
+provjeri(KVALIFIKACIJA_PRAG === 6, 'prag je 6 tačnih')
+
+const kval = { p1: 'a', p2: null, kvalifikacija: true }
+provjeri(jeKvalifikacija(kval), 'označen meč s jednim igračem JESTE kvalifikacija')
+provjeri(
+  !jeKvalifikacija({ p1: 'a', p2: 'b', kvalifikacija: true }),
+  'meč s oba igrača NIJE kvalifikacija ni kad oznaka zaluta'
+)
+provjeri(!jeKvalifikacija({ p1: 'a', p2: null }), 'neoznačen bye nije kvalifikacija (1. runda)')
+provjeri(!jeKvalifikacija({ p1: null, p2: null, kvalifikacija: true }), 'prazna grana nije kvalifikacija')
+
+provjeri(
+  resolveMatch({ ...kval, p1Played: true, p1Score: 6 }) === 'a',
+  'tačno na pragu (6/10) → prolazi'
+)
+provjeri(
+  resolveMatch({ ...kval, p1Played: true, p1Score: 10 }) === 'a',
+  'iznad praga → prolazi'
+)
+provjeri(
+  resolveMatch({ ...kval, p1Played: true, p1Score: 5 }) === null,
+  'jedan ispod praga (5/10) → ispada, grana ostaje prazna'
+)
+provjeri(resolveMatch({ ...kval, p1Played: false }) === null, 'nije ni izašao do roka → ispada')
+provjeri(
+  resolveMatch({ ...kval, p1Played: true, p1Score: 0 }) === null,
+  'odigrao bez ijednog tačnog → ispada'
+)
+provjeri(
+  resolveMatch({ p1: null, p2: 'b', kvalifikacija: true, p2Played: true, p2Score: 7 }) === 'b',
+  'kvalifikant na drugom slotu se čita jednako'
+)
+provjeri(
+  resolveMatch({ p1: null, p2: 'b', kvalifikacija: true, p2Played: true, p2Score: 3 }) === null,
+  'kvalifikant na drugom slotu ispada ispod praga'
+)
+
+// Bye u PRVOJ rundi ostaje besplatan — oznaku tamo server ni ne postavlja.
+provjeri(
+  resolveMatch({ p1: 'a', p2: null, p1Played: false }) === 'a',
+  'neoznačen bye i dalje prolazi bez borbe (1. runda)'
+)
+provjeri(kvalifikacijaProsla({ p1: 'a', p1Played: true, p1Score: 6 }), 'kvalifikacijaProsla: 6 prolazi')
+provjeri(!kvalifikacijaProsla({ p1: 'a', p1Played: true, p1Score: 5 }), 'kvalifikacijaProsla: 5 ne prolazi')
 
 console.log('\n══════════════════════════════════')
 if (pao === 0) console.log('SVI TESTOVI DUELA PROŠLI ✓')

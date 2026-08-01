@@ -8,6 +8,7 @@ import {
   subscribeMatches,
   isRegisteredForDuel,
   countDuelParticipants,
+  KVALIFIKACIJA_PRAG as KVAL_PRAG,
 } from '../services/tournament'
 import { registerForDuel } from '../services/quizApi'
 import { track } from '../services/analytics'
@@ -99,6 +100,9 @@ export default function Turnir() {
   const protivnik = myMatch
     ? participants[myMatch.p1 === user?.uid ? myMatch.p2 : myMatch.p1]?.name
     : null
+  // Kvalifikacija: ostao sam bez protivnika u rundi poslije prve, pa prolaz
+  // zavisi od praga tačnih. Server tu oznaku piše na sam meč (resolveByes).
+  const kvalifikacija = !!myMatch?.kvalifikacija
   const rokRunde = tour?.roundDeadlines?.[(tour?.currentRound || 1) - 1]
 
   return (
@@ -193,23 +197,30 @@ export default function Turnir() {
             <>
               {myMatch && !iPlayed ? (
                 <>
-                  <p className="text-sm font-semibold text-teal-700">
-                    Tvoj duel je spreman{protivnik ? ` — protiv: ${protivnik}` : ''}
+                  <p className={`text-sm font-semibold ${kvalifikacija ? 'text-amber-700' : 'text-teal-700'}`}>
+                    {kvalifikacija
+                      ? 'Kvalifikacija — u ovoj rundi nemaš protivnika'
+                      : `Tvoj duel je spreman${protivnik ? ` — protiv: ${protivnik}` : ''}`}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    10 pitanja, 2 minute za cijeli duel. Ko ne odigra do roka, gubi bez borbe.
+                    {kvalifikacija
+                      ? `10 pitanja, 2 minute. Prolaz se ne poklanja: treba ti ${KVAL_PRAG} od 10 tačnih, inače ispadaš. Ko ne odigra do roka, ispada.`
+                      : '10 pitanja, 2 minute za cijeli duel. Ko ne odigra do roka, gubi bez borbe.'}
                   </p>
                   <button
                     onClick={() => navigate('/duel')}
-                    className="mt-3 w-full rounded-2xl bg-teal-700 py-3.5 font-title font-extrabold text-white active:bg-teal-800"
+                    className={`mt-3 w-full rounded-2xl py-3.5 font-title font-extrabold text-white ${
+                      kvalifikacija ? 'bg-amber-600 active:bg-amber-700' : 'bg-teal-700 active:bg-teal-800'
+                    }`}
                   >
-                    Igraj svoj duel
+                    {kvalifikacija ? 'Igraj kvalifikaciju' : 'Igraj svoj duel'}
                   </button>
                 </>
               ) : myMatch && iPlayed ? (
                 <p className="text-sm text-slate-500">
-                  Odigrao/la si duel. Rezultat protivnika je skriven — runda se zatvara{' '}
-                  {dugo(rokRunde)}.
+                  {kvalifikacija
+                    ? `Odigrao/la si kvalifikaciju. Runda se zatvara ${dugo(rokRunde)}.`
+                    : `Odigrao/la si duel. Rezultat protivnika je skriven — runda se zatvara ${dugo(rokRunde)}.`}
                 </p>
               ) : amRegistered ? (
                 <p className="text-sm text-slate-500">

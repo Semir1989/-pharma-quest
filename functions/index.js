@@ -58,7 +58,9 @@ import {
 import {
   DUEL_QUESTIONS,
   DUEL_TOTAL_SECONDS,
+  KVALIFIKACIJA_PRAG,
   duelPreostalo,
+  jeKvalifikacija,
   resolveMatch,
 } from './duel-pravila.js'
 import { rasporedRundi, brojRundi, paroviPrveRunde } from './turnir-raspored.js'
@@ -1684,15 +1686,28 @@ async function propagate(tid, round, slot, winner) {
   await ref.update({ [field]: winner })
 }
 
-// Riješi bye/prazne mečeve u rundi (igrač bez protivnika odmah prolazi).
+// Riješi mečeve u rundi koji nemaju oba igrača.
+//
+// PRVA RUNDA: igrač bez protivnika prolazi odmah (bye). Ti byevi su posljedica
+// bracketa — 20 prijavljenih u stablu od 32 daje 12 byeva — pa bi uslov značio
+// da polovina učesnika ispada prvog dana bez ijednog meča.
+//
+// RUNDE POSLIJE PRVE: prolaz se ne poklanja. Meč se označi kao kvalifikacija i
+// ostaje OTVOREN — igrač dobija istih 10 pitanja i mora pogoditi bar
+// KVALIFIKACIJA_PRAG, inače na zatvaranju runde ispada (resolveMatch).
+// Prazna grana (nijedan igrač) se i dalje samo zatvara.
 async function resolveByes(tid, round, rounds) {
   const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
   for (const d of snap.docs) {
     const m = d.data()
     if (m.status !== 'pending' || (m.p1 && m.p2)) continue
-    const winner = m.p1 || m.p2 || null
-    await d.ref.update({ winner, status: 'done' })
-    if (round < rounds) await propagate(tid, round, m.slot, winner)
+    const sam = m.p1 || m.p2 || null
+    if (sam && round > 1) {
+      await d.ref.update({ kvalifikacija: true })
+      continue
+    }
+    await d.ref.update({ winner: sam, status: 'done' })
+    if (round < rounds) await propagate(tid, round, m.slot, sam)
   }
 }
 
@@ -1818,17 +1833,25 @@ async function zavrsiDuel(uid, tid, sRef, session, answers) {
   await sRef.update({ answers, finished: true, finishedAt })
 
   const mRef = db.doc(`tournaments/${tid}/matches/${session.matchId}`)
+  let kval = false
   await db.runTransaction(async (tx) => {
     const ms = await tx.get(mRef)
     if (!ms.exists) return
     const m = ms.data()
+    kval = jeKvalifikacija(m)
     if (m.p1 === uid) tx.update(mRef, { p1Score: score, p1Played: true, p1FinishedAt: finishedAt })
     else if (m.p2 === uid) tx.update(mRef, { p2Score: score, p2Played: true, p2FinishedAt: finishedAt })
   })
 
   await applyProgress(uid, { duels: 1 }) // questovi tipa "odigraj duel"
   await bumpStreak(uid)
-  return { score, total: session.questionIds.length }
+  // Ishod kvalifikacije se smije reći ODMAH: nema protivnika čiji bi rezultat
+  // trebalo čuvati do zatvaranja runde, a prag je igraču bio poznat unaprijed.
+  return {
+    score,
+    total: session.questionIds.length,
+    ...(kval ? { kvalifikacija: true, prag: KVALIFIKACIJA_PRAG, prosao: score >= KVALIFIKACIJA_PRAG } : {}),
+  }
 }
 
 // Pokreni/nastavi svoj duel u tekućoj rundi.
@@ -1851,8 +1874,18 @@ export const startDuel = onCall(async (request) => {
   if (!md) return { noMatch: true }
   const m = md.data()
   const isP1 = m.p1 === uid
+  // Kvalifikacija se javlja na SVAKOM izlazu: igrač mora unaprijed znati da mu
+  // prolaz zavisi od praga, a ne od protivnika kojeg nema.
+  const kval = jeKvalifikacija(m) ? { kvalifikacija: true, prag: KVALIFIKACIJA_PRAG } : {}
   if ((isP1 && m.p1Played) || (!isP1 && m.p2Played)) {
-    return { alreadyPlayed: true, score: isP1 ? m.p1Score : m.p2Score, total: DUEL_QUESTIONS }
+    const score = (isP1 ? m.p1Score : m.p2Score) || 0
+    return {
+      alreadyPlayed: true,
+      score,
+      total: DUEL_QUESTIONS,
+      ...kval,
+      ...(kval.kvalifikacija ? { prosao: score >= KVALIFIKACIJA_PRAG } : {}),
+    }
   }
   const sRef = db.doc(`duelSessions/${tid}_${uid}`)
   const sSnap = await sRef.get()
@@ -1862,7 +1895,7 @@ export const startDuel = onCall(async (request) => {
     // Vrijeme je isteklo dok igrača nije bilo → duel se zatvara s onim što ima.
     if (duelPreostalo(session.startedAt) <= 0) {
       const r = await zavrsiDuel(uid, tid, sRef, session, session.answers || [])
-      return { alreadyPlayed: true, score: r.score, total: r.total, isteklo: true }
+      return { ...r, alreadyPlayed: true, isteklo: true }
     }
   } else {
     session = {
@@ -1886,6 +1919,7 @@ export const startDuel = onCall(async (request) => {
     secondsLeft: duelPreostalo(session.startedAt),
     totalSeconds: DUEL_TOTAL_SECONDS,
     question: publicQuestion(qid, qDoc, session.current, duelPreostalo(session.startedAt)),
+    ...kval,
   }
 })
 
@@ -1914,7 +1948,7 @@ export const submitDuelAnswer = onCall(async (request) => {
   const proteklo = (Date.now() - (session.startedAt || Date.now())) / 1000
   if (kraj === true || proteklo > DUEL_TOTAL_SECONDS + GRACE_SECONDS) {
     const r = await zavrsiDuel(uid, tid, sRef, session, session.answers || [])
-    return { isteklo: true, finished: true, myScore: r.score, total: r.total, secondsLeft: 0 }
+    return { ...r, isteklo: true, finished: true, myScore: r.score, secondsLeft: 0 }
   }
 
   const qid = session.questionIds[session.current]
@@ -1940,12 +1974,12 @@ export const submitDuelAnswer = onCall(async (request) => {
 
   const r = await zavrsiDuel(uid, tid, sRef, session, answers)
   return {
+    ...r,
     correct,
     correctIndex: secret.correctIndex,
     explanation: secret.explanation,
     finished: true,
     myScore: r.score,
-    total: r.total,
     secondsLeft: duelPreostalo(session.startedAt),
   }
 })
@@ -3401,6 +3435,7 @@ export const adminTurnirPregled = onCall(async (request) => {
         p1FinishedAt: m.p1FinishedAt || null,
         p2FinishedAt: m.p2FinishedAt || null,
         pitanja: (m.questionIds || []).length,
+        kvalifikacija: jeKvalifikacija(m),
       }
     })
     .sort((a, b) => a.round - b.round || a.slot - b.slot)
@@ -3669,29 +3704,50 @@ export const adminPodsjetiNeodigrale = onCall(async (request) => {
   if (t.status !== 'active') throw new HttpsError('failed-precondition', 'Turnir nije aktivan.')
   const round = t.currentRound
   const snap = await db.collection(`tournaments/${tid}/matches`).where('round', '==', round).get()
-  const kome = new Set()
+  // uid → vrsta meča, jer poruka nije ista: kvalifikantu nema ko "proći
+  // umjesto njega", njemu istječe vlastiti prag.
+  const kome = new Map()
   for (const d of snap.docs) {
     const m = d.data()
-    if (m.status === 'done' || !m.p1 || !m.p2) continue
-    if (!m.p1Played) kome.add(m.p1)
-    if (!m.p2Played) kome.add(m.p2)
+    if (m.status === 'done') continue
+    // Kvalifikacija nema protivnika, ali JE meč koji se mora odigrati — bez
+    // ovoga bi je podsjetnik preskočio i igrač bi ispao ne znajući da je imao
+    // šta odigrati.
+    if (jeKvalifikacija(m)) {
+      const sam = m.p1 || m.p2
+      const odigrao = m.p1 ? m.p1Played : m.p2Played
+      if (sam && !odigrao) kome.set(sam, 'kvalifikacija')
+      continue
+    }
+    if (!m.p1 || !m.p2) continue
+    if (!m.p1Played) kome.set(m.p1, 'duel')
+    if (!m.p2Played) kome.set(m.p2, 'duel')
   }
   const rok = (t.roundDeadlines || [])[round - 1]
   const kada = rok
     ? new Intl.DateTimeFormat('bs-BA', { timeZone: 'Europe/Sarajevo', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(rok))
     : 'uskoro'
-  const poruka = {
-    title: `Tvoj duel čeka — runda ${round}`,
-    body: `Odigraj do ${kada} ili prolazi protivnik.`,
-    url: '/turnir',
-    tip: 'turnir',
-    tag: `duel-podsjetnik-${tid}-r${round}`,
-  }
+  const porukaZa = (vrsta) =>
+    vrsta === 'kvalifikacija'
+      ? {
+          title: `Kvalifikacija te čeka — runda ${round}`,
+          body: `Nemaš protivnika: odigraj do ${kada} i pogodi bar ${KVALIFIKACIJA_PRAG} od ${DUEL_QUESTIONS} da prođeš dalje.`,
+          url: '/turnir',
+          tip: 'turnir',
+          tag: `duel-podsjetnik-${tid}-r${round}`,
+        }
+      : {
+          title: `Tvoj duel čeka — runda ${round}`,
+          body: `Odigraj do ${kada} ili prolazi protivnik.`,
+          url: '/turnir',
+          tip: 'turnir',
+          tag: `duel-podsjetnik-${tid}-r${round}`,
+        }
 
   let poslano = 0
   let bezUredjaja = 0
   let odjavljenih = 0
-  for (const igrac of kome) {
+  for (const [igrac, vrsta] of kome) {
     const us = await db.doc(`users/${igrac}`).get()
     if (!us.exists) continue
     const p = us.data()
@@ -3704,7 +3760,7 @@ export const adminPodsjetiNeodigrale = onCall(async (request) => {
       bezUredjaja++
       continue
     }
-    if (await posaljiNotifikaciju(igrac, tokeni, poruka)) {
+    if (await posaljiNotifikaciju(igrac, tokeni, porukaZa(vrsta))) {
       poslano++
       await us.ref.update({ lastNotifAt: Date.now(), lastNotifTip: 'turnir' }).catch(() => {})
     }

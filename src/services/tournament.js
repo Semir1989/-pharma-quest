@@ -7,6 +7,11 @@ import { db } from '../firebase'
 // XP trka je od 31.07.2026. zaseban event sa svojim servisom
 // (services/xpTrka.js) — ovdje je nema, iako su do tada dijelile ovaj config.
 
+// Koliko tačnih treba igraču bez protivnika (u rundi poslije prve) da prođe
+// dalje. MORA pratiti KVALIFIKACIJA_PRAG iz functions/duel-pravila.js —
+// server je jedini koji odlučuje, ovo je samo za tekst na ekranu.
+export const KVALIFIKACIJA_PRAG = 6
+
 // Config čitaju i Arena (kartica duela) i /turnir, pa se drži u kešu za sesiju
 // — isti pristup kao getTasks/getBadges. Admin izmjena prozora vidi se poslije
 // reloada.
