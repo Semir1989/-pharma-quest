@@ -6,7 +6,11 @@ import { DEFAULT_AVATAR } from '../data/avatars'
 // Napomena (Etapa 6): stroga pravila dozvoljavaju klijentu da KREIRA profil
 // (xp mora biti 0), a poslije smije mijenjati samo displayName i avatar —
 // zato, ako dokument već postoji, ažuriramo samo ta dva polja.
-export async function createUserProfile(uid, { email, displayName, avatar }) {
+// `phone` i `country` (01.08.2026) upisuju se SAMO pri kreiranju profila.
+// Razlog nije previd nego pravila: klijentu je poslije kreiranja otvoreno tačno
+// pet polja (vidi firestore.rules), a telefon i država nisu među njima. Igraču
+// koji ih hoće mijenjati ime ispravlja admin — isto kao i ime.
+export async function createUserProfile(uid, { email, displayName, avatar, phone, country }) {
   const ref = doc(db, 'users', uid)
   const existing = await getDoc(ref)
 
@@ -22,6 +26,8 @@ export async function createUserProfile(uid, { email, displayName, avatar }) {
     email,
     displayName: displayName || 'Farmaceut',
     avatar: avatar || DEFAULT_AVATAR,
+    phone: phone || null,
+    country: country || null,
     xp: 0,
     level: 1,
     streak: 0,

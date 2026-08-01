@@ -9,11 +9,19 @@ import BrandHeader from '../components/BrandHeader'
 import AvatarPicker from '../components/AvatarPicker'
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from '../components/icons'
 import { DEFAULT_AVATAR } from '../data/avatars'
+import {
+  DRZAVE,
+  PODRAZUMIJEVANA_DRZAVA,
+  validanTelefon,
+  ocistiTelefon,
+} from '../utils/drzave'
 
 export default function Register() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [country, setCountry] = useState(PODRAZUMIJEVANA_DRZAVA)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [avatar, setAvatar] = useState(DEFAULT_AVATAR)
@@ -24,6 +32,13 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    // Telefon se provjerava PRIJE kreiranja naloga: da se provjera radi poslije,
+    // nalog bi već postojao a profil ne bi, pa bi igrač završio na /dovrsi-profil
+    // i ne bi se mogao registrovati ponovo s istim mailom.
+    if (!validanTelefon(phone)) {
+      setError('Unesi ispravan broj telefona (8–15 cifara).')
+      return
+    }
     if (password !== confirm) {
       setError('Lozinke se ne poklapaju.')
       return
@@ -39,6 +54,8 @@ export default function Register() {
         email: email.trim(),
         displayName: name.trim(),
         avatar,
+        phone: ocistiTelefon(phone),
+        country,
       })
       track('sign_up', { method: 'password' })
       navigate('/')
@@ -88,6 +105,38 @@ export default function Register() {
             onChange={(e) => setEmail(e.target.value)}
             className="flex-1 bg-transparent text-slate-800 outline-none placeholder:text-slate-400"
           />
+        </div>
+
+        {/* Telefon */}
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <span className="text-teal-700">📱</span>
+          <input
+            type="tel"
+            required
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="Broj telefona (npr. 061 123 456)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="flex-1 bg-transparent text-slate-800 outline-none placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Država */}
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <span className="text-teal-700">🌍</span>
+          <select
+            required
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="flex-1 bg-transparent text-slate-800 outline-none"
+          >
+            {DRZAVE.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
